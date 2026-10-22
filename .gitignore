@@ -1,0 +1,58 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+out/
+coverage/
+*.tsbuildinfo
+.turbo/
+
+# Next.js
+.next/
+next-env.d.ts
+
+# Expo / React Native
+.expo/
+.expo-shared/
+web-build/
+apps/*/android/
+apps/*/ios/
+*.jks
+*.keystore
+*.p8
+*.p12
+*.mobileprovision
+google-services.json
+GoogleService-Info.plist
+
+# Playwright
+tests/e2e/test-results/
+tests/e2e/playwright-report/
+tests/e2e/blob-report/
+
+# Environment files: only *.example files are committed (SEC-BASE-008, BP §29)
+.env
+.env.*
+*.env
+.envrc
+!.env.example
+!**/.env.example
+
+# Secrets / credentials
+*.secret*
+*.pem
+*.key
+service-account*.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.log
+npm-debug.log*
+pnpm-debug.log*

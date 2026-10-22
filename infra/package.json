@@ -1,0 +1,18 @@
+{
+  "name": "@kaamkaro/infra",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A01: CI guards (IMPL §7.4), local ESLint plugin, local dev infrastructure (docker compose). T2.1.",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

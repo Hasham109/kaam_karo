@@ -1,0 +1,9 @@
+# Keeps the SHA-pinned GitHub Actions current (SEC-REVIEW T2.1 finding 5; SEC-BASE-008).
+# npm dependency updates stay manual for now (catalog in pnpm-workspace.yaml, A15 audit policy).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels: [dependencies, ci]

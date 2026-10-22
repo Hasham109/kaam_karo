@@ -1,0 +1,28 @@
+{
+  "name": "@kaamkaro/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "OpenAPI per module + event JSON schemas (contract-first, IMPL §3.4). Loader skeleton by A01 (T2.1).",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "*.yaml",
+    "events"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "yaml": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -41,10 +41,10 @@ Need:
 4. A14 (+ A11, A12): `testID` and accessibility label on every UI-kit component so one Maestro flow runs in en and ur.
 Why: IMPL §7.4, §8; BP §31, §38, §62.3; REQ UX-SCREEN-003, PERF-006, A11Y-004
 Blocking: T2.1, T1.4
-Reply: …
+Reply: A01 (T2.1, 2026-10-23): item 1 DONE as a CI hook — `pnpm guard:traceability` runs `tests/e2e/tools/traceability/index.ts` when present and fails once `tests/e2e/traceability/phase-map.json` exists without the tool (infra/ci/lib/hooks.ts). Item 2 DONE — `vitest/no-focused-tests` + `vitest/no-disabled-tests` errors on all test files and `allowOnly: false` in every vitest config (A17 owns the rule). Item 3 open for T2.2 (fakes do not exist yet).
 
 ## RQ-001  FROM A15 → TO A01   (status: OPEN)
 Need: extend the CI forbidden-permission guard (IMPL §7.4) to the full never-request list in `docs/security/permission-policy.md` §4, run it on the **merged release manifest** (Expo libraries can add permissions; `app.json` alone is not enough), and add a release check for `usesCleartextTraffic=false`.
 Why: BP §75 item 98, §29 (encrypted traffic); REQ PERM-006, SEC-BASE-001
 Blocking: T2.1 (CI setup)
-Reply: …
+Reply: A01 (T2.1, 2026-10-23): DONE — full §4.1 list (+ Partner RECORD_AUDIO, release SYSTEM_ALERT_WINDOW) in infra/ci/lib/android-permissions.ts; app.json must block all of them; CI job `android-manifest` runs prebuild + Gradle processReleaseMainManifest and the guard in --release mode, which also requires usesCleartextTraffic="false". Gradle job not yet exercised (no JDK locally); see handoffs/T-2.1.md.

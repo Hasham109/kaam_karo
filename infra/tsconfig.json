@@ -1,0 +1,18 @@
+{
+  "extends": "../tsconfig.base.json",
+  "//": "CI guards run directly with Node 24 type stripping: erasable syntax only, .ts import extensions.",
+  "compilerOptions": {
+    "target": "es2023",
+    "lib": ["es2023"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "types": ["node"],
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "allowJs": true,
+    "checkJs": false
+  },
+  "include": ["ci", "eslint", "vitest.config.ts"]
+}

@@ -1,0 +1,12 @@
+# Secret scanner config (SEC-BASE-008, BP §29, §43 rule 69). Used by .github/workflows/ci.yml.
+# .env.example is scanned too: it must contain only obviously fake values.
+title = "Kaam Karo gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Lockfile integrity hashes are not secrets."
+paths = [
+  '''(^|/)pnpm-lock\.yaml$''',
+]

@@ -1,0 +1,125 @@
+# CI for every pull request and every push to main (T2.1, PLAT-001; IMPL §7.4; BP §29, §34).
+# Jobs: build/lint/typecheck/test (unit + API + contract) + static guards, secret scan,
+# dependency audit, and the forbidden-permission check on the MERGED release manifests.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Build, lint, typecheck, test, guards
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      APP_ENV: test
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0 (pnpm version from package.json "packageManager")
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+      - name: Format check
+        run: pnpm run format:check
+      - name: Build, lint, typecheck, test (unit + API + contract)
+        run: pnpm turbo run build lint typecheck test
+      # IMPL §7.4: forbidden permissions (config + prebuild manifests), hard-coded values,
+      # string-lint, transition-table generator, traceability.
+      - name: CI guards
+        run: pnpm run guards
+
+  secret-scan:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GITLEAKS_VERSION: 8.30.1
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # scan the full history, not only the last commit (SEC-BASE-008)
+          persist-credentials: false
+      - name: Install gitleaks (checksum verified)
+        run: |
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o "$archive" "$base/$archive"
+          curl -sSfL -o checksums.txt "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          sha256sum --check --ignore-missing checksums.txt
+          tar -xzf "$archive" gitleaks
+      - name: Scan git history
+        run: ./gitleaks git . --config .gitleaks.toml --redact --verbose --exit-code 1
+
+  dependency-audit:
+    name: Dependency vulnerability scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      # Gate (SEC-BASE-008; policy docs/security/dependency-exceptions.md): EVERY high/critical
+      # advisory fails the build. The only waivers are the per-advisory tracked exceptions in
+      # pnpm-workspace.yaml auditConfig.ignoreGhsas (EX-001, EX-002). No class-wide waivers.
+      - name: pnpm audit (high and critical fail the build)
+        run: pnpm audit --audit-level high
+      # Informational: pnpm hides ignored advisories (it prints only "2 ignored: 2 high"), so show
+      # the tracked exceptions and their dependency paths here for the A15 re-review. A runtime
+      # path (services/api, apps/admin, mobile runtime) would invalidate the exception.
+      - name: Tracked exceptions EX-001 / EX-002 (informational, never fails)
+        run: |
+          echo 'EX-001 GHSA-86w9-cpqp-85rv node-forge; EX-002 GHSA-vfj7-8cjw-p6xm braces'
+          echo 'Register: docs/security/dependency-exceptions.md'
+          pnpm install --frozen-lockfile --ignore-scripts > /dev/null || true
+          pnpm why node-forge braces || true
+
+  android-manifest:
+    # RQ-001 / PERM-006 / SEC-BASE-001: libraries can inject permissions, so the guard also runs
+    # on the merged release manifest produced by Gradle after `expo prebuild`.
+    name: Android merged release manifest guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+      - name: Expo prebuild (android)
+        run: |
+          pnpm --filter @kaamkaro/customer run prebuild
+          pnpm --filter @kaamkaro/partner run prebuild
+      - name: Merge release manifests
+        run: |
+          for app in customer partner; do
+            (cd "apps/$app/android" && ./gradlew --no-daemon :app:processReleaseMainManifest)
+          done
+      - name: Forbidden-permission guard (release mode)
+        run: node infra/ci/check-android-permissions.ts --release

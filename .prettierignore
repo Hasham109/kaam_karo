@@ -1,0 +1,15 @@
+# Docs and coordination files are owned by A00/A15/A16 and kept as written.
+docs/
+coordination/
+.claude/
+CLAUDE.md
+PROMPTS.md
+pnpm-lock.yaml
+**/dist/
+**/.next/
+**/.expo/
+**/.turbo/
+**/coverage/
+**/next-env.d.ts
+tests/e2e/test-results/
+tests/e2e/playwright-report/

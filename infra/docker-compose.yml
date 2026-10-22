@@ -1,0 +1,51 @@
+# Local DEVELOPMENT infrastructure only (T2.1; D-001: PostgreSQL + PostGIS, Redis).
+# Staging/production use managed services from the hosting platform (vendor open, BP §33)
+# with private network access only (INFRA-002, BP §34).
+#
+# Usage (from the repo root, after `cp .env.example .env`):
+#   pnpm infra:up      # docker compose --env-file .env -f infra/docker-compose.yml up -d
+#   pnpm infra:down
+#
+# Credentials come from .env (fake values from .env.example; SEC-BASE-008).
+# Ports are bound to 127.0.0.1 so nothing is exposed beyond this machine (INFRA-002).
+name: kaamkaro-dev
+
+services:
+  postgres:
+    image: postgis/postgis:18-3.6
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
+    ports:
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      # PostgreSQL 18+ images keep data under /var/lib/postgresql/<major>/.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8.8-alpine
+    restart: unless-stopped
+    # Cache/queue only: business data never lives in Redis (REL-013). Password required.
+    command: ['redis-server', '--requirepass', '${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}']
+    ports:
+      - '127.0.0.1:${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli -a "$${REDIS_PASSWORD}" --no-auth-warning ping | grep PONG']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+volumes:
+  postgres-data:
+  redis-data:

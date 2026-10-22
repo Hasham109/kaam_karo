@@ -1,0 +1,27 @@
+{
+  "name": "@kaamkaro/platform",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Server platform library (A01): env loader, Sentry options (deny-all data collection + scrubbers), health probes. T2.2 adds logger, error envelope, idempotency, outbox, audit.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@sentry/nestjs": "catalog:",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "@sentry/nestjs": "catalog:"
+  }
+}

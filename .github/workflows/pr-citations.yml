@@ -1,0 +1,26 @@
+# Citation guard (IMPL §7.4; golden rule 1): the PR description must list known requirement
+# IDs and at least one BP §n / D-xxx / ARCH §n citation. Re-runs when the description is edited.
+name: PR citations
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  citations:
+    name: Requirement IDs + citations
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      # No install needed: the guard uses only Node built-ins (Node 24 type stripping).
+      - name: Check PR description
+        run: node infra/ci/check-pr-citations.ts

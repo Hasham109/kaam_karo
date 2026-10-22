@@ -1,0 +1,38 @@
+{
+  "name": "kaamkaro",
+  "private": true,
+  "description": "Kaam Karo monorepo (D-001: pnpm workspaces + Turborepo, TypeScript). T2.1 / PLAT-001.",
+  "packageManager": "pnpm@12.15.0",
+  "engines": {
+    "node": ">=24.0.0 <25"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "ci": "turbo run build lint typecheck test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "guard:permissions": "node infra/ci/check-android-permissions.ts",
+    "guard:hardcoded": "node infra/ci/check-hardcoded-values.ts",
+    "guard:citations": "node infra/ci/check-pr-citations.ts",
+    "guard:string-lint": "node infra/ci/run-hook.ts string-lint",
+    "guard:transition-table": "node infra/ci/run-hook.ts transition-table",
+    "guard:traceability": "node infra/ci/run-hook.ts traceability",
+    "guards": "pnpm run guard:permissions && pnpm run guard:hardcoded && pnpm run guard:string-lint && pnpm run guard:transition-table && pnpm run guard:traceability",
+    "infra:up": "docker compose --env-file .env -f infra/docker-compose.yml up -d",
+    "infra:down": "docker compose --env-file .env -f infra/docker-compose.yml down"
+  },
+  "devDependencies": {
+    "@eslint/js": "catalog:",
+    "@next/eslint-plugin-next": "catalog:",
+    "@vitest/eslint-plugin": "catalog:",
+    "eslint": "catalog:",
+    "globals": "catalog:",
+    "prettier": "catalog:",
+    "turbo": "catalog:",
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:"
+  }
+}

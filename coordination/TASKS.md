@@ -12,12 +12,12 @@ Acceptance criteria and BP refs per task: docs/implementation.md §6 (same task 
 | T0.4 | Permission & threat policy v1 | A15 | T0.1 | DONE | handoffs/T-0.4.md |
 | T0.5 | Test strategy + device matrix | A16 | T0.2 | DONE | handoffs/T-0.5.md |
 | T0.6 | **Urdu Nastaliq smoke test** (condition of D-001): one Expo dev-build screen with Noto Nastaliq Urdu, RTL layout, mixed Urdu/English label, a list, a bottom sheet and a text input, run on the cheapest phone in the device matrix | A14 + A01 | T0.5 | TODO (phone: Infinix Note 40, D-027) | — |
-| T1.1 | Screen specs for C01–C42 (fields, states: loading/empty/success/error/pending) | A11 + A00 | T0.2 | TODO | — |
-| T1.2 | Screen specs for P01–P26 | A12 + A00 | T0.2 | TODO | — |
-| T1.3 | Screen specs for A01–A26 with sub-role access per screen | A13 + A00 | T0.2 | TODO | — |
+| T1.1 | Screen specs for C01–C42 (fields, states: loading/empty/success/error/pending) | A11 + A00 | T0.2 | CLAIMED | — |
+| T1.2 | Screen specs for P01–P26 | A12 + A00 | T0.2 | CLAIMED | — |
+| T1.3 | Screen specs for A01–A26 with sub-role access per screen | A13 + A00 | T0.2 | CLAIMED | — |
 | T1.4 | i18n + RTL + Urdu typography kit; string-lint rule | A14 | G0 | TODO | — |
-| T1.5 | Flow maps: request → match → book/quote → job → pay → review; supply gap; dispute | A00 | T1.1–T1.3 | TODO | — |
-| T2.1 | Monorepo, CI (build/lint/typecheck/test), envs, secrets, Sentry, health check | A01 | G0 | TODO | — |
+| T1.5 | Flow maps: request → match → book/quote → job → pay → review; supply gap; dispute | A00 | T1.1–T1.3 | CLAIMED | — |
+| T2.1 | Monorepo, CI (build/lint/typecheck/test), envs, secrets, Sentry, health check | A01 | G0 | DONE | handoffs/T-2.1.md |
 | T2.2 | Platform lib: config loader, error envelope, idempotency middleware, outbox + worker, append-only audit | A01 | T2.1 | TODO | — |
 | T2.3 | DB schema v1 for all ARCH §5 entities (technical fields per ARCH §5) + migrations | A01 with each owner | T2.1 | TODO | — |
 | T2.4 | Identity: phone OTP login (D-002) with fake `OtpSender`, OTP expiry + attempt limits + resend cooldown (values in config, `TODO(OWNER)`), sessions, roles, admin sub-roles, MFA for admin | A02 | T2.2 | TODO | — |

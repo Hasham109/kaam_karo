@@ -1,0 +1,79 @@
+# T2.1 / PLAT-001 (BP §60, D-001): two mobile apps + admin + one backend + shared packages.
+packages:
+  - apps/*
+  - services/*
+  - packages/*
+  - contracts
+  - tests/e2e
+  - infra
+
+# Dependency install scripts are denied unless listed as true (supply-chain safety).
+# @swc/core: its optional platform package already ships the binary; no script needed.
+allowBuilds:
+  '@swc/core': false
+
+# Tracked dependency-vulnerability exceptions ONLY (SEC-BASE-008). Each GHSA here needs a row in
+# docs/security/dependency-exceptions.md (owner A15); no class-wide waivers in CI.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-86w9-cpqp-85rv # EX-001 node-forge via @expo/cli (dev tooling), re-review 2027-01-21
+    - GHSA-vfj7-8cjw-p6xm # EX-002 braces via metro-file-map / @next/eslint-plugin-next, re-review 2027-01-21
+
+# One pinned version per tool for the whole repo (D-001 stack only).
+catalog:
+  # tooling
+  turbo: 2.11.10
+  typescript: 6.0.3
+  eslint: 10.13.0
+  '@eslint/js': 10.0.1
+  typescript-eslint: 8.72.0
+  globals: 17.13.0
+  '@vitest/eslint-plugin': 1.6.27
+  '@next/eslint-plugin-next': 16.4.2
+  prettier: 3.9.10
+  vitest: 5.0.5
+  '@types/node': 24.19.2
+  # backend (NestJS)
+  '@nestjs/common': 12.2.0
+  '@nestjs/core': 12.2.0
+  '@nestjs/platform-express': 12.2.0
+  '@nestjs/testing': 12.2.0
+  reflect-metadata: 0.2.2
+  rxjs: 7.8.2
+  '@sentry/nestjs': 11.8.0
+  supertest: 7.3.1
+  '@types/supertest': 7.2.1
+  unplugin-swc: 2.0.0
+  '@swc/core': 1.16.20
+  # contracts
+  yaml: 2.9.1
+  ajv: 8.20.0
+  # web admin (Next.js)
+  next: 16.4.2
+  react: 19.3.0
+  react-dom: 19.3.0
+  '@types/react': 19.3.0
+  '@types/react-dom': 19.3.0
+  # mobile (Expo SDK 58 bundled versions)
+  expo: 58.0.17
+  expo-build-properties: 58.0.11
+  expo-dev-client: 58.0.14
+  react-native: 0.88.0
+  # e2e
+  '@playwright/test': 1.64.1
+
+# Written by pnpm: these versions were younger than pnpm's minimum release age at install time.
+minimumReleaseAgeExclude:
+  - '@swc/core-darwin-arm64@1.16.20'
+  - '@swc/core-darwin-x64@1.16.20'
+  - '@swc/core-linux-arm-gnueabihf@1.16.20'
+  - '@swc/core-linux-arm64-gnu@1.16.20'
+  - '@swc/core-linux-arm64-musl@1.16.20'
+  - '@swc/core-linux-ppc64-gnu@1.16.20'
+  - '@swc/core-linux-s390x-gnu@1.16.20'
+  - '@swc/core-linux-x64-gnu@1.16.20'
+  - '@swc/core-linux-x64-musl@1.16.20'
+  - '@swc/core-win32-arm64-msvc@1.16.20'
+  - '@swc/core-win32-ia32-msvc@1.16.20'
+  - '@swc/core-win32-x64-msvc@1.16.20'
+  - '@swc/core@1.16.20'

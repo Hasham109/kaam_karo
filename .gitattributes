@@ -1,0 +1,7 @@
+# Normalise line endings so lint/format results are identical on Windows and CI (T2.1).
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ttf binary
+*.otf binary
+*.zip binary

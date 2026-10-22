@@ -1,0 +1,30 @@
+{
+  "name": "@kaamkaro/customer",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Kaam Karo Customer App (Expo dev build, D-001; BP §60). SKELETON created by A01 in T2.1 (bootstrap grant). Owner: A11.",
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start --dev-client",
+    "android": "expo run:android",
+    "prebuild": "expo prebuild --platform android --clean --no-install",
+    "build": "expo export --platform android --output-dir dist",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@kaamkaro/i18n": "workspace:*",
+    "expo": "catalog:",
+    "expo-build-properties": "catalog:",
+    "expo-dev-client": "catalog:",
+    "react": "catalog:",
+    "react-native": "catalog:"
+  },
+  "devDependencies": {
+    "@types/react": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

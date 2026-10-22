@@ -1,0 +1,62 @@
+# Contract: health (owner A01). Contract-first per ARCH §8 rule 7 / IMPL §3.4.
+openapi: 3.1.0
+info:
+  title: Kaam Karo — Health
+  version: 1.0.0
+  description: |
+    Liveness/readiness of the API and its dependencies.
+    REL-011 (BP §31.2, §34). No secrets, hostnames or error details are returned.
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: API and dependency health
+      x-requirement-ids: [REL-011]
+      security: []
+      responses:
+        '200':
+          description: API is healthy. Dependencies are `up` or (in development/test) `not_configured`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthReport'
+        '503':
+          description: |
+            A dependency is `down`, or the database/Redis is `not_configured` in staging/production.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthReport'
+components:
+  schemas:
+    DependencyStatus:
+      type: string
+      enum: [up, down, not_configured]
+    DependencyCheck:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          $ref: '#/components/schemas/DependencyStatus'
+    HealthReport:
+      type: object
+      additionalProperties: false
+      required: [status, checks]
+      properties:
+        status:
+          type: string
+          enum: [ok, error]
+        checks:
+          type: object
+          additionalProperties: false
+          required: [database, redis, queue, storage]
+          properties:
+            database:
+              $ref: '#/components/schemas/DependencyCheck'
+            redis:
+              $ref: '#/components/schemas/DependencyCheck'
+            queue:
+              $ref: '#/components/schemas/DependencyCheck'
+            storage:
+              $ref: '#/components/schemas/DependencyCheck'

@@ -1,0 +1,27 @@
+{
+  "name": "@kaamkaro/admin",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Admin Portal (Next.js, D-001; BP §60). SKELETON created by A01 in T2.1 (bootstrap grant). Owner: A13.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "next": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
