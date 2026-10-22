@@ -58,7 +58,7 @@ The seed ranges were expanded exactly as written. These changes were needed so t
 | SCOPE-GEO-001 | Pakistan is the only supported marketplace country; a city can be listed without being active. | API test: a service location outside Pakistan is rejected with `OUT_OF_SERVICE_COUNTRY`; a request in a listed but inactive city returns a "not active yet" result and never reaches matching. | BP §57.2, §69; K-13 | A03 | Launch |
 | SCOPE-GEO-002 | Lahore is the launch city and the whole of Lahore is one active service zone from the pilot. | Seed test: Lahore `is_listed = true, is_active = true`; every other Pakistani city `is_listed = true, is_active = false`; any point inside the Lahore boundary resolves to the active zone. | BP §6.2; D-007, D-019; K-14 | A03 | Launch |
 | SCOPE-CAT-001 | The catalog is limited to the BP §63 household tree; categories excluded by BP §1.4 never exist, and new verticals are not added to the launch menu. | Seed test: seeded service count equals the BP §63 item count; no seeded item belongs to an excluded area (medical, legal, financial, childcare/eldercare, recruitment, government, high-risk construction); the admin API offers no way to create a new top-level family at launch. | BP §1.4, §5, §63, §65; K-04 | A03 | Launch |
-| SCOPE-CAT-002 | All catalog items are seeded inactive; the active launch set is chosen per city in the Admin Portal. | Seed test: every seeded service is inactive; activating a family for Lahore in A23 makes it visible in the customer app without a deploy; inactive items never appear to customers. | BP §6, §6.1, §64 | A03 | Launch · TODO(OWNER) (which families on day one: OQ-016) |
+| SCOPE-CAT-002 | All catalog items are seeded inactive; the active launch set is chosen per city in the Admin Portal. | Seed test: every seeded service is inactive; activating a family for Lahore in A23 makes it visible in the customer app without a deploy; inactive items never appear to customers; the Lahore seed activates exactly the 10 D-024 families. | BP §6, §6.1, §64; D-024 | A03 | Launch |
 
 ## 2. Catalog and service configuration (CAT-SVC)
 
@@ -301,10 +301,10 @@ Common acceptance for BOOK-STATUS-001…015: from the named state the server all
 | ID | Requirement | Acceptance criterion | Source | Owner | Status |
 |---|---|---|---|---|---|
 | BOOK-CANCEL-001 | Customer cancels before provider acceptance: normally no fee. | API test: cancel from Requested/Quote Pending/Quoted → Cancelled with fee 0. | BP §16 | A04 | Launch |
-| BOOK-CANCEL-002 | Customer cancels after acceptance but before the agreed window: policy-dependent fee, shown before confirmation. | The fee and window come from config (D-013) and are shown on C14 before confirm; while `null`, the fee is 0. How a fee is collected when the job never reaches Completed is open (K-17). | BP §16, §42; D-003, D-013; K-17 | A04 / A09 | Launch · TODO(OWNER) (OQ-019) |
+| BOOK-CANCEL-002 | Customer cancels after acceptance but before the agreed window: policy-dependent fee, shown before confirmation. | Not charged at launch (D-023): the fee config stays `null` and a late cancellation is recorded with fee 0; C14 shows the cancellation policy. | BP §16, §42; D-003, D-013, D-023; K-17 | A04 / A09 | Launch |
 | BOOK-CANCEL-003 | Provider cancels: the customer gets a clear replacement/refund path; provider reliability is affected. | Test: provider cancel → customer sees re-match/other offers and refund path (if anything was paid); the cancellation counts in MATCH-SCORE-009. | BP §16 | A04 / A05 | Launch |
 | BOOK-CANCEL-004 | Provider no-show: customer can report; a support case opens and policy action can follow. | Test: customer report → No-show (party PROVIDER) + support ticket; counts in reliability. | BP §16 | A04 / A10 | Launch |
-| BOOK-CANCEL-005 | Customer no-show: provider can report after a controlled wait period; any fee must be disclosed in policy. | Test: report before the configured wait period is refused; after it → No-show (party CUSTOMER). While the wait period is `null`, the report goes to support for manual review. Fee: same as BOOK-CANCEL-002. | BP §16; D-013; K-17 | A04 | Launch · TODO(OWNER) (OQ-019) |
+| BOOK-CANCEL-005 | Customer no-show: provider can report after a controlled wait period; any fee must be disclosed in policy. | Test: report before the configured wait period is refused; after it → No-show (party CUSTOMER). While the wait period is `null`, the report goes to support for manual review. No customer no-show fee at launch (D-023). | BP §16; D-013, D-023; K-17 | A04 | Launch · TODO(OWNER) (wait period, D-013) |
 | BOOK-CANCEL-006 | Emergency/unsafe situation: either side can stop the job and escalate to support. | Test: "Stop – safety" from Arrived → Cancelled, from In Progress → Disputed; both create a safety-flagged support ticket. | BP §16, §40 | A04 / A10 | Launch · INTERP (target state) |
 
 ## 15. Pricing (PRICE) — one per BP §17 rule
@@ -345,7 +345,7 @@ Common acceptance for BOOK-STATUS-001…015: from the named state the server all
 | FARE-006 | Line type Parts / New materials: customer approval required when additional to the approved estimate. | Test: a parts line added after acceptance stays Proposed until approved. | BP §58.1, §58.2 | A04 | Launch |
 | FARE-007 | Line type Emergency / After-hours fee: disclosed before acceptance when reasonably possible. | Allowed only on services with `emergency_allowed`; shown before accept. | BP §58.1; CAT-SVC-004 | A04 | Launch |
 | FARE-008 | Line type Travel / Distance surcharge: rule-based and visible. | Line can only be created from a configured rule (outside normal area); while the rule is `null`, the type is disabled. | BP §58.1 | A04 | Launch · TODO(OWNER) |
-| FARE-009 | Line type Platform fee: Kaam Karo fee if charged to the customer, displayed separately. | While config `fees.customer_platform_fee` is `null`, no platform-fee line is created. | BP §58.1, §41 | A04 / A09 | Launch · TODO(OWNER) (OQ-020) |
+| FARE-009 | Line type Platform fee: Kaam Karo fee if charged to the customer, displayed separately. | No platform-fee line is ever created for the customer at launch: `fees.customer_platform_fee` is disabled (D-025); API test rejects the line type. | BP §58.1, §41; D-025 | A04 / A09 | Launch |
 | FARE-010 | Line type Tax: from configured rules, displayed separately. | While tax rules are `null`, no tax line is created. | BP §58.1 | A04 / A09 | Launch · TODO(OWNER) (OQ-020) |
 | FARE-011 | Line type Discount / Coupon: displayed separately. | Negotiated discount line allowed; coupons are not built (promotions Not launch). Whether a discount reduces labour before commission is open (D-022). | BP §58.1, §46; D-022 | A04 / A09 | Launch · TODO(OWNER) |
 | FARE-012 | Each line has a state: Proposed → Approved or Rejected; approved lines become Final; an unapproved line is never payable. | Test: a Proposed line is excluded from the payable total; only the customer can approve/reject (C37); provider cannot convert it (IMPL T3.5). | BP §52.1, §58.2 | A04 | Launch |
@@ -443,7 +443,7 @@ Common acceptance for BOOK-STATUS-001…015: from the named state the server all
 
 | ID | Requirement | Acceptance criterion | Source | Owner | Status |
 |---|---|---|---|---|---|
-| I18N-001 | Customer and Partner apps work fully in English and Urdu. | Every screen passes the en and ur E2E runs. Admin portal language: OQ-022. | BP §78.1, §86 | A14 | Launch |
+| I18N-001 | Customer and Partner apps work fully in English and Urdu. | Every app screen passes the en and ur E2E runs. The Admin Portal is English only (D-026). | BP §78.1, §86; D-026 | A14 | Launch |
 | I18N-002 | Language is chosen at onboarding or from the device language, and can be changed any time. | E2E: switch on C41/settings applies immediately without reinstall. | BP §78.1 | A14 / A11 / A12 | Launch |
 | I18N-003 | Urdu uses full RTL mirroring: alignment, icons, arrows, control order and sheets. | RTL screenshot checks per screen (checklist IMPL §7.3-E). | BP §78.2 | A14 | Launch |
 | I18N-004 | Urdu uses a professional font (Noto Nastaliq Urdu candidate) with generous line height. | T0.6 smoke test passes on the cheapest device: no clipped marks, readable line height. | BP §78.2; D-001 | A14 | Launch |
@@ -746,13 +746,13 @@ T0.2 acceptance: every Blueprint section maps to at least one requirement ID or 
 | OQ-013 / D-017 | Remaining rating numbers | RATING-ENF-004, -008 |
 | OQ-014 / K-16 | How a booking enters Quote Pending; inspection-first flow | BOOK-STATUS-003 |
 | OQ-015 | Verification items per category | CAT-SVC-005, CFG-RULE-007, TRUST-VER-002/003 |
-| OQ-016 | Which service families are active in Lahore on day one | SCOPE-CAT-002 |
+| D-024 (was OQ-016) | Day-one families: all 10 — answered | SCOPE-CAT-002 |
 | OQ-017 | Customer booking/request limits | CFG-RULE-008, ABUSE-003 |
 | OQ-018 | Support categories and SLAs | CFG-RULE-012 |
-| OQ-019 / K-17 | Fees for jobs that never reach Completed vs D-003 | BOOK-CANCEL-002, -005 |
-| OQ-020 | Customer platform fee and tax lines | FARE-009, FARE-010 |
+| D-023 (was OQ-019 / K-17) | Fees on non-completed jobs: not charged — answered | BOOK-CANCEL-002, -005 |
+| D-025 / OQ-020 | Platform fee: none (answered); tax line still open | FARE-009, FARE-010 |
 | OQ-021 | Supply gap: what "callback" and "waitlist" do | MATCH-GAP-001 |
-| OQ-022 | Admin portal language | I18N-001 |
+| D-026 (was OQ-022) | Admin portal English only — answered | I18N-001 |
 | D-008…D-013 | Vendors, weights/thresholds, media limits, RPO/RTO, cancellation windows | many `TODO(OWNER)` rows |
 
 ## 34. Counts

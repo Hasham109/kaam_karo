@@ -2,6 +2,14 @@
 
 Newest first. Every behaviour change, with task ID and requirement IDs.
 
+## 2026-10-22 — Owner decisions D-023…D-027
+- D-023: no fees on jobs that never reach Completed (K-17 resolved) → BOOK-CANCEL-002/-005 updated; sweep check added (IMPL §7.3).
+- D-024: all 10 BP §6 families active in Lahore on day one → SCOPE-CAT-002, IMPL §5, T2.6 acceptance.
+- D-025: no customer platform fee → FARE-009; sweep check added.
+- D-026: Admin portal English only → I18N-001, ARCH §13.
+- D-027: reference test phone = cheapest, lowest-spec Android (model open) → T0.6 still blocked (OQ-029).
+- ARCH §21 gets K-16/K-17; ARCH §22 and CLAUDE.md decision table updated. No code exists, so no BUGS entries.
+
 ## 2026-10-22 — Phase 0 (T0.1–T0.5)
 - T0.1 (A00): coordination templates completed (BUGS template, handoffs/_TEMPLATE.md, REQUESTS templates, full TASKS titles).
 - T0.2 (A00): `docs/requirements/REQUIREMENTS.md` v1 — 417 requirements, one acceptance criterion each; BP §1–§87 coverage matrix (73 mapped, 14 informational).

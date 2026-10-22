@@ -28,6 +28,11 @@ Status values follow BP §72: **Accepted**, **Proposed** (options on the table, 
 | D-020 | Provider with unpaid commission | **Accepted 2026-10-22** | Until the worker pays the owed commission to the company, the next customer cannot hire them (limit 0, ARCH §6.8) | Nothing |
 | D-021 | Provider pays the company | **Accepted 2026-10-22** | The worker can send the money through any bank or mobile wallet; the hiring block also applies to already-accepted jobs (they cannot start until paid) (ARCH §6.8) | Nothing |
 | D-022 | Provider account follow-ups | **Proposed** (waiting for owner) | Finance verification time limit; grace time before an unpaid already-accepted job is treated as provider cancellation; does a discount reduce labour before commission; should the customer confirm the recorded payment method (ARCH §6.8) | Production values (config `TODO(OWNER)` until decided) |
+| D-023 | Fees on jobs that never reach Completed (K-17, OQ-019) | **Accepted 2026-10-22** | Owner: "for now keep payment at the end only." Payment stays only after `Completed` (D-003). A late-cancellation fee, a customer no-show fee, or an inspection fee when the quote is declined is **not charged at launch** (config stays `null`) | Nothing |
+| D-024 | Service families active in Lahore on day one (OQ-016) | **Accepted 2026-10-22** | All 10 families suggested by BP §6: Plumbing, Electrical, AC/Cooling, Appliance Repair, Internet/Wi-Fi, TV/Entertainment, Cleaning, Carpentry/Furniture, Locksmith/Access, basic Car Care (BP §63 families: Plumbing & Water, Electrical & Power, AC Cooling & Heating, Home Appliances, Internet Wi-Fi & Networking, TV Satellite & Home Entertainment, Cleaning & Hygiene, Carpentry & Furniture, Locksmith & Access, Car & Two-Wheeler Everyday Care). All other §63 families stay inactive | Nothing |
+| D-025 | Customer platform fee (OQ-020) | **Accepted 2026-10-22** | **No** separate platform fee for the customer. Platform income = 30% commission only (D-006). Config `fees.customer_platform_fee` = `0`/disabled. (Tax line is still open, OQ-020) | Nothing |
+| D-026 | Admin portal language (OQ-022) | **Accepted 2026-10-22** | Admin portal in **English only**. Customer and Partner apps stay English + Urdu | Nothing |
+| D-027 | Test phone for the Urdu smoke test and low-end testing (OQ-029) | **Accepted 2026-10-22 (criterion only)** | The reference test device (D-REF) is the **cheapest, lowest-spec Android phone** (small screen, low RAM). Exact model still to be named by the owner | T0.6 until the physical phone is available |
 
 ## Not launch (do not build)
 Wallet/credits for customers, subscriptions, corporate/B2B (BP §46); promotions/coupons (BP §14); contacts picker, calendar, biometrics, Bluetooth (BP §74); every item in BP §83 until accepted (BP §86).
@@ -35,4 +40,4 @@ Wallet/credits for customers, subscriptions, corporate/B2B (BP §46); promotions
 ## T0.3 verification note (2026-10-22, A00)
 - Every row above matches ARCH §22 word for word in meaning; only the layout changed (separate Status column, rows sorted by ID).
 - ARCH §22 itself still uses the old layout; no content difference, so no ARCH change is needed.
-- Every decision now has one status: 14 Accepted (D-001…D-007, D-014…D-016, D-018…D-021), 1 Partly accepted (D-017), 7 Proposed (D-008…D-013, D-022). Total 22.
+- Every decision now has one status: 14 Accepted (D-001…D-007, D-014…D-016, D-018…D-021), 1 Partly accepted (D-017), 7 Proposed (D-008…D-013, D-022). Total 22. Later the same day the owner added D-023…D-027 (all Accepted; D-027 criterion only).

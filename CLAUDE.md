@@ -49,8 +49,13 @@ Do **not** read whole files every time. Use Grep on headings such as `^# 15\.` i
 | D-016 | Provider records CASH/DIGITAL at billing. Cash → 30% of labour debited from the provider account |
 | D-018 | Only the team leader is verified. Crew size never changes price |
 | D-020 / D-021 | Balance below 0 → provider cannot be hired **or start already-accepted jobs** until paid. Provider pays by any bank/wallet, then Finance verifies (transaction ID + screenshot) |
+| D-023 | Payment only at the end: no late-cancellation, customer no-show or declined-quote inspection fee at launch |
+| D-024 | Day one in Lahore: all 10 BP §6 service families active; other §63 families inactive |
+| D-025 | No customer platform fee; platform income = 30% commission only |
+| D-026 | Admin portal English only (apps stay English + Urdu) |
+| D-027 | Reference test phone = cheapest, lowest-spec Android (model still to be named) |
 
-Still open (do not guess): D-008 gateway/payout, D-009 vendors, D-010 weights & badge thresholds, D-011 media limits, D-012 RPO/RTO & performance budgets, D-013 cancellation windows & quote validity, D-017 remaining numbers, D-022 provider-account follow-ups.
+Still open (do not guess): D-008 gateway/payout, D-009 vendors, D-010 weights & badge thresholds, D-011 media limits, D-012 RPO/RTO & performance budgets, D-013 cancellation windows & quote validity, D-017 remaining numbers, D-022 provider-account follow-ups, tax line (OQ-020), test-phone model (OQ-029).
 
 ## Stack (D-001, accepted)
 

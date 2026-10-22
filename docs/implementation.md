@@ -363,7 +363,7 @@ Format per BP §48: `AREA-TOPIC-NNN`. A00 expands this into `docs/requirements/R
 | SCOPE-GEO-001 | Pakistan-only marketplace; city listed ≠ active | §57.2, §69 | A03 |
 | SCOPE-GEO-002 | Launch city = Lahore (only active city); the whole of Lahore is active from the pilot | §6.2; D-007, D-019 | A03 |
 | SCOPE-CAT-001 | Catalog limited to BP §63 tree; excluded categories never present | §1.4, §63 | A03 |
-| SCOPE-CAT-002 | Active launch set per city configurable (8–10 families from §6) | §6, §64 | A03 |
+| SCOPE-CAT-002 | Active launch set per city configurable; day one in Lahore = all 10 families from §6 (D-024) | §6, §64; D-024 | A03 |
 | CAT-SVC-001..010 | Service config: price model, selling modes, inspection/quote flags, emergency allowed, verification required, customer questions, AI guidance, inclusions/exclusions, pricing unit, materials/warranty policy | §4.2, §53, §64 | A03 |
 | CFG-RULE-001..012 | Every BP §42 rule stored as audited config | §42 | A03 |
 | SEC-AUTH-001..008 | Phone OTP login via `AuthProvider`/`OtpSender` (D-002 accepted; no passwords for customers/providers); sessions expire/revoke; no raw passwords; OTP rate-limit; admin MFA; blocked accounts; recovery abuse protection; deletion lifecycle | §27, §29 | A02 |
@@ -426,7 +426,7 @@ Exit: no major unresolved product ambiguity for MVP.
 | T0.3 | Copy ARCH §21 conflicts and §22 decisions into `CONFLICTS.md` / `DECISIONS.md` (record D-001, D-002, D-003, D-005, D-006, D-007, D-014 as Accepted 2026-10-22); record D-004, D-015, D-016, D-018, D-019 and the D-017 threshold as Accepted too; record D-020 and D-021 Accepted too; ask the owner the rest of D-017 and D-022 | A00 | T0.1 | Each decision has status Proposed/Accepted | §46, §72 |
 | T0.4 | Permission & threat policy v1 | A15 | T0.1 | Matches BP §28, §74, §75 tables exactly | §28–§30, §74, §75 |
 | T0.5 | Test strategy + device matrix | A16 | T0.2 | Includes low-cost Android, small screen, slow network, Urdu | §38, §49, §78.2 |
-| T0.6 | **Urdu Nastaliq smoke test** (condition of D-001): one Expo dev-build screen with Noto Nastaliq Urdu, RTL layout, mixed Urdu/English label, a list, a bottom sheet and a text input, run on the cheapest phone in the device matrix | A14 + A01 | T0.5 | Screenshots in `docs/qa/urdu-smoke/`: no clipped marks, readable line height, correct RTL mirroring, smooth scroll. On FAIL, A00 reopens D-001 | §78.2 |
+| T0.6 | **Urdu Nastaliq smoke test** (condition of D-001): one Expo dev-build screen with Noto Nastaliq Urdu, RTL layout, mixed Urdu/English label, a list, a bottom sheet and a text input, run on the cheapest phone in the device matrix (D-027: cheapest, lowest-spec Android phone) | A14 + A01 | T0.5 | Screenshots in `docs/qa/urdu-smoke/`: no clipped marks, readable line height, correct RTL mirroring, smooth scroll. On FAIL, A00 reopens D-001 | §78.2 |
 
 **Gate G0:** ✅ D-001 (stack) accepted on 2026-10-22 (ARCH §17). Coding may start once T0.1–T0.3 are done. T0.6 must pass before Phase 3 UI work begins.
 
@@ -451,7 +451,7 @@ Exit: secure login and data model working.
 | T2.3 | DB schema v1 for all ARCH §5 entities (technical fields per ARCH §5) + migrations | A01 with each owner | T2.1 | Every table/column has a comment citing BP § | §25, §66 |
 | T2.4 | Identity: phone OTP login (D-002) with fake `OtpSender`, OTP expiry + attempt limits + resend cooldown (values in config, `TODO(OWNER)`), sessions, roles, admin sub-roles, MFA for admin | A02 | T2.2 | SEC-AUTH-* and ADMIN-ROLE-* tests pass; brute-forcing an OTP is blocked by the attempt limit (test); no password column for customers/providers | §8, §27, §29 |
 | T2.5 | Profiles + addresses + snapshot helper + favorites | A02 | T2.4 | Editing an address does not change an existing booking snapshot | §21, §26 |
-| T2.6 | Catalog seed from BP §63 (all inactive) + launch-family flags + `ConfigRule` store + cities: **Lahore** `is_listed = true, is_active = true` (D-007); other Pakistani cities `is_listed = true, is_active = false`; whole Lahore seeded as one active service zone (D-019); provider radius/areas still work inside it (BP §59) | A03 | T2.3 | Seed count equals BP §63 items; excluded categories absent; only Lahore is active | §6, §42, §57.2, §63, §64 |
+| T2.6 | Catalog seed from BP §63 (all inactive) + launch-family flags + `ConfigRule` store + cities: **Lahore** `is_listed = true, is_active = true` (D-007); other Pakistani cities `is_listed = true, is_active = false`; whole Lahore seeded as one active service zone (D-019); provider radius/areas still work inside it (BP §59); the 10 day-one families of D-024 active in Lahore | A03 | T2.3 | Seed count equals BP §63 items; excluded categories absent; only Lahore is active; exactly the 10 D-024 families are active in Lahore | §6, §42, §57.2, §63, §64 |
 | T2.7 | Backup + **restore test** in staging | A01 | T2.3 | Restore documented with timestamp | §31.3, §49 |
 | T2.8 | Security review of T2.1–T2.6 | A15 | T2.4–T2.6 | SEC-REVIEW PASS | §29 |
 
@@ -587,6 +587,8 @@ Severity:
 - [ ] Is any configurable value (BP §42) hard-coded? (grep for numeric literals in pricing/cancel/matching modules)
 - [ ] Can paid/promoted placement bypass eligibility? (BP §68)
 - [ ] Can a payment start before the booking is `Completed`? (D-003)
+- [ ] Is any fee charged on a booking that never reached `Completed` (cancellation, no-show, declined-quote inspection)? (must be "no", D-023)
+- [ ] Does any customer bill contain a platform-fee line? (must be "no", D-025)
 - [ ] Is anything auto-assigned to a provider without the customer choosing? (D-005)
 - [ ] Do platform + provider shares always add up exactly to the commissionable amount (no paisa lost to rounding)? (D-006)
 - [ ] Does any pricing, commission or fare code read `crew_size`? (must be "no", D-018)
