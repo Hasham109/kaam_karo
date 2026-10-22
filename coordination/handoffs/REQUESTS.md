@@ -27,6 +27,12 @@ A00 approval: —
 
 ---
 
+## RQ-003  FROM A00 → TO A16   (status: OPEN)
+Need: update docs/qa/device-matrix.md: D-REF physical device = Infinix Note 40 (owner D-027). Record that it does not meet the small-screen/low-RAM profile (verify against the real phone's specs), so small-screen and low-RAM checks also run on E-MIN until OQ-034 is answered.
+Why: D-027; BP §78.2, §49
+Blocking: T0.6
+Reply: …
+
 ## RQ-002  FROM A16 → TO A01, A17, A14, A11, A12, A15   (status: OPEN)
 Need:
 1. A01: CI wiring for the requirement-traceability tool (lives in `tests/e2e/tools/`, A16 lane) — test citing an unknown ID fails; Launch IDs due in a closed phase without a passing test fail (docs/qa/test-strategy.md §3).

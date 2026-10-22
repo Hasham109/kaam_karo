@@ -11,7 +11,7 @@ Acceptance criteria and BP refs per task: docs/implementation.md §6 (same task 
 | T0.3 | Copy ARCH §21 conflicts and §22 decisions into `CONFLICTS.md` / `DECISIONS.md` (record D-001, D-002, D-003, D-005, D-006, D-007, D-014 as Accepted 2026-10-22); record D-004, D-015, D-016, D-018, D-019 and the D-017 threshold as Accepted too; record D-020 and D-021 Accepted too; ask the owner the rest of D-017 and D-022 | A00 | T0.1 | DONE | handoffs/T-0.1-0.3.md |
 | T0.4 | Permission & threat policy v1 | A15 | T0.1 | DONE | handoffs/T-0.4.md |
 | T0.5 | Test strategy + device matrix | A16 | T0.2 | DONE | handoffs/T-0.5.md |
-| T0.6 | **Urdu Nastaliq smoke test** (condition of D-001): one Expo dev-build screen with Noto Nastaliq Urdu, RTL layout, mixed Urdu/English label, a list, a bottom sheet and a text input, run on the cheapest phone in the device matrix | A14 + A01 | T0.5 | BLOCKED (OQ-029: physical D-REF phone) | — |
+| T0.6 | **Urdu Nastaliq smoke test** (condition of D-001): one Expo dev-build screen with Noto Nastaliq Urdu, RTL layout, mixed Urdu/English label, a list, a bottom sheet and a text input, run on the cheapest phone in the device matrix | A14 + A01 | T0.5 | TODO (phone: Infinix Note 40, D-027) | — |
 | T1.1 | Screen specs for C01–C42 (fields, states: loading/empty/success/error/pending) | A11 + A00 | T0.2 | TODO | — |
 | T1.2 | Screen specs for P01–P26 | A12 + A00 | T0.2 | TODO | — |
 | T1.3 | Screen specs for A01–A26 with sub-role access per screen | A13 + A00 | T0.2 | TODO | — |

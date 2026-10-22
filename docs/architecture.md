@@ -353,6 +353,8 @@ One controlled status at a time. Every change is written as a **Job Event** (BP 
 - *Reviewed* → a **flag** (`review_submitted_at`) on a Completed booking, not a status.
 - *Resolved / Refunded / Rework* → **Dispute outcomes** stored on the Dispute record. Booking goes `Disputed → Closed`, or `Disputed → In Progress` for Rework.
 
+³ **Quote Pending entry (D-028, K-16):** Draft → Quote Pending when the customer submits on a quote-required/inspection service; Requested → Quote Pending when the provider chooses Quote. The inspection visit happens while the booking is in Quote Pending; its time is stored on the booking.
+
 ² **Blueprint gap:** *Rejected* and *No-show* are named as targets but not listed as statuses. **Default reading:** Rejected → terminal status `Rejected` → `Closed`. No-show → terminal status `No-show` with `party = CUSTOMER|PROVIDER` → `Closed` (BP §16 treats customer and provider no-show differently).
 
 Implementation: a single transition table in code, `allowedTransitions[from][to] = {actorRoles, guards}`, covered by a test for **every** row (BP §43 rule 68: tests for critical business rules).
@@ -761,7 +763,7 @@ Each vendor choice must later document country availability, fees, limits, certi
 
 ## 19. Configurable rules — BP §42, §64 (never hard-code)
 
-Service category activation (per city) · min/max price thresholds · commission & fees · cancellation windows · quote expiry · provider radius/areas · verification requirements per category · customer booking limits · review eligibility · promotion rules (`[NOT LAUNCH]`) · notification templates · support categories & SLAs · per-service: price model, selling modes, inspection expected, quote required, emergency allowed, verification mandatory, customer questions, AI guidance, safety/documentation requirements · matching weights & fairness caps · badge rules · AI confidence threshold · media limits & retention · commission rate (seeded 0.30 per D-006) and commission base line types (seeded `["LABOR"]` per D-015) · low-rating enforcement settings (§6.7, D-014/D-017) · provider negative-balance limit `ledger.max_negative_balance` (seeded 0 per D-020). · customer platform fee `fees.customer_platform_fee` disabled (D-025) · cancellation / customer no-show / declined-quote inspection fees `null` = not charged (D-023) · day-one active families seeded per D-024.
+Service category activation (per city) · min/max price thresholds · commission & fees · cancellation windows · quote expiry · provider radius/areas · verification requirements per category · customer booking limits · review eligibility · promotion rules (`[NOT LAUNCH]`) · notification templates · support categories & SLAs · per-service: price model, selling modes, inspection expected, quote required, emergency allowed, verification mandatory, customer questions, AI guidance, safety/documentation requirements · matching weights & fairness caps · badge rules · AI confidence threshold · media limits & retention · commission rate (seeded 0.30 per D-006) and commission base line types (seeded `["LABOR"]` per D-015) · low-rating enforcement settings (§6.7, D-014/D-017) · provider negative-balance limit `ledger.max_negative_balance` (seeded 0 per D-020). · customer platform fee `fees.customer_platform_fee` disabled (D-025) · cancellation / customer no-show / declined-quote inspection fees `null` = not charged (D-023) · tax rules `null` + `TODO(OWNER)`, tax line shown (D-029) · day-one active families seeded per D-024.
 
 ---
 
@@ -812,7 +814,7 @@ Service category activation (per city) · min/max price thresholds · commission
 | K-15 | BP §46 marks "Wallet/credits" as Later, but D-016 needs a provider account balance | §46, §13 P15 vs D-016 | Not a conflict: the provider earnings ledger (P15 pending/available/paid) is required now. A **customer** wallet/credits feature stays Later | Resolved 2026-10-22 |
 | K-14 | BP §6.2 suggests a pilot in "one city + selected neighborhoods"; owner chose the whole of Lahore | §6.2 vs D-019 | Owner decision wins (authority order §0.1). Watch supply density per area on the health dashboard (BP §61) | Resolved 2026-10-22 |
 | K-13 | Location strategy reaches multi-country (Stage 5) while v0.3 says Pakistan only | §6.2 vs §57.2, §69 | Launch = Pakistan only. Multi-country is a far-future stage, not scope. | Resolved |
-| K-16 | §15 has no transition **into** Quote Pending; the inspection-first flow (§4.1) has no state mapping | §15, §4.1, §18 | Draft → Quote Pending for quote/inspection services; Requested → Quote Pending when the provider chooses Quote; the inspection visit happens inside Quote Pending | `[INTERPRETATION]` confirm (OQ-014) |
+| K-16 | §15 has no transition **into** Quote Pending; the inspection-first flow (§4.1) has no state mapping | §15, §4.1, §18 | Draft → Quote Pending for quote/inspection services; Requested → Quote Pending when the provider chooses Quote; the inspection visit happens inside Quote Pending | Resolved 2026-10-22 (D-028) |
 | K-17 | D-003 (pay only after Completed) vs §16 cancellation/no-show fees and §58.1 inspection fee on jobs that never reach Completed | §16, §58.1 vs D-003 | Owner D-023: these fees are not charged at launch; payment stays at the end only | Resolved 2026-10-22 (D-023) |
 
 ---
@@ -847,6 +849,8 @@ Service category activation (per city) · min/max price thresholds · commission
 | D-024 | Day-one service families in Lahore | **ACCEPTED 2026-10-22:** all 10 BP §6 families active (Plumbing, Electrical, AC/Cooling, Appliances, Internet/Wi-Fi, TV/Entertainment, Cleaning, Carpentry/Furniture, Locksmith/Access, basic Car Care); other §63 families inactive | Nothing |
 | D-025 | Customer platform fee | **ACCEPTED 2026-10-22: none.** Platform income is the 30% commission only; `fees.customer_platform_fee` disabled. Tax line still `[OPEN]` | Nothing |
 | D-026 | Admin portal language | **ACCEPTED 2026-10-22: English only.** Customer and Partner apps stay en + ur | Nothing |
-| D-027 | Reference test phone | **ACCEPTED 2026-10-22 (criterion):** the cheapest, lowest-spec Android phone (small screen, low RAM) is the T0.6 / low-end reference device; model to be named | T0.6 until the phone exists |
+| D-027 | Reference test phone | **ACCEPTED 2026-10-22: Infinix Note 40** is the physical T0.6 / low-end reference phone; small-screen and low-RAM checks also run on emulator profile E-MIN (OQ-034) | Nothing |
+| D-028 | Quote Pending entry / inspection-first flow | **ACCEPTED 2026-10-22:** Draft → Quote Pending (quote/inspection service), Requested → Quote Pending (provider chooses Quote); inspection visit inside Quote Pending (K-16) | Nothing |
+| D-029 | Tax on the bill | **ACCEPTED 2026-10-22:** separate tax line shown; tax type/rate `[OPEN]` (config `null`) | Production tax values |
 
 Later / not launch (do not build): wallet/credits, subscriptions, corporate/B2B (BP §46); promotions/coupons (BP §14); contacts picker, calendar, biometrics, Bluetooth (BP §74); every item in BP §83 until accepted (BP §86).

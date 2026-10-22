@@ -280,7 +280,7 @@ Common acceptance for BOOK-STATUS-001…015: from the named state the server all
 |---|---|---|---|---|---|
 | BOOK-STATUS-001 | Draft: customer has not submitted. | Allowed → Requested (or → Quote Pending, see 003). "Abandoned" is not a status: an old Draft is removed by a cleanup job. | BP §15; K-05 | A04 | Launch · INTERP (OQ-009) |
 | BOOK-STATUS-002 | Requested: customer submitted. | Allowed → Accepted, Rejected, Expired, Cancelled (and → Quote Pending when the provider chooses to quote, see 003). | BP §15 | A04 | Launch |
-| BOOK-STATUS-003 | Quote Pending: provider must price or inspect. | Entered from Draft (submit on a quote-required/inspection service) or Requested (provider chooses Quote); allowed → Quoted, Rejected, Expired, Cancelled. | BP §15, §4.1, §18; K-16 | A04 | Launch · INTERP (OQ-014) |
+| BOOK-STATUS-003 | Quote Pending: provider must price or inspect. | Entered from Draft (submit on a quote-required/inspection service) or Requested (provider chooses Quote); allowed → Quoted, Rejected, Expired, Cancelled; the inspection visit happens inside Quote Pending (visit time stored, no extra status). | BP §15, §4.1, §18; K-16; D-028 | A04 | Launch |
 | BOOK-STATUS-004 | Quoted: a quote waits for the customer. | Allowed → Accepted, Expired; customer "Decline" is stored as `Quote.customer_response = DECLINED` and the booking goes to Cancelled (reason `QUOTE_DECLINED`) unless other offers are still open. | BP §15, §53; K-05 | A04 | Launch · INTERP (OQ-009) |
 | BOOK-STATUS-005 | Accepted: provider accepted the booking/quote. | Allowed → Scheduled, Cancelled. | BP §15 | A04 | Launch |
 | BOOK-STATUS-006 | Scheduled: appointment set. | Allowed → Provider En Route, Cancelled, No-show; → En Route is refused with `UNPAID_COMMISSION` while the provider balance is below the limit (LEDGER-NEG-005). | BP §15; D-021 | A04 | Launch |
@@ -346,7 +346,7 @@ Common acceptance for BOOK-STATUS-001…015: from the named state the server all
 | FARE-007 | Line type Emergency / After-hours fee: disclosed before acceptance when reasonably possible. | Allowed only on services with `emergency_allowed`; shown before accept. | BP §58.1; CAT-SVC-004 | A04 | Launch |
 | FARE-008 | Line type Travel / Distance surcharge: rule-based and visible. | Line can only be created from a configured rule (outside normal area); while the rule is `null`, the type is disabled. | BP §58.1 | A04 | Launch · TODO(OWNER) |
 | FARE-009 | Line type Platform fee: Kaam Karo fee if charged to the customer, displayed separately. | No platform-fee line is ever created for the customer at launch: `fees.customer_platform_fee` is disabled (D-025); API test rejects the line type. | BP §58.1, §41; D-025 | A04 / A09 | Launch |
-| FARE-010 | Line type Tax: from configured rules, displayed separately. | While tax rules are `null`, no tax line is created. | BP §58.1 | A04 / A09 | Launch · TODO(OWNER) (OQ-020) |
+| FARE-010 | Line type Tax: from configured rules, displayed separately. | Every customer bill shows a separate tax line (D-029); the amount comes from config tax rules; while the rules are `null`, the line shows Rs. 0 and A09 flags "tax rule not set". Tax is never commissionable (D-015). | BP §58.1; D-029 | A04 / A09 | Launch · TODO(OWNER) (tax type/rate, OQ-035) |
 | FARE-011 | Line type Discount / Coupon: displayed separately. | Negotiated discount line allowed; coupons are not built (promotions Not launch). Whether a discount reduces labour before commission is open (D-022). | BP §58.1, §46; D-022 | A04 / A09 | Launch · TODO(OWNER) |
 | FARE-012 | Each line has a state: Proposed → Approved or Rejected; approved lines become Final; an unapproved line is never payable. | Test: a Proposed line is excluded from the payable total; only the customer can approve/reject (C37); provider cannot convert it (IMPL T3.5). | BP §52.1, §58.2 | A04 | Launch |
 | FARE-013 | Emergency exception for charges is narrowly defined, logged and communicated; disabled until rules exist. | Feature flag `fare.emergency_exception_enabled = false`; with the flag off no line skips approval. | BP §58.3; K-10 | A04 | Launch · TODO(OWNER) |
@@ -744,13 +744,13 @@ T0.2 acceptance: every Blueprint section maps to at least one requirement ID or 
 | OQ-011 | Visit/inspection/emergency fees excluded from commission | COMM-003 |
 | OQ-012 | Email at registration | UX-SCREEN-004 |
 | OQ-013 / D-017 | Remaining rating numbers | RATING-ENF-004, -008 |
-| OQ-014 / K-16 | How a booking enters Quote Pending; inspection-first flow | BOOK-STATUS-003 |
+| D-028 (was OQ-014 / K-16) | Quote Pending entry + inspection inside it — answered | BOOK-STATUS-003 |
 | OQ-015 | Verification items per category | CAT-SVC-005, CFG-RULE-007, TRUST-VER-002/003 |
 | D-024 (was OQ-016) | Day-one families: all 10 — answered | SCOPE-CAT-002 |
 | OQ-017 | Customer booking/request limits | CFG-RULE-008, ABUSE-003 |
 | OQ-018 | Support categories and SLAs | CFG-RULE-012 |
 | D-023 (was OQ-019 / K-17) | Fees on non-completed jobs: not charged — answered | BOOK-CANCEL-002, -005 |
-| D-025 / OQ-020 | Platform fee: none (answered); tax line still open | FARE-009, FARE-010 |
+| D-025, D-029 / OQ-035 | Platform fee: none; tax line shown; tax type/rate open | FARE-009, FARE-010 |
 | OQ-021 | Supply gap: what "callback" and "waitlist" do | MATCH-GAP-001 |
 | D-026 (was OQ-022) | Admin portal English only — answered | I18N-001 |
 | D-008…D-013 | Vendors, weights/thresholds, media limits, RPO/RTO, cancellation windows | many `TODO(OWNER)` rows |

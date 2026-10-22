@@ -3,7 +3,7 @@
 Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate verdicts above the table.
 
 ## Sync 2026-10-22
-- Phase 0: T0.1–T0.5 DONE (QA PASS). T0.6 BLOCKED on OQ-029 (owner must name the cheapest physical test phone). Gate G0 met: coding may start (T2.1, T1.4, T1.1–T1.3).
+- Phase 0: T0.1–T0.5 DONE (QA PASS). T0.6 unblocked: owner chose Infinix Note 40 (D-027); it needs the Expo dev build from T2.1. Gate G0 met: coding may start (T2.1, T1.4, T1.1–T1.3).
 
 | Agent | Subagent file | Now doing (task) | Status | Branch | Blocked by | Next planned | Last update (UTC) |
 |---|---|---|---|---|---|---|---|
@@ -21,7 +21,7 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 | A11 | customer-app | — | IDLE | — | — | T1.1 | — |
 | A12 | partner-app | — | IDLE | — | — | T1.2 | — |
 | A13 | admin-portal | — | IDLE | — | — | T1.3 | — |
-| A14 | i18n-a11y | — | BLOCKED | — | OQ-029 (D-REF phone) | T0.6 | 2026-10-22 |
+| A14 | i18n-a11y | — | IDLE | — | — | T0.6 (on Infinix Note 40, after T2.1) | 2026-10-22 |
 | A15 | security-reviewer | T0.4 Permission & threat policy | DONE | — | — | Rename OQ-P1…P6 → OQ-023…028 in policy; T2.8 | 2026-10-22 |
 | A16 | qa-tester | T0.5 Test strategy + device matrix | DONE | — | — | T3.12 | 2026-10-22 |
 | A17 | bug-hunter | — | IDLE | — | — | first sweep after Phase 2 | — |

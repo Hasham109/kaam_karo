@@ -2,6 +2,11 @@
 
 Newest first. Every behaviour change, with task ID and requirement IDs.
 
+## 2026-10-22 — Owner decisions D-027 (model), D-028, D-029
+- D-027: test phone = Infinix Note 40 → T0.6 unblocked (needs T2.1 dev build); RQ-003 to A16; OQ-034 (small-screen/low-RAM gap).
+- D-028: Quote Pending entry + inspection inside Quote Pending confirmed (K-16 resolved) → BOOK-STATUS-003, ARCH §6.1 note ³.
+- D-029: customer bill shows a separate tax line; tax type/rate open (OQ-035) → FARE-010.
+
 ## 2026-10-22 — Owner decisions D-023…D-027
 - D-023: no fees on jobs that never reach Completed (K-17 resolved) → BOOK-CANCEL-002/-005 updated; sweep check added (IMPL §7.3).
 - D-024: all 10 BP §6 families active in Lahore on day one → SCOPE-CAT-002, IMPL §5, T2.6 acceptance.
