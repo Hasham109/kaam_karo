@@ -56,6 +56,7 @@ Do **not** read whole files every time. Use Grep on headings such as `^# 15\.` i
 | D-027 | Reference test phone = Infinix Note 40 (small-screen/low-RAM checks also on emulator E-MIN) |
 | D-028 | Draft/Requested → Quote Pending for quote/inspection jobs; inspection visit happens inside Quote Pending |
 | D-029 | Customer bill shows a separate tax line (tax type/rate still open) |
+| D-030 | Booking exists only after the provider accepts. Cash is recorded only by the provider (P14); no cash choice in the Customer app |
 
 Still open (do not guess): D-008 gateway/payout, D-009 vendors, D-010 weights & badge thresholds, D-011 media limits, D-012 RPO/RTO & performance budgets, D-013 cancellation windows & quote validity, D-017 remaining numbers, D-022 provider-account follow-ups, tax type/rate (OQ-035), second low-end test phone (OQ-034).
 

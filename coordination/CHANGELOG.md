@@ -2,6 +2,28 @@
 
 Newest first. Every behaviour change, with task ID and requirement IDs.
 
+## 2026-10-23 — D-030 owner decision (A00)
+- OQ-049 answered: booking exists only after the provider accepts the request; cash payment is recorded only by the provider (P14, D-016); the Customer app has no cash choice (C16 information only, C20 "Paid by"). Recorded in DECISIONS.md, ARCH §22, CLAUDE.md.
+
+## 2026-10-23 — T1.5 Flow maps (A00) — IN_REVIEW
+- JOURNEY-001…003: new `docs/screens/flows.md` — nine flows (request → match, booking → job → completion, quote/inspection, payment + ledger + Pay company, supply gap, cancellation/no-show, dispute, provider verification, low-rating dry-run). Every arrow cites an ARCH §6 transition, the screen ID, server guards and the ARCH §7 event.
+- New open questions OQ-073 (Completed → Closed), OQ-074 (exits from NoSupply), OQ-075 (verification-decision event). Spec only; no behaviour/code change.
+
+## 2026-10-23 — T1.3 Admin screen specs A01–A26 + access matrix (A13) — IN_REVIEW
+- OPS-ADMIN-001…026, ADMIN-ROLE-001…008, ROLE-003, UX-SCREEN-003: new `docs/screens/admin.md` — access matrix (26 screens × 8 BP §8.4 sub-roles, 208 cells: 147 decided, 16 by rule, 45 `OQ` = `none` until answered), global rules (separate admin auth + MFA, audit + reason on every write, server-enforced permissions, PII masking, pending/unknown handling), and one section per screen with fields, actions (allowed sub-roles, server module, audit, reason/confirm), the 5 states and open items. English-only admin UI (D-026); en+ur fields for user-facing content.
+- Covers D-021 Finance verification queue (A09), D-014/D-017 reinstatement + dry-run (A03/A18), D-006/D-015/D-020/D-022/D-023/D-025/D-029 financial config (A13), D-019/D-024 activation (A23).
+- New open questions OQ-051…OQ-061. Spec only; no behaviour/code change.
+
+## 2026-10-23 — T1.2 Partner screen specs P01–P26 (A12) — IN_REVIEW
+- UX-SCREEN-002/-003: new `docs/screens/partner.md` — 26 screens (BP §13 P01–P21 + ARCH §3.2 P22–P26), each with fields, server-requested actions, the 5 states (loading/empty/success/error/pending-unknown) and EN + DRAFT UR copy; global patterns G1–G8 written once (network/offline/pending, permission-on-tap, active-job location indicator, RTL, PKR, server-driven actions + error codes, pre-match privacy).
+- Covers D-002, D-004/D-018 (crew size on Accept/Quote), D-016 (CASH/DIGITAL on P14), D-020/D-021 (unpaid banner, Pay company in P15, start block on P12), D-014/D-017 (rating warnings), D-028, D-029.
+- New open questions OQ-062…OQ-072. Spec only; no behaviour/code change.
+
+## 2026-10-23 — T1.1 Customer screen specs C01–C42 (A11) — IN_REVIEW
+- UX-SCREEN-001/-003/-004/-005: new `docs/screens/customer.md` — 42 screens (BP §12 C01–C30 + ARCH §3.1 C31–C42), each with fields, server-requested actions, the 5 states (loading/empty/success/error/pending-unknown) and EN + DRAFT UR copy; global patterns written once (network/offline/pending, permission-on-tap, RTL, PKR, server-driven actions).
+- New open questions OQ-039…OQ-050; RQ-004 (contract fields needed by the customer screens) to A04/A05/A07/A09/A10.
+- Spec only; no behaviour/code change.
+
 ## 2026-10-23 — T2.1 security fix round (A01) — SEC-REVIEW CHANGES-REQUIRED → fixes in, re-check requested
 - SEC-BASE-002 / INFRA-005 (SEC #1, S2): Sentry deny-all dataCollection + beforeSend/beforeSendTransaction scrubbers, typed satisfies NodeOptions; fake-transport API test proves no body, auth header, cookie, query or IP is sent.
 - SEC-BASE-008 (SEC #2): CI audit gate = pnpm audit --audit-level high; only waivers are EX-001/EX-002 in auditConfig.ignoreGhsas (docs/security/dependency-exceptions.md).

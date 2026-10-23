@@ -852,5 +852,6 @@ Service category activation (per city) · min/max price thresholds · commission
 | D-027 | Reference test phone | **ACCEPTED 2026-10-22: Infinix Note 40** is the physical T0.6 / low-end reference phone; small-screen and low-RAM checks also run on emulator profile E-MIN (OQ-034) | Nothing |
 | D-028 | Quote Pending entry / inspection-first flow | **ACCEPTED 2026-10-22:** Draft → Quote Pending (quote/inspection service), Requested → Quote Pending (provider chooses Quote); inspection visit inside Quote Pending (K-16) | Nothing |
 | D-029 | Tax on the bill | **ACCEPTED 2026-10-22:** separate tax line shown; tax type/rate `[OPEN]` (config `null`) | Production tax values |
+| D-030 | Cash payment recording | **ACCEPTED 2026-10-23:** booking exists only after the provider accepts the customer's request; cash is recorded only by the provider (P14); Customer app has no cash choice (C16 info only, C20 shows "Paid by") | Nothing |
 
 Later / not launch (do not build): wallet/credits, subscriptions, corporate/B2B (BP §46); promotions/coupons (BP §14); contacts picker, calendar, biometrics, Bluetooth (BP §74); every item in BP §83 until accepted (BP §86).

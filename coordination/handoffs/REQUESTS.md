@@ -27,6 +27,17 @@ A00 approval: —
 
 ---
 
+## RQ-004  FROM A11 → TO A04, A05, A07, A09, A10   (status: OPEN)
+Need: when you write the contracts for T3.4–T3.7, T6.1 and T7.x, please include these fields so the customer screens in docs/screens/customer.md never compute status, price or permissions on the device:
+1. A04: every booking response carries `allowedNextActions` (incl. customer cancel, report provider no-show, safety stop, confirm completion, pay, review) and the booking list supports a server-side `group` filter (upcoming / active / past / cancelled) for C22; quote/offer responses carry lines with state, `deductible`, materials class, `crew_size`, `valid_until`, inclusions/exclusions/duration and an estimate-vs-committed flag (C13, C14, C36, C37).
+2. A04/A09: a priced booking draft for C14 (all lines incl. the D-029 tax line and the total, computed by the server) and a final bill for C16/C20 with "Paid by" (CASH/DIGITAL as recorded).
+3. A05/A07: request status (ARCH §6.2) and match payload with reasons, distance/ETA, badges, crew size or usual team size (OQ-045), and the supply-gap options list (C40).
+4. A10: server-built share text (no phone/exact address) for request, quote, booking and referral; notification categories with a `critical` flag (C27).
+5. All: errors as stable codes (e.g. `TRANSITION_NOT_ALLOWED`, `QUOTE_EXPIRED`, `LIMIT_REACHED`, `ACCOUNT_BLOCKED`, `OUT_OF_SERVICE_COUNTRY`); a provider-eligibility refusal returned to the customer must not reveal the reason (e.g. `UNPAID_COMMISSION` → generic "provider not available").
+Why: BP §15.1, §17, §29, §31.1; D-003, D-004, D-016, D-029; BOOK-STATUS-016, SEC-BASE-007, PROV-CREW-003, LEDGER-006, SHARE-001, COMM-004
+Blocking: T3.8–T3.10, T4.6, T6.4 (not T1.1)
+Reply: …
+
 ## RQ-003  FROM A00 → TO A16   (status: OPEN)
 Need: update docs/qa/device-matrix.md: D-REF physical device = Infinix Note 40 (owner D-027). Record that it does not meet the small-screen/low-RAM profile (verify against the real phone's specs), so small-screen and low-RAM checks also run on E-MIN until OQ-034 is answered.
 Why: D-027; BP §78.2, §49
