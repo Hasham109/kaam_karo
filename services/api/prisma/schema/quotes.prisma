@@ -1,0 +1,158 @@
+// ============================================================================
+// Module M10 quotes — Quotes & Fare. Owner: A04 (booking-quotes).
+// ARCH §4 M10, §5.6, §6.3, §6.6; BP §17, §18, §53, §58, §66; D-004, D-015, D-018, D-025, D-029.
+// Tables: quote, fare_line. Crew size never changes price; pricing code never reads it (D-018).
+// ============================================================================
+
+/// Quote status (ARCH §6.6; BP §18, §58.2). WITHDRAWN is not offered until OQ-068 is answered.
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  WITHDRAWN
+
+  @@map("quote_status")
+}
+
+/// Customer response to a quote: accept, decline or ask for clarification (BP §18 step 60, §66 "customer response"; QUOTE-006).
+enum QuoteCustomerResponse {
+  ACCEPTED
+  DECLINED
+  CLARIFICATION_REQUESTED
+
+  @@map("quote_customer_response")
+}
+
+/// Fare line type, exact list of BP §58.1 (FARE-001…011). LABOR is the only commissionable type (D-015; config commission.base_line_types = ["LABOR"]).
+enum FareLineType {
+  VISIT
+  INSPECTION
+  LABOR
+  TOOLS
+  CONSUMABLES
+  PARTS
+  EMERGENCY
+  TRAVEL
+  PLATFORM_FEE
+  TAX
+  DISCOUNT
+
+  @@map("fare_line_type")
+}
+
+/// Fare line state: proposed, approved, rejected, final; an unapproved line is never payable (BP §58.2; ARCH §6.3; FARE-012).
+enum FareLineState {
+  PROPOSED
+  APPROVED
+  REJECTED
+  FINAL
+
+  @@map("fare_line_state")
+}
+
+/// Materials classification: included, excluded or customer-approved extra (BP §17; PRICE-005).
+enum MaterialsClass {
+  INCLUDED
+  EXCLUDED
+  CUSTOMER_APPROVED_EXTRA
+
+  @@map("materials_class")
+}
+
+/// Commercial offer from one provider for one booking (BP §18, §25 Quote "booking + provider", §66 Quote; ARCH §6.6; QUOTE-001…009).
+model Quote {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                      String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Booking the quote is for; ref booking.booking by ID (BP §25 Quote "booking"; INFRA-001).
+  bookingId               String                 @map("booking_id") @db.Uuid
+  /// Supplier who quotes; ref profiles.provider_profile by ID (BP §66 "supplier").
+  providerProfileId       String                 @map("provider_profile_id") @db.Uuid
+  /// Smart request the quote answers, if any; ref intake.customer_request by ID (BP §66 "request"; QUOTE-009).
+  requestId               String?                @map("request_id") @db.Uuid
+  /// Quote status (ARCH §6.6; BP §66 "approval status").
+  status                  QuoteStatus            @default(DRAFT)
+  /// Validity end; an expired quote cannot be accepted; length from config, D-013 open (BP §18 step 58, §66 "validity"; QUOTE-004).
+  validUntil              DateTime?              @map("valid_until") @db.Timestamptz(3)
+  /// Number of workers who will come, required ≥ 1 (CHECK); never changes price (ARCH §5.6; D-004, D-018; PROV-CREW-001, PROV-CREW-005).
+  crewSize                Int                    @map("crew_size")
+  /// What the quote includes, in the provider's words (BP §18 step 59; QUOTE-005).
+  inclusions              String?
+  /// What the quote excludes (BP §18 step 59; QUOTE-005).
+  exclusions              String?
+  /// Expected duration in minutes (BP §18 step 59; QUOTE-005).
+  expectedDurationMinutes Int?                   @map("expected_duration_minutes")
+  /// Customer response (BP §18 step 60, §66 "customer response"; QUOTE-006).
+  customerResponse        QuoteCustomerResponse? @map("customer_response")
+  /// When the customer responded (BP §66 "timestamps").
+  respondedAt             DateTime?              @map("responded_at") @db.Timestamptz(3)
+  /// When the quote was sent (BP §66 "timestamps").
+  sentAt                  DateTime?              @map("sent_at") @db.Timestamptz(3)
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt               DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt               DateTime               @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version                 Int                    @default(1)
+  /// Line items incl. taxes/fees (BP §66 "line items, taxes/fees"; QUOTE-003).
+  lines                   FareLine[]
+
+  @@index([bookingId])
+  @@index([providerProfileId, status])
+  @@map("quote")
+}
+
+/// One priced line of a quote or a job extra; amounts in PKR minor units (BP §58.1, §58.2, §66 Fare Line; ARCH §6.3; FARE-001…013; PRICE-001…007). At least one of quote_id / booking_id is set (CHECK).
+model FareLine {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Quote the line belongs to (BP §66 Quote "line items").
+  quoteId              String?         @map("quote_id") @db.Uuid
+  /// Booking for extras proposed during the job; ref booking.booking by ID (BP §58.2; ARCH §6.3; FARE-006).
+  bookingId            String?         @map("booking_id") @db.Uuid
+  /// Line type (BP §58.1, §66 "type"; FARE-001…011).
+  lineType             FareLineType    @map("line_type")
+  /// Description of the charge (BP §66 "description"; FARE-004 reason for tools).
+  description          String
+  /// Quantity, where practical (BP §58.1 Labor "quantity/unit"; FARE-003).
+  quantity             Decimal?        @db.Decimal(12, 3)
+  /// Unit code for the quantity (BP §4.2, §58.1; CAT-SVC-009; FARE-003).
+  unit                 String?
+  /// Line amount in PKR minor units, ≥ 0 (CHECK); DISCOUNT lines are subtracted by type (BP §58.1, §66 "amount"; BP §26).
+  amountMinor          BigInt          @map("amount_minor")
+  /// Who proposed it (BP §66 "who proposed it"; BP §58.2).
+  proposedByRole       ActorRole       @map("proposed_by_role")
+  /// Proposing user; ref identity.user_account by ID (BP §66 "who proposed it").
+  proposedByUserId     String?         @map("proposed_by_user_id") @db.Uuid
+  /// Line state (BP §58.2, §66 "approval status"; FARE-012).
+  state                FareLineState   @default(PROPOSED)
+  /// Materials class for parts/consumables (BP §17; PRICE-005).
+  materialsClass       MaterialsClass? @map("materials_class")
+  /// Inspection fee deductible from the final repair (BP §58.1; PRICE-003; FARE-002).
+  isDeductible         Boolean?        @map("is_deductible")
+  /// Evidence/notes text (BP §66 "evidence/notes").
+  notes                String?
+  /// Evidence media; refs media.media_object by ID (BP §66 "evidence/notes"; BP §58.3).
+  evidenceMediaIds     String[]        @map("evidence_media_ids") @db.Uuid
+  /// Applicable rule, e.g. the config key/version of a tax or travel rule (BP §66 "applicable rules"; FARE-008, FARE-010; D-029).
+  applicableRule       String?         @map("applicable_rule")
+  /// Emergency exception line; disabled until the rules exist (BP §58.3; FARE-013; K-10).
+  isEmergencyException Boolean         @default(false) @map("is_emergency_exception")
+  /// User who approved/rejected; only the customer approves extras (BP §58.2; FARE-012; NOTIF-005).
+  decidedByUserId      String?         @map("decided_by_user_id") @db.Uuid
+  /// When it was approved/rejected (BP §58.2; BP §66 Quote "timestamps").
+  decidedAt            DateTime?       @map("decided_at") @db.Timestamptz(3)
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt            DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version              Int             @default(1)
+  /// Relation to the quote (BP §66).
+  quote                Quote?          @relation(fields: [quoteId], references: [id], onDelete: Restrict)
+
+  @@index([quoteId])
+  @@index([bookingId])
+  @@map("fare_line")
+}

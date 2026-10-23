@@ -1,0 +1,69 @@
+# T0.6 Urdu Nastaliq smoke test (condition of D-001; BP §78.2; D-027 reference phone).
+# Requirement IDs: I18N-001, I18N-002, I18N-003, I18N-004, I18N-008, A11Y-002, A11Y-004.
+# Runs against a DEVELOPMENT build (the smoke screen exists only when __DEV__ is true) with
+# Metro running. Selectors are test IDs only, so the same flow works in en and ur (RQ-002 item 4).
+#
+#   maestro test apps/customer/.maestro/urdu-smoke.yaml
+#
+# Screenshots land in the current folder; copy them to docs/qa/urdu-smoke/<run>/.
+# Limitation: Maestro `inputText` types ASCII only on Android, so Urdu typing (cursor and
+# alignment) is a manual step in docs/qa/urdu-smoke/README.md (checklist item C8).
+appId: com.kaamkaro.customer
+---
+- launchApp
+- tapOn:
+    id: urdu-smoke-open
+- assertVisible:
+    id: urdu-smoke-screen
+# The screen opens in Urdu.
+- assertVisible:
+    id: urdu-smoke-paragraph
+- assertVisible:
+    id: urdu-smoke-mixed
+- assertVisible:
+    id: urdu-smoke-amount
+- takeScreenshot: ur-01-top
+- tapOn:
+    id: urdu-smoke-input
+- inputText: 'AC 123'
+- hideKeyboard
+- takeScreenshot: ur-02-input-ascii
+- scrollUntilVisible:
+    element:
+      id: urdu-smoke-row-12
+    direction: DOWN
+- takeScreenshot: ur-03-list
+- tapOn:
+    id: urdu-smoke-row-12
+- assertVisible:
+    id: urdu-smoke-sheet
+- takeScreenshot: ur-04-sheet
+- tapOn:
+    id: urdu-smoke-sheet-close
+- assertNotVisible:
+    id: urdu-smoke-sheet
+- scrollUntilVisible:
+    element:
+      id: urdu-smoke-language-toggle
+    direction: UP
+# Switch to English without restarting (I18N-002).
+- tapOn:
+    id: urdu-smoke-language-toggle
+- assertVisible:
+    id: urdu-smoke-paragraph
+- takeScreenshot: en-01-top
+- tapOn:
+    id: urdu-smoke-sheet-open
+- assertVisible:
+    id: urdu-smoke-sheet
+- takeScreenshot: en-02-sheet
+- back
+- assertNotVisible:
+    id: urdu-smoke-sheet
+# Back to Urdu, then leave the screen with the back button.
+- tapOn:
+    id: urdu-smoke-language-toggle
+- tapOn:
+    id: urdu-smoke-back
+- assertVisible:
+    id: urdu-smoke-open

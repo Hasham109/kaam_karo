@@ -1,0 +1,119 @@
+// ============================================================================
+// Module M15 notifications — Notifications. Owner: A10 (comms-notify-reviews).
+// ARCH §4 M15, §5.3 (NotificationPreference), §7; BP §24, §80, §84 item 116; D-001 (FCM).
+// Tables: notification, notification_template, notification_preference.
+// Notifications are produced from outbox events by the worker, never from screens (BP §24; NOTIF-001; REL-009).
+// ============================================================================
+
+/// Message priority (ARCH §7 High/Medium/Low; BP §80).
+enum NotificationPriority {
+  HIGH
+  MEDIUM
+  LOW
+
+  @@map("notification_priority")
+}
+
+/// Delivery channel (BP §24; D-001 Firebase Cloud Messaging push).
+enum NotificationChannel {
+  PUSH
+  IN_APP
+
+  @@map("notification_channel")
+}
+
+/// Delivery state (BP §24; REL-009; ANALYTICS-008 notification delivery).
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+
+  @@map("notification_status")
+}
+
+/// A delivered (or to-be-delivered) message for one user from one event (BP §24, §25 Notification "user + event"; ARCH §7; NOTIF-001…009).
+model Notification {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id            String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Recipient; ref identity.user_account by ID (BP §25 "user").
+  userId        String               @map("user_id") @db.Uuid
+  /// Domain event type, e.g. booking.accepted (BP §25 "event"; ARCH §7; NOTIF-001).
+  eventType     String               @map("event_type")
+  /// Source outbox event; ref platform.outbox_event by ID (BP §24; ARCH §7; NOTIF-001).
+  outboxEventId String?              @map("outbox_event_id") @db.Uuid
+  /// User-controllable category (BP §84 item 116; NOTIF-009; ARCH §5.3).
+  category      String
+  /// Priority (ARCH §7; BP §80).
+  priority      NotificationPriority
+  /// Critical messages cannot be switched off (BP §84 item 116; NOTIF-009).
+  isCritical    Boolean              @default(false) @map("is_critical")
+  /// Channel (BP §24; D-001 FCM).
+  channel       NotificationChannel
+  /// Language the text was rendered in (BP §78.3; I18N-001).
+  locale        AppLanguage
+  /// Rendered title (BP §24; CFG-RULE-011 templates).
+  title         String
+  /// Rendered body (BP §24; CFG-RULE-011 templates).
+  body          String
+  /// Delivery state (REL-009; ANALYTICS-008).
+  status        NotificationStatus   @default(PENDING)
+  /// When it was sent (ANALYTICS-008).
+  sentAt        DateTime?            @map("sent_at") @db.Timestamptz(3)
+  /// When the user read it (BP §12 C26, §13 P19 notifications).
+  readAt        DateTime?            @map("read_at") @db.Timestamptz(3)
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt     DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt     DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([userId, createdAt])
+  @@map("notification")
+}
+
+/// Per-event, per-audience, per-language message template, editable without a release (BP §8.3, §24; CFG-RULE-011; OPS-ADMIN-015).
+model NotificationTemplate {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Domain event type (ARCH §7; BP §24).
+  eventType       String      @map("event_type")
+  /// Audience role: one event yields per-role messages (BP §24; NOTIF-001).
+  audienceRole    ActorRole   @map("audience_role")
+  /// Template language; en + ur for customer/provider messages (BP §78; CFG-RULE-011; D-026 admin English).
+  locale          AppLanguage
+  /// Title template (CFG-RULE-011).
+  title           String
+  /// Body template; variables come from the event schema in contracts/ (CFG-RULE-011; OPS-ADMIN-015).
+  body            String
+  /// Template in use (CFG-RULE-011).
+  isActive        Boolean     @default(true) @map("is_active")
+  /// Staff user who last changed it; also audited (BP §8.3; SEC-BASE-010).
+  changedByUserId String?     @map("changed_by_user_id") @db.Uuid
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt       DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version         Int         @default(1)
+
+  @@unique([eventType, audienceRole, locale])
+  @@map("notification_template")
+}
+
+/// User choice to receive a notification category (ARCH §5.3 NotificationPreference "user, category, enabled"; BP §74, §84 item 116; NOTIF-009).
+model NotificationPreference {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// User; ref identity.user_account by ID (ARCH §5.3 "user"; NOTIF-009).
+  userId    String   @map("user_id") @db.Uuid
+  /// Category (ARCH §5.3 "category"; NOTIF-009).
+  category  String
+  /// Enabled; critical categories cannot be disabled (ARCH §5.3 "enabled"; NOTIF-009).
+  enabled   Boolean
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([userId, category])
+  @@map("notification_preference")
+}

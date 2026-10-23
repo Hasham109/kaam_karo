@@ -1,0 +1,121 @@
+// ============================================================================
+// Module M9 booking — Booking & Job. Owner: A04 (booking-quotes).
+// ARCH §4 M9, §5.6, §6.1; BP §15, §16, §21, §25; D-003, D-004, D-005, D-018, D-021, D-023, D-028.
+// Tables: booking, job_event (job_event is APPEND-ONLY: no UPDATE/DELETE for the app role, BP §26).
+// Status changes only through the booking service transition table (BP §15.1; BOOK-STATUS-016).
+// ============================================================================
+
+/// Booking/job status: the 15 BP §15 statuses plus terminal REJECTED and NO_SHOW (ARCH §6.1 fn²). Reviewed, Declined and dispute outcomes are not statuses (ARCH §6.1 fn¹; OQ-009). BOOK-STATUS-001…017.
+enum BookingStatus {
+  DRAFT
+  REQUESTED
+  QUOTE_PENDING
+  QUOTED
+  ACCEPTED
+  SCHEDULED
+  PROVIDER_EN_ROUTE
+  ARRIVED
+  IN_PROGRESS
+  AWAITING_APPROVAL
+  COMPLETED
+  DISPUTED
+  CANCELLED
+  EXPIRED
+  CLOSED
+  REJECTED
+  NO_SHOW
+
+  @@map("booking_status")
+}
+
+/// Party of a no-show: customer or provider; BP §16 treats them differently (ARCH §6.1 fn²; BOOK-STATUS-017).
+enum NoShowParty {
+  CUSTOMER
+  PROVIDER
+
+  @@map("no_show_party")
+}
+
+/// Customer demand record and the job that fulfils it (BP §25 Booking "customer + service + provider/assignment", §15; ARCH §6.1; BOOK-STATUS-001…017).
+model Booking {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                 String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Short booking number shown as "Booking #…" and read to support: 10 random hex characters from gen_random_uuid(), not sequential, so other bookings cannot be guessed (BP §12 C15, §29; UX-SCREEN-001).
+  bookingNumber      String        @unique @default(dbgenerated("upper(substr(replace((gen_random_uuid())::text, '-'::text, ''::text), 1, 10))")) @map("booking_number")
+  /// Customer; ref profiles.customer_profile by ID (BP §25 "customer"; INFRA-001).
+  customerProfileId  String        @map("customer_profile_id") @db.Uuid
+  /// Service booked; ref catalog.service by ID (BP §25 "service"; INFRA-001).
+  serviceId          String        @map("service_id") @db.Uuid
+  /// Provider chosen by the customer; null until chosen; no auto-assign (BP §25 "provider/assignment"; D-005; MATCH-MODE-001).
+  providerProfileId  String?       @map("provider_profile_id") @db.Uuid
+  /// Smart request this booking came from, if any; ref intake.customer_request by ID (BP §66; ARCH §6.2).
+  requestId          String?       @map("request_id") @db.Uuid
+  /// Selling mode used for this booking (BP §53; CAT-SVC-002; D-028).
+  sellingMode        SellingMode   @map("selling_mode")
+  /// Current status; set only by the server (BP §15, §15.1; BOOK-STATUS-016).
+  status             BookingStatus @default(DRAFT)
+  /// When the status last changed; the full history is in job_event (BP §15; DATA-002).
+  statusChangedAt    DateTime      @default(now()) @map("status_changed_at") @db.Timestamptz(3)
+  /// Address snapshot used for this job; ref location.location_snapshot by ID; never the live address row (BP §21; PROF-ADDR-002).
+  locationSnapshotId String?       @map("location_snapshot_id") @db.Uuid
+  /// Appointment time (BP §15 Scheduled "appointment is set"; BOOK-STATUS-006).
+  scheduledAt        DateTime?     @map("scheduled_at") @db.Timestamptz(3)
+  /// Inspection visit time, inside Quote Pending; no separate status (D-028; BOOK-STATUS-003; OQ-066).
+  inspectionVisitAt  DateTime?     @map("inspection_visit_at") @db.Timestamptz(3)
+  /// Number of workers who will come: copied from the accepted quote or entered when accepting; never changes price (ARCH §5.6; D-004, D-018; PROV-CREW-002, PROV-CREW-005).
+  crewSize           Int?          @map("crew_size")
+  /// Accepted quote = commercial basis of the job; ref quotes.quote by ID (BP §18 step 61; QUOTE-007).
+  acceptedQuoteId    String?       @map("accepted_quote_id") @db.Uuid
+  /// Emergency job; only for services with emergency allowed (BP §58.3, §59.3; CAT-SVC-004; FARE-013).
+  isEmergency        Boolean       @default(false) @map("is_emergency")
+  /// Who cancelled (BP §16; BOOK-STATUS-013 "cancel reason and party recorded").
+  cancelledByRole    ActorRole?    @map("cancelled_by_role")
+  /// Cancel reason code from config booking.cancel_reasons, or UNSPECIFIED while null (BP §16; BOOK-STATUS-013; HEALTH-005; OQ-050, OQ-065).
+  cancelReasonCode   String?       @map("cancel_reason_code")
+  /// No-show party, required when status = NO_SHOW (CHECK) (BP §16; BOOK-STATUS-017).
+  noShowParty        NoShowParty?  @map("no_show_party")
+  /// When the customer submitted the review: a flag, not a status (ARCH §6.1 fn¹ "Reviewed"; D-014; RATING-ENF-001; REV-001).
+  reviewSubmittedAt  DateTime?     @map("review_submitted_at") @db.Timestamptz(3)
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt          DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version; every transition checks it (technical field, ARCH §5; BP §15, §31.2).
+  version            Int           @default(1)
+  /// Status/action history (BP §15, §25 Job Event).
+  events             JobEvent[]
+
+  @@index([customerProfileId, status])
+  @@index([providerProfileId, status])
+  @@index([status, scheduledAt])
+  @@map("booking")
+}
+
+/// Append-only history of every booking state/action change (BP §15, §25 Job Event, §26, §66 Marketplace Event fields; DATA-002, DATA-004).
+model JobEvent {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Booking the event belongs to (BP §25 Job Event "booking/job").
+  bookingId      String         @map("booking_id") @db.Uuid
+  /// Acting user; null for system jobs; ref identity.user_account by ID (BP §66 "actor").
+  actorUserId    String?        @map("actor_user_id") @db.Uuid
+  /// Acting role (BP §66 "actor"; BP §15.1).
+  actorRole      ActorRole      @map("actor_role")
+  /// Action code, e.g. TRANSITION, CREW_SIZE_SET, ADMIN_OVERRIDE (BP §66 "action"; DATA-002).
+  action         String
+  /// Status before (BP §66 "previous state").
+  fromStatus     BookingStatus? @map("from_status")
+  /// Status after (BP §66 "new state").
+  toStatus       BookingStatus? @map("to_status")
+  /// Reason given, e.g. cancel reason or admin override reason (BP §8.3, §16; ROLE-003; BOOK-STATUS-013).
+  reason         String?
+  /// Source/device metadata where needed (BP §66 "source/device metadata").
+  sourceMetadata Json?          @map("source_metadata")
+  /// When it happened (BP §66 "timestamp").
+  occurredAt     DateTime       @default(now()) @map("occurred_at") @db.Timestamptz(3)
+  /// Relation to the booking (BP §25).
+  booking        Booking        @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+
+  @@index([bookingId, occurredAt])
+  @@map("job_event")
+}

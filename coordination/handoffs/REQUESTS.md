@@ -27,6 +27,12 @@ A00 approval: —
 
 ---
 
+## RQ-005  FROM A14 → TO A01   (status: OPEN)
+Need: move `expo-font` into the `pnpm-workspace.yaml` catalog as `expo-font: 58.0.9` (the Expo SDK 58 bundled version, already a dependency of `expo` itself) and switch `apps/customer/package.json` from the exact pin `"expo-font": "58.0.9"` to `"catalog:"`. A14 pinned it exactly in apps/customer for T0.6 because the catalog file is in the A01 lane. No other new dependency was added.
+Why: D-001 (one pinned version per tool, Expo-bundled packages only); I18N-004 (BP §78.2) — the expo-font config plugin embeds Noto Nastaliq Urdu at build time.
+Blocking: nothing (T0.6 works with the exact pin)
+Reply: …
+
 ## RQ-004  FROM A11 → TO A04, A05, A07, A09, A10   (status: OPEN)
 Need: when you write the contracts for T3.4–T3.7, T6.1 and T7.x, please include these fields so the customer screens in docs/screens/customer.md never compute status, price or permissions on the device:
 1. A04: every booking response carries `allowedNextActions` (incl. customer cancel, report provider no-show, safety stop, confirm completion, pay, review) and the booking list supports a server-side `group` filter (upcoming / active / past / cancelled) for C22; quote/offer responses carry lines with state, `deductible`, materials class, `crew_size`, `valid_until`, inclusions/exclusions/duration and an estimate-vs-committed flag (C13, C14, C36, C37).

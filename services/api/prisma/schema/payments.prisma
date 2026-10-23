@@ -1,0 +1,336 @@
+// ============================================================================
+// Module M11 payments — Payments, provider ledger & settlement. Owner: A09 (payments-ledger).
+// ARCH §4 M11, §6.8; BP §17, §25, §26, §31.2; D-003, D-006, D-008, D-015, D-016, D-020, D-021, D-023, D-025, D-030.
+// Tables: payment_method_record, payment, refund, provider_ledger_entry (all four APPEND-ONLY:
+// no UPDATE/DELETE for the app role, BP §26; PAY-003, LEDGER-005), commission_payment_submission,
+// settlement, payout_method.
+// Status of a payment/refund = its latest row per payment_ref / refund_ref (rows are never edited).
+// Balance of a provider = SUM(credits) − SUM(debits) of provider_ledger_entry (ARCH §6.8).
+// Commission rate and base come from config, never from this schema (D-006, D-015; COMM-001, COMM-003).
+// ============================================================================
+
+/// How the customer paid, recorded by the provider at billing (D-016, D-030; LEDGER-001; ARCH §6.8).
+enum PaymentMethod {
+  CASH
+  DIGITAL
+
+  @@map("payment_method")
+}
+
+/// Payment status row: CASH_RECORDED for cash; PENDING → SUCCEEDED | FAILED for the gateway (BP §25 Payment "financial transaction state"; PAY-001; D-016).
+enum PaymentStatus {
+  CASH_RECORDED
+  PENDING
+  SUCCEEDED
+  FAILED
+
+  @@map("payment_status")
+}
+
+/// Refund status row: issued by Finance, then confirmed or failed by the gateway (BP §25 Refund; PAY-006; SUP-004).
+enum RefundStatus {
+  ISSUED
+  SUCCEEDED
+  FAILED
+
+  @@map("refund_status")
+}
+
+/// Provider ledger entry type (ARCH §6.8; D-016 cash debit / digital credit; D-021 payment to company; PAY-007 settlement; BP §26 reversal).
+enum LedgerEntryType {
+  COMMISSION_DEBIT
+  JOB_CREDIT
+  COMPANY_PAYMENT_CREDIT
+  SETTLEMENT_DEBIT
+  REVERSAL
+
+  @@map("ledger_entry_type")
+}
+
+/// Ledger direction: debit lowers the provider balance, credit raises it (ARCH §6.8; LEDGER-003, LEDGER-004).
+enum LedgerDirection {
+  DEBIT
+  CREDIT
+
+  @@map("ledger_direction")
+}
+
+/// "Pay company" submission state in the Finance queue (D-021; ARCH §6.8; LEDGER-PAY-003, LEDGER-PAY-004).
+enum CommissionPaymentStatus {
+  SUBMITTED
+  APPROVED
+  REJECTED
+
+  @@map("commission_payment_status")
+}
+
+/// Settlement (payout) state (BP §13 P15, §25 Settlement "provider payout state"; PAY-007).
+enum SettlementStatus {
+  PENDING
+  PAID
+  FAILED
+
+  @@map("settlement_status")
+}
+
+/// Payout method type: bank account or mobile wallet (BP §13 P16).
+enum PayoutMethodType {
+  BANK_ACCOUNT
+  MOBILE_WALLET
+
+  @@map("payout_method_type")
+}
+
+/// Payout method check status from the PayoutProvider interface (BP §13 P16 "compliant provider"; EXT-001; D-008).
+enum PayoutMethodStatus {
+  NOT_CHECKED
+  VERIFIED
+  FAILED
+
+  @@map("payout_method_status")
+}
+
+/// Append-only record of how a completed booking was paid, recorded once by the provider (D-016, D-030; LEDGER-001, LEDGER-002; PAY-003; BP §26).
+model PaymentMethodRecord {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Booking; one record per booking (unique); ref booking.booking by ID (LEDGER-002 "recorded once"; D-003 only after Completed).
+  bookingId        String        @unique @map("booking_id") @db.Uuid
+  /// Method recorded (D-016, D-030; LEDGER-001).
+  method           PaymentMethod
+  /// Provider user who recorded it; ref identity.user_account by ID (D-030 "recorded only by the provider").
+  recordedByUserId String        @map("recorded_by_user_id") @db.Uuid
+  /// When it was recorded (BP §26; LEDGER-001).
+  recordedAt       DateTime      @default(now()) @map("recorded_at") @db.Timestamptz(3)
+
+  @@map("payment_method_record")
+}
+
+/// Append-only payment rows: one row per payment state; the latest row per payment_ref is current (BP §25 Payment, §26; PAY-001…005, PAY-009; D-003, D-016).
+model Payment {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Groups the rows of one payment (one cash record or one gateway attempt) (BP §26 immutable history; PAY-003).
+  paymentRef        String                @map("payment_ref") @db.Uuid
+  /// Booking paid for; payment only after Completed; ref booking.booking by ID (BP §25 "booking"; D-003; PAY-TIMING-001).
+  bookingId         String                @map("booking_id") @db.Uuid
+  /// Customer who paid; ref profiles.customer_profile by ID (BP §25 "customer/provider where applicable").
+  customerProfileId String                @map("customer_profile_id") @db.Uuid
+  /// Provider who did the job; ref profiles.provider_profile by ID (BP §25 "customer/provider where applicable").
+  providerProfileId String                @map("provider_profile_id") @db.Uuid
+  /// Payment method (D-016; PAY-001).
+  method            PaymentMethod
+  /// Status of this row (BP §25 "financial transaction state"; PAY-001).
+  status            PaymentStatus
+  /// Bill total in PKR minor units, > 0 (CHECK) (BP §17, §58; D-025 no customer platform fee; D-029 tax line incl.).
+  amountMinor       BigInt                @map("amount_minor")
+  /// Gateway reference from the PaymentGateway interface (fake until D-008); used for reconciliation (PAY-001, PAY-005; EXT-001).
+  gatewayRef        String?               @map("gateway_ref")
+  /// User who caused the row: the provider for cash, the customer for a digital start; null for gateway callbacks (BP §26; D-030).
+  actorUserId       String?               @map("actor_user_id") @db.Uuid
+  /// When this state happened (BP §26; PAY-009 transaction history).
+  occurredAt        DateTime              @default(now()) @map("occurred_at") @db.Timestamptz(3)
+  /// Refunds reversing this payment (BP §25 Refund "payment/booking"; PAY-006).
+  refunds           Refund[]
+  /// Ledger rows caused by this payment (ARCH §6.8; LEDGER-003, LEDGER-004).
+  ledgerEntries     ProviderLedgerEntry[]
+
+  @@unique([bookingId], where: raw("status = ANY (ARRAY['CASH_RECORDED'::payment_status, 'SUCCEEDED'::payment_status])"), map: "payment_one_settled_per_booking")
+  @@index([paymentRef, occurredAt])
+  @@index([bookingId])
+  @@map("payment")
+}
+
+/// Append-only refund rows linked to the original payment and, if any, the dispute; the original payment row never changes (BP §25 Refund, §26; PAY-004, PAY-006; SUP-004; OQ-058).
+model Refund {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Groups the rows of one refund (BP §26; PAY-006).
+  refundRef   String       @map("refund_ref") @db.Uuid
+  /// The SUCCEEDED payment row being reversed (BP §25 Refund "payment"; PAY-006).
+  paymentId   String       @map("payment_id") @db.Uuid
+  /// Booking; ref booking.booking by ID (BP §25 Refund "payment/booking").
+  bookingId   String       @map("booking_id") @db.Uuid
+  /// Dispute that led to the refund; ref support.dispute by ID (BP §40; SUP-004; PAY-006).
+  disputeId   String?      @map("dispute_id") @db.Uuid
+  /// Refund amount in PKR minor units, > 0 (CHECK); partial refunds are open (PAY-006; OQ-058).
+  amountMinor BigInt       @map("amount_minor")
+  /// Status of this row (BP §25; PAY-006).
+  status      RefundStatus
+  /// Reason; required on ISSUED rows (CHECK) (BP §8.4 Finance; ROLE-003; SEC-BASE-010).
+  reason      String?
+  /// Gateway reference (PAY-005, PAY-006; EXT-001).
+  gatewayRef  String?      @map("gateway_ref")
+  /// Finance user who issued it; null for gateway callbacks (BP §8.4; ADMIN-ROLE-004).
+  actorUserId String?      @map("actor_user_id") @db.Uuid
+  /// When this state happened (BP §26).
+  occurredAt  DateTime     @default(now()) @map("occurred_at") @db.Timestamptz(3)
+  /// Relation to the payment row (PAY-006).
+  payment     Payment      @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+
+  @@index([refundRef, occurredAt])
+  @@index([paymentId])
+  @@map("refund")
+}
+
+/// Append-only provider earnings ledger: cash debits 30% of labour, digital credits bill − commission, Finance-approved company payments and settlements; corrections are reversal rows (ARCH §6.8; BP §26; D-006, D-015, D-016, D-020, D-021; LEDGER-001…007; PAY-004; COMM-001…004).
+model ProviderLedgerEntry {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                            String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Provider account; ref profiles.provider_profile by ID (ARCH §6.8; D-016).
+  providerProfileId             String                       @map("provider_profile_id") @db.Uuid
+  /// Entry type (ARCH §6.8; LEDGER-003, LEDGER-004, LEDGER-PAY-005, PAY-007, PAY-004).
+  entryType                     LedgerEntryType              @map("entry_type")
+  /// Debit or credit (ARCH §6.8; D-016; LEDGER-003, LEDGER-004).
+  direction                     LedgerDirection
+  /// Amount in PKR minor units, always > 0 (CHECK); the direction gives the sign (BP §26; LEDGER-005).
+  amountMinor                   BigInt                       @map("amount_minor")
+  /// Booking the entry is for; ref booking.booking by ID (D-016; LEDGER-003, LEDGER-004).
+  bookingId                     String?                      @map("booking_id") @db.Uuid
+  /// Payment row that caused it (LEDGER-003, LEDGER-004).
+  paymentId                     String?                      @map("payment_id") @db.Uuid
+  /// Approved "Pay company" submission (D-021; LEDGER-PAY-005).
+  commissionPaymentSubmissionId String?                      @map("commission_payment_submission_id") @db.Uuid
+  /// Settlement paid out (PAY-007; LEDGER-007).
+  settlementId                  String?                      @map("settlement_id") @db.Uuid
+  /// Original entry this REVERSAL corrects; total reversals never exceed the original (trigger) (BP §26; PAY-004; LEDGER-005).
+  reversesEntryId               String?                      @map("reverses_entry_id") @db.Uuid
+  /// Bill total at billing, PKR minor units, for the job breakdown (COMM-004; LEDGER-006).
+  billTotalMinor                BigInt?                      @map("bill_total_minor")
+  /// Commissionable amount = sum of LABOR lines, PKR minor units (D-015; COMM-003).
+  commissionableMinor           BigInt?                      @map("commissionable_minor")
+  /// Commission charged, PKR minor units (D-006; COMM-001, COMM-002).
+  commissionMinor               BigInt?                      @map("commission_minor")
+  /// Commission rate applied, copied from config commission.rate at billing (D-006; COMM-001; BP §26 traceability).
+  commissionRate                Decimal?                     @map("commission_rate") @db.Decimal(5, 4)
+  /// Reason shown in the account history (A09) — required for reversals (BP §26; LEDGER-006; ROLE-003).
+  reason                        String?
+  /// User who caused the entry (Finance for approvals/settlements/reversals, provider for cash); null for system (BP §26; SEC-BASE-010).
+  actorUserId                   String?                      @map("actor_user_id") @db.Uuid
+  /// Idempotency key of the business action; a retry can never write a second row (BP §31.2; REL-003; PAY-002).
+  idempotencyKey                String                       @unique @map("idempotency_key")
+  /// When the entry was written (BP §26; LEDGER-006).
+  createdAt                     DateTime                     @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Relation to the payment (LEDGER-003, LEDGER-004).
+  payment                       Payment?                     @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  /// Relation to the submission (LEDGER-PAY-005).
+  commissionPaymentSubmission   CommissionPaymentSubmission? @relation(fields: [commissionPaymentSubmissionId], references: [id], onDelete: Restrict)
+  /// Relation to the settlement (PAY-007).
+  settlement                    Settlement?                  @relation(fields: [settlementId], references: [id], onDelete: Restrict)
+  /// Relation to the reversed entry (BP §26; PAY-004).
+  reversesEntry                 ProviderLedgerEntry?         @relation("LedgerReversal", fields: [reversesEntryId], references: [id], onDelete: Restrict)
+  /// Reversal rows pointing at this entry (BP §26; PAY-004).
+  reversals                     ProviderLedgerEntry[]        @relation("LedgerReversal")
+
+  @@unique([bookingId], where: raw("entry_type = ANY (ARRAY['COMMISSION_DEBIT'::ledger_entry_type, 'JOB_CREDIT'::ledger_entry_type])"), map: "ledger_one_job_entry_per_booking")
+  @@unique([commissionPaymentSubmissionId], where: raw("entry_type = 'COMPANY_PAYMENT_CREDIT'"), map: "ledger_one_credit_per_submission")
+  @@index([providerProfileId, createdAt])
+  @@map("provider_ledger_entry")
+}
+
+/// Provider's "Pay company" claim: transaction ID + optional screenshot, decided by Finance; the claim itself never clears the block (D-020, D-021; ARCH §6.8; LEDGER-PAY-002…006).
+model CommissionPaymentSubmission {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Provider who paid; ref profiles.provider_profile by ID (D-021).
+  providerProfileId String                  @map("provider_profile_id") @db.Uuid
+  /// Amount the provider says they sent, PKR minor units, > 0 (CHECK) (D-021; LEDGER-PAY-003; OQ-059).
+  amountMinor       BigInt                  @map("amount_minor")
+  /// Bank/wallet transaction ID; duplicates are flagged, not blocked (D-021; LEDGER-PAY-002).
+  transactionRef    String                  @map("transaction_ref")
+  /// Provider user who submitted it; the server refuses a decision by the same person (D-021; ABUSE-010; OQ-083).
+  submittedByUserId String                  @map("submitted_by_user_id") @db.Uuid
+  /// Optional screenshot; ref media.media_object by ID; Finance-only, read-audited (D-021; BP §75 item 97; LEDGER-PAY-002).
+  screenshotMediaId String?                 @map("screenshot_media_id") @db.Uuid
+  /// Queue state (D-021; LEDGER-PAY-003, LEDGER-PAY-004).
+  status            CommissionPaymentStatus @default(SUBMITTED)
+  /// When it was submitted (LEDGER-PAY-003; D-022 verification time open).
+  submittedAt       DateTime                @default(now()) @map("submitted_at") @db.Timestamptz(3)
+  /// Finance user who decided; ref identity.user_account by ID (BP §8.4 Finance; LEDGER-PAY-004; ADMIN-ROLE-004).
+  decidedByUserId   String?                 @map("decided_by_user_id") @db.Uuid
+  /// Decision time (LEDGER-PAY-004).
+  decidedAt         DateTime?               @map("decided_at") @db.Timestamptz(3)
+  /// Decision reason; required for approve and reject (CHECK) (LEDGER-PAY-004; ROLE-003).
+  decisionReason    String?                 @map("decision_reason")
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt         DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt         DateTime                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version; a second decision fails (technical field, ARCH §5; BP §31.2; LEDGER-PAY-004).
+  version           Int                     @default(1)
+  /// The credit row written on approval (LEDGER-PAY-005).
+  ledgerEntries     ProviderLedgerEntry[]
+
+  @@index([status, submittedAt])
+  @@index([transactionRef])
+  @@index([providerProfileId])
+  @@map("commission_payment_submission")
+}
+
+/// Payout of a positive provider balance; the money effect is a SETTLEMENT_DEBIT ledger row (BP §25 Settlement "provider + payment(s)", §13 P15; PAY-007; LEDGER-007; OQ-070).
+model Settlement {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Provider paid; ref profiles.provider_profile by ID (BP §25 Settlement "provider").
+  providerProfileId String                @map("provider_profile_id") @db.Uuid
+  /// Amount in PKR minor units, > 0 (CHECK), at most the available balance (PAY-007).
+  amountMinor       BigInt                @map("amount_minor")
+  /// Payout state (BP §25 "provider payout state"; P15 settlement status).
+  status            SettlementStatus      @default(PENDING)
+  /// Payout method used (BP §13 P16).
+  payoutMethodId    String?               @map("payout_method_id") @db.Uuid
+  /// Reference from the PayoutProvider interface or the manual transfer (PAY-007; EXT-001; D-008).
+  payoutRef         String?               @map("payout_ref")
+  /// Finance reason (PAY-007; ROLE-003).
+  reason            String?
+  /// Finance user who created it (PAY-007 "needs Finance role"; ADMIN-ROLE-004).
+  createdByUserId   String?               @map("created_by_user_id") @db.Uuid
+  /// When it was paid (BP §13 P15 "paid"; PAY-007).
+  paidAt            DateTime?             @map("paid_at") @db.Timestamptz(3)
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt         DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt         DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version           Int                   @default(1)
+  /// Relation to the payout method (BP §13 P16).
+  payoutMethod      PayoutMethod?         @relation(fields: [payoutMethodId], references: [id], onDelete: Restrict)
+  /// Ledger rows of this settlement (PAY-007).
+  ledgerEntries     ProviderLedgerEntry[]
+
+  @@index([providerProfileId, status])
+  @@map("settlement")
+}
+
+/// Provider bank/wallet payout method; the full number is never shown again after saving (BP §13 P16; PAY-007; EXT-001; SEC-BASE-002).
+model PayoutMethod {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Provider; ref profiles.provider_profile by ID (BP §13 P16).
+  providerProfileId String             @map("provider_profile_id") @db.Uuid
+  /// Bank account or mobile wallet (BP §13 P16).
+  methodType        PayoutMethodType   @map("method_type")
+  /// Account holder name (BP §13 P16).
+  accountTitle      String             @map("account_title")
+  /// Bank or wallet code from the server-provided list (BP §13 P16; EXT-001).
+  institutionCode   String             @map("institution_code")
+  /// Masked account/IBAN/wallet number for display: mask characters plus at most the last 4 digits (CHECK) (BP §13 P16; BP §29; SEC-BASE-002).
+  maskedNumber      String             @map("masked_number")
+  /// Token/reference of the full details held by the PayoutProvider interface (fake until D-008); the full number is never stored in any Kaam Karo table (BP §29; EXT-001; PAY-007).
+  payoutProviderRef String?            @map("payout_provider_ref")
+  /// Check status (BP §13 P16).
+  status            PayoutMethodStatus @default(NOT_CHECKED)
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt         DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Soft-delete time when the provider removes the method; settlements keep pointing at it (technical field, ARCH §5; BP §26).
+  deletedAt         DateTime?          @map("deleted_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version           Int                @default(1)
+  /// Settlements paid to this method (PAY-007).
+  settlements       Settlement[]
+
+  @@index([providerProfileId])
+  @@map("payout_method")
+}

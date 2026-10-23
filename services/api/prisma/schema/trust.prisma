@@ -1,0 +1,151 @@
+// ============================================================================
+// Module M3 trust — Verification & Trust. Owner: A05 (matching-trust).
+// ARCH §4 M3, §6.4, §6.7; BP §22, §55.2, §66; D-014, D-017, D-018.
+// Tables: verification_record, provider_standing, supplier_badge.
+// ============================================================================
+
+/// Provider verification level (BP §22.1; ARCH §6.4; TRUST-VER-001…004). Shared type, also used by catalog.service.
+enum VerificationLevel {
+  BASIC
+  VERIFIED
+  BUSINESS_VERIFIED
+  SPECIALIZED_VERIFIED
+
+  @@map("verification_level")
+}
+
+/// State of one verification submission in the Risk/Trust queue (BP §22; OPS-ADMIN-004; TRUST-VER-002).
+enum VerificationRecordStatus {
+  SUBMITTED
+  APPROVED
+  REJECTED
+
+  @@map("verification_record_status")
+}
+
+/// Low-rating enforcement standing; the number of warnings before block comes from config rating.warnings_before_block (D-014, D-017; ARCH §6.7; RATING-ENF-003…005).
+enum RatingStanding {
+  GOOD_STANDING
+  WARNING
+  BLOCKED_LOW_RATING
+
+  @@map("rating_standing")
+}
+
+/// Badge types, exact candidate list of BP §55.2 (TRUST-BADGE-001…014). Rules and thresholds come from config (D-010).
+enum BadgeType {
+  VERIFIED
+  HIGHLY_RATED
+  EXPERIENCED
+  CUSTOMER_FAVORITE
+  FAST_RESPONSE
+  FAST_SERVICE
+  RELIABLE
+  REPEAT_CUSTOMER_FAVORITE
+  TOP_SPECIALIST
+  RECENTLY_JOINED
+  EMERGENCY_AVAILABLE
+  AVAILABLE_TODAY
+  AVAILABLE_NOW
+  LARGE_TEAM
+
+  @@map("badge_type")
+}
+
+/// Badge expiry/recalculation status (BP §66 Supplier Badge "expiry/recalculation status").
+enum BadgeStatus {
+  ACTIVE
+  RECALCULATION_PENDING
+  EXPIRED
+
+  @@map("badge_status")
+}
+
+/// One verification check/submission for a provider (BP §22, §25 Verification Record "Profile + verification state"; TRUST-VER-001…004). Only the team leader is verified (D-018).
+model VerificationRecord {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Provider being verified; ref profiles.provider_profile by ID (BP §25; D-018; INFRA-001).
+  providerProfileId String                   @map("provider_profile_id") @db.Uuid
+  /// Level applied for (BP §22.1; TRUST-VER-002, TRUST-VER-003).
+  requestedLevel    VerificationLevel        @map("requested_level")
+  /// Category whose requirements apply; ref catalog.category by ID; null = general check (BP §22.1 risk-proportional; CFG-RULE-007; OQ-015).
+  categoryId        String?                  @map("category_id") @db.Uuid
+  /// Uploaded documents; refs media.media_object by ID, picked with the system document picker (BP §22, §75; MEDIA-008).
+  documentMediaIds  String[]                 @map("document_media_ids") @db.Uuid
+  /// Queue state (OPS-ADMIN-004; TRUST-VER-002).
+  status            VerificationRecordStatus @default(SUBMITTED)
+  /// When the provider submitted (OPS-ADMIN-004 "submitted at / waiting time").
+  submittedAt       DateTime                 @default(now()) @map("submitted_at") @db.Timestamptz(3)
+  /// Risk/Trust staff user who decided; ref identity.user_account (BP §8.3, §8.4; ADMIN-ROLE-006).
+  decidedByUserId   String?                  @map("decided_by_user_id") @db.Uuid
+  /// Decision time (OPS-ADMIN-004).
+  decidedAt         DateTime?                @map("decided_at") @db.Timestamptz(3)
+  /// Reason for the decision; required, also audited (BP §8.3; ROLE-003).
+  decisionReason    String?                  @map("decision_reason")
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt         DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt         DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version           Int                      @default(1)
+
+  @@index([providerProfileId])
+  @@index([status, submittedAt])
+  @@map("verification_record")
+}
+
+/// Current trust standing of a provider: verification level and low-rating enforcement state (BP §22.1; ARCH §6.4, §6.7; D-014; TRUST-VER-001; RATING-ENF-003…006).
+model ProviderStanding {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                      String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Provider; ref profiles.provider_profile by ID (BP §25; INFRA-001).
+  providerProfileId       String            @unique @map("provider_profile_id") @db.Uuid
+  /// Current verification level; every provider starts at Basic (BP §22.1; ARCH §6.4; TRUST-VER-001; MATCH-ELIG-077).
+  verificationLevel       VerificationLevel @default(BASIC) @map("verification_level")
+  /// Low-rating standing (D-014; ARCH §6.7; RATING-ENF-003…005). Enforcement runs dry-run until D-017 is complete (RATING-ENF-008).
+  ratingStanding          RatingStanding    @default(GOOD_STANDING) @map("rating_standing")
+  /// Warnings given in the current low-rating episode; reset when the average is back at/above the threshold (D-014; RATING-ENF-004).
+  ratingWarningCount      Int               @default(0) @map("rating_warning_count")
+  /// When the rating standing last changed; the review period counts from here (D-017; ARCH §6.7; RATING-ENF-004).
+  ratingStandingChangedAt DateTime?         @map("rating_standing_changed_at") @db.Timestamptz(3)
+  /// Last time the enforcement job evaluated this provider (D-014; RATING-ENF-003).
+  lastRatingCheckAt       DateTime?         @map("last_rating_check_at") @db.Timestamptz(3)
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt               DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt               DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version                 Int               @default(1)
+
+  @@map("provider_standing")
+}
+
+/// Badge earned by a provider from a configured rule (BP §55.2, §66 Supplier Badge; TRUST-BADGE-001…014; D-010).
+model SupplierBadge {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Provider holding the badge; ref profiles.provider_profile by ID (BP §66; INFRA-001).
+  providerProfileId String      @map("provider_profile_id") @db.Uuid
+  /// Badge type (BP §66 "badge type"; BP §55.2).
+  badgeType         BadgeType   @map("badge_type")
+  /// Service the badge is for, e.g. Top Specialist for this service; ref catalog.service by ID (BP §55.2; TRUST-BADGE-009).
+  serviceId         String?     @map("service_id") @db.Uuid
+  /// Config rule that granted it, key + version (BP §66 "eligibility rule"; OPS-ADMIN-022; D-010).
+  eligibilityRule   String      @map("eligibility_rule")
+  /// Date the badge became effective (BP §66 "effective date").
+  effectiveFrom     DateTime    @map("effective_from") @db.Timestamptz(3)
+  /// Expiry date, if any (BP §66 "expiry").
+  expiresAt         DateTime?   @map("expires_at") @db.Timestamptz(3)
+  /// Expiry/recalculation status (BP §66).
+  status            BadgeStatus @default(ACTIVE)
+  /// Metrics used to compute the badge (BP §66 "source metrics"; BP §55.2 measurable facts).
+  sourceMetrics     Json        @map("source_metrics")
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt         DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt         DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([providerProfileId, status])
+  @@map("supplier_badge")
+}

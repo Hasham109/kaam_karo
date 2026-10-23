@@ -1,0 +1,4 @@
+{
+  "//": "T2.3 schema tools run with Node 24 type stripping as ES modules.",
+  "type": "module"
+}

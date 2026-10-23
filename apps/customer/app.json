@@ -47,7 +47,13 @@
           }
         }
       ],
-      "expo-dev-client"
+      "expo-dev-client",
+      [
+        "expo-font",
+        {
+          "fonts": ["../../packages/ui/assets/fonts/NotoNastaliqUrdu-Regular.ttf"]
+        }
+      ]
     ]
   }
 }

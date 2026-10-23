@@ -56,3 +56,6 @@ Thumbs.db
 *.log
 npm-debug.log*
 pnpm-debug.log*
+
+# Generated Prisma client (T2.3; `pnpm --filter @kaamkaro/api db:generate`)
+services/api/src/generated/

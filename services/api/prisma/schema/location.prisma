@@ -1,0 +1,61 @@
+// ============================================================================
+// Module M6 location — Location snapshots. Owner: A06 (location-maps).
+// ARCH §4 M6, §12; BP §21, §57, §66, §81; D-007, D-019.
+// Table: location_snapshot. A snapshot used by a booking or request is never edited (BP §21; PROF-ADDR-002).
+// ============================================================================
+
+/// How the location was obtained or corrected (BP §57.1; LOC-GEO-003: map pin, place search, saved address, manual entry; LOC-GEO-001 device location on tap).
+enum LocationSource {
+  DEVICE_LOCATION
+  MAP_PIN
+  PLACE_SEARCH
+  SAVED_ADDRESS
+  MANUAL_ENTRY
+
+  @@map("location_source")
+}
+
+/// Whether the customer confirmed the location; suggestions are never silently locked (BP §66 "confirmation status"; LOC-GEO-002, LOC-GEO-004).
+enum LocationConfirmation {
+  SUGGESTED
+  CONFIRMED
+
+  @@map("location_confirmation")
+}
+
+/// Location used for one request or job, copied so later profile edits do not change history; frozen once confirmed or referenced (trigger) (BP §21, §66 Location Snapshot; PROF-ADDR-002; LOC-GEO-004).
+model LocationSnapshot {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                 String                                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Address label at the time, e.g. Home (BP §66 "address label").
+  addressLabel       String?                               @map("address_label")
+  /// Readable address the customer confirmed or typed (BP §21; LOC-GEO-004; PROF-ADDR-003).
+  addressText        String                                @map("address_text")
+  /// Latitude/longitude WGS84 (PostGIS geography); null when only a manual address exists (BP §66 "latitude/longitude"; LOC-GEO-006).
+  point              Unsupported("geography(Point,4326)")?
+  /// Accuracy estimate in metres (BP §66 "accuracy estimate").
+  accuracyMeters     Int?                                  @map("accuracy_meters")
+  /// Maps place/address reference (BP §66 "place/address reference"; LOC-GEO-004).
+  placeRef           String?                               @map("place_ref")
+  /// How the location was set (BP §57.1; LOC-GEO-003).
+  source             LocationSource
+  /// Confirmation status (BP §66; LOC-GEO-002, LOC-GEO-004).
+  confirmationStatus LocationConfirmation                  @default(SUGGESTED) @map("confirmation_status")
+  /// City; ref catalog.city by ID; must be a Pakistani city (BP §57.2; SCOPE-GEO-001; LOC-GEO-002).
+  cityId             String                                @map("city_id") @db.Uuid
+  /// Area/locality; what a provider sees before the job needs more (BP §21, §52.2; PROF-ADDR-004).
+  areaName           String?                               @map("area_name")
+  /// Saved address this snapshot was copied from; ref profiles.address by ID (BP §21, §25 Address "copied into job snapshot").
+  sourceAddressId    String?                               @map("source_address_id") @db.Uuid
+  /// User who created the snapshot (technical field created_by, ARCH §5; BP §25).
+  createdBy          String?                               @map("created_by") @db.Uuid
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt          DateTime                              @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time; changes stop once confirmed or referenced by a booking/request (technical field, ARCH §5; BP §21).
+  updatedAt          DateTime                              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version            Int                                   @default(1)
+
+  @@index([point], type: Gist)
+  @@map("location_snapshot")
+}

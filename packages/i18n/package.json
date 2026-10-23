@@ -2,12 +2,16 @@
   "name": "@kaamkaro/i18n",
   "version": "0.0.0",
   "private": true,
-  "description": "SKELETON created by A01 in T2.1 (bootstrap grant). Owner: A14.",
+  "description": "en/ur catalogs, RTL helpers, PKR formatting (owner A14; T2.1 skeleton by A01). ./dev-smoke = dev-only T0.6 catalog.",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./dev-smoke": {
+      "types": "./dist/dev/smoke-messages.d.ts",
+      "default": "./dist/dev/smoke-messages.js"
     }
   },
   "main": "dist/index.js",

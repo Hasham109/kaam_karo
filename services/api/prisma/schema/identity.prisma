@@ -1,0 +1,217 @@
+// ============================================================================
+// Module M1 identity — Identity & Access. Owner: A02 (identity-profiles).
+// ARCH §4 M1; BP §8, §25, §27, §29; D-002 (phone + OTP, admin MFA).
+// Tables: user_account, user_role, device_session, admin_user, admin_user_sub_role, admin_recovery_code.
+// No password column exists anywhere (SEC-AUTH-003; T2.4 acceptance).
+// ============================================================================
+
+/// Platform role held by a user; one user can hold several (BP §25 User "has one or more roles"; ROLE-001, ROLE-002, ROLE-003).
+enum UserRoleType {
+  CUSTOMER
+  PROVIDER
+  ADMIN
+
+  @@map("user_role_type")
+}
+
+/// Account lifecycle state: blocked accounts keep their records; deletion is request → hold → anonymise (BP §26, §27; SEC-AUTH-006, SEC-AUTH-008).
+enum AccountStatus {
+  ACTIVE
+  BLOCKED
+  DELETION_REQUESTED
+  ANONYMISED
+
+  @@map("account_status")
+}
+
+/// App language: English or Urdu (BP §78.1; I18N-001, I18N-002). Shared type, also used by intake, notifications and reviews.
+enum AppLanguage {
+  EN
+  UR
+
+  @@map("app_language")
+}
+
+/// Client surface a session belongs to; the admin portal has its own auth path (BP §34, §60; SEC-AUTH-005; PLAT-001).
+enum ClientSurface {
+  CUSTOMER_APP
+  PARTNER_APP
+  ADMIN_PORTAL
+
+  @@map("client_surface")
+}
+
+/// Admin sub-roles, exact list of BP §8.4 (ADMIN-ROLE-001…008).
+enum AdminSubRole {
+  SUPER_ADMIN
+  OPERATIONS
+  SUPPORT
+  FINANCE
+  CONTENT_MANAGER
+  RISK_TRUST
+  ANALYST
+  TECHNICAL_ADMIN
+
+  @@map("admin_sub_role")
+}
+
+/// Login identity and common profile of every person: customer, provider or staff (BP §25 User; D-002; SEC-AUTH-001).
+model User {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                  String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Verified mobile number in E.164 form; the login identifier for customers and providers (D-002; BP §27; SEC-AUTH-001). Set to null when anonymised (SEC-AUTH-008).
+  phoneE164           String?         @unique @map("phone_e164")
+  /// Name shown to the other party (BP §25 "common profile"). Set to null when anonymised (SEC-AUTH-008).
+  displayName         String?         @map("display_name")
+  /// Optional email; profile data only, never a login factor (UX-SCREEN-004; BP §27; OQ-012 default). Set to null when anonymised.
+  email               String?
+  /// Preferred language for the apps, notifications and summaries; null = follow the device language (BP §78.1, §78.3; I18N-002).
+  preferredLanguage   AppLanguage?    @map("preferred_language")
+  /// Account lifecycle state (BP §27 blocked account / deletion; SEC-AUTH-006, SEC-AUTH-008).
+  status              AccountStatus   @default(ACTIVE)
+  /// When the status last changed (BP §27; SEC-AUTH-006). Reason and actor live in audit_log (BP §8.3; ROLE-003).
+  statusChangedAt     DateTime?       @map("status_changed_at") @db.Timestamptz(3)
+  /// When the user asked for deletion; start of the hold period (BP §27; SEC-AUTH-008; hold length config TODO(OWNER), OQ-028).
+  deletionRequestedAt DateTime?       @map("deletion_requested_at") @db.Timestamptz(3)
+  /// When personal fields were anonymised; transactions stay linked (BP §26; DATA-003; SEC-AUTH-008).
+  anonymisedAt        DateTime?       @map("anonymised_at") @db.Timestamptz(3)
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt           DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version, incremented on every update (technical field, ARCH §5; BP §31.2).
+  version             Int             @default(1)
+  /// Roles held by this user (BP §25 "has one or more roles").
+  roles               UserRole[]
+  /// Login sessions on devices (BP §25 Device Session).
+  sessions            DeviceSession[]
+  /// Staff access record when the user is an admin (BP §25 Admin User "belongs to User").
+  adminUser           AdminUser?
+
+  @@map("user_account")
+}
+
+/// One role held by a user (BP §25 User "has one or more roles"; ROLE-001…003).
+model UserRole {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// The user holding the role (BP §25).
+  userId    String       @map("user_id") @db.Uuid
+  /// The role (BP §25; ROLE-001…003).
+  role      UserRoleType
+  /// When the role was granted (technical field, ARCH §5; BP §25).
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Relation to the user (BP §25).
+  user      User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, role])
+  @@map("user_role")
+}
+
+/// Login/device session with expiry and revocation (BP §25 Device Session, §27 Sessions; SEC-AUTH-002, SEC-BASE-002).
+model DeviceSession {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Session owner (BP §25 Device Session "User").
+  userId        String        @map("user_id") @db.Uuid
+  /// Which client the session is for; admin sessions use a separate auth path (BP §34; SEC-AUTH-005).
+  surface       ClientSurface
+  /// Hash of the session/refresh token; the raw token is never stored (BP §29; SEC-BASE-002).
+  tokenHash     String        @unique @map("token_hash")
+  /// Device name shown in "sign out other devices" (BP §25 "login/device management"; SEC-AUTH-002).
+  deviceLabel   String?       @map("device_label")
+  /// Firebase Cloud Messaging token of this device for push notifications (D-001 FCM; BP §24; NOTIF-001).
+  pushToken     String?       @map("push_token")
+  /// When the second factor was verified in this session; required for admin sessions (D-002; BP §27; SEC-AUTH-005).
+  mfaVerifiedAt DateTime?     @map("mfa_verified_at") @db.Timestamptz(3)
+  /// Last request seen on this session (BP §27; SEC-AUTH-002 idle handling, OQ-028).
+  lastSeenAt    DateTime?     @map("last_seen_at") @db.Timestamptz(3)
+  /// Session expiry; lifetime from config auth.session_ttl, TODO(OWNER) (BP §27; SEC-AUTH-002; OQ-028).
+  expiresAt     DateTime      @map("expires_at") @db.Timestamptz(3)
+  /// When the session was revoked (sign-out, block, deletion request); a revoked session gets 401 (BP §27; SEC-AUTH-002).
+  revokedAt     DateTime?     @map("revoked_at") @db.Timestamptz(3)
+  /// Row creation time = sign-in time (technical field, ARCH §5; BP §25).
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt     DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Relation to the user (BP §25).
+  user          User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@map("device_session")
+}
+
+/// Staff access record; sign-in method and second-factor type are open (BP §25 Admin User, §27; D-002; SEC-AUTH-005; OQ-051).
+model AdminUser {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// The user account of the staff member (BP §25 Admin User "belongs to User").
+  userId              String              @unique @map("user_id") @db.Uuid
+  /// False = deactivated staff account that cannot sign in (BP §27 "Blocked account"; ADMIN-ROLE-001).
+  isActive            Boolean             @default(true) @map("is_active")
+  /// When MFA enrolment finished; sign-in without MFA is refused (D-002; BP §27; SEC-AUTH-005).
+  mfaEnrolledAt       DateTime?           @map("mfa_enrolled_at") @db.Timestamptz(3)
+  /// Second-factor secret encrypted by the API with AES-GCM, 256-bit key (nonce + ciphertext + tag); the key comes from the secret manager, never from this DB (D-002; BP §27, §29; SEC-AUTH-005; SEC-BASE-002; OQ-051).
+  mfaSecretCiphertext Bytes?              @map("mfa_secret_ciphertext")
+  /// ID of the encryption key used for mfa_secret_ciphertext, for key rotation; set together with it (CHECK) (BP §29; SEC-BASE-002).
+  mfaSecretKeyId      String?             @map("mfa_secret_key_id")
+  /// Staff user who created this account; only Super Admin manages staff (technical field created_by, ARCH §5; ADMIN-ROLE-001).
+  createdBy           String?             @map("created_by") @db.Uuid
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt           DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version             Int                 @default(1)
+  /// Relation to the user (BP §25).
+  user                User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+  /// Sub-roles held; effective access is their union (BP §8.4; OQ-053 default).
+  subRoles            AdminUserSubRole[]
+  /// One-time MFA recovery codes, stored hashed (D-002; SEC-AUTH-005; OQ-051).
+  recoveryCodes       AdminRecoveryCode[]
+
+  @@map("admin_user")
+}
+
+/// One admin sub-role held by a staff account (BP §8.4, §25 Admin User "has permissions"; ADMIN-ROLE-001…008; OQ-053).
+model AdminUserSubRole {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// The staff account (BP §25 Admin User).
+  adminUserId     String       @map("admin_user_id") @db.Uuid
+  /// The sub-role (BP §8.4; ADMIN-ROLE-001…008).
+  subRole         AdminSubRole @map("sub_role")
+  /// Super Admin who granted it; the grant is also audited (ADMIN-ROLE-001; SEC-BASE-010).
+  grantedByUserId String?      @map("granted_by_user_id") @db.Uuid
+  /// When the sub-role was granted (technical field, ARCH §5; BP §25).
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// When the sub-role was revoked; rows are never deleted so the grant history stays (ADMIN-ROLE-001; ABUSE-010; BP §26).
+  revokedAt       DateTime?    @map("revoked_at") @db.Timestamptz(3)
+  /// Super Admin who revoked it; also audited (ADMIN-ROLE-001; SEC-BASE-010).
+  revokedByUserId String?      @map("revoked_by_user_id") @db.Uuid
+  /// Relation to the staff account (BP §25).
+  adminUser       AdminUser    @relation(fields: [adminUserId], references: [id], onDelete: Restrict)
+
+  @@unique([adminUserId, subRole], where: raw("revoked_at IS NULL"), map: "admin_user_sub_role_active_key")
+  @@index([adminUserId])
+  @@map("admin_user_sub_role")
+}
+
+/// One-time MFA recovery code of a staff account; only a slow hash (argon2id/bcrypt) is stored (D-002; BP §27; SEC-AUTH-005; SEC-BASE-002; OQ-051).
+model AdminRecoveryCode {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Staff account (BP §25 Admin User).
+  adminUserId String    @map("admin_user_id") @db.Uuid
+  /// Slow hash of the code; the code itself is shown once and never stored (BP §29; SEC-BASE-002).
+  codeHash    String    @map("code_hash")
+  /// When the code was used; a used code never works again (SEC-AUTH-005).
+  usedAt      DateTime? @map("used_at") @db.Timestamptz(3)
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Relation to the staff account (BP §25).
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Restrict)
+
+  @@index([adminUserId])
+  @@map("admin_recovery_code")
+}

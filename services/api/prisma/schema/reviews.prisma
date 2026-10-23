@@ -1,0 +1,93 @@
+// ============================================================================
+// Module M12 reviews — Reviews & Reputation. Owner: A10 (comms-notify-reviews).
+// ARCH §4 M12, §6.7; BP §19, §25; D-014 (one rating per completed job).
+// Tables: review, review_flag.
+// ============================================================================
+
+/// Moderation state of a review; removed reviews never count for ratings (BP §19; REV-004, REV-005; RATING-ENF-002; REQ-AI-009).
+enum ReviewModerationStatus {
+  PENDING_MODERATION
+  VISIBLE
+  FLAGGED
+  REMOVED
+
+  @@map("review_moderation_status")
+}
+
+/// State of a flag/report in the moderation queue (BP §19 "flag/report", "moderation queue"; REV-004, REV-005; OPS-ADMIN-011).
+enum ReviewFlagStatus {
+  OPEN
+  UPHELD
+  DISMISSED
+
+  @@map("review_flag_status")
+}
+
+/// Customer feedback for one completed booking (BP §19, §25 Review "completed booking + provider"; D-014; REV-001…007; RATING-ENF-001).
+model Review {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                  String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Completed booking reviewed; one review per booking (unique); ref booking.booking by ID (BP §19, §25; D-014; REV-001; ABUSE-004).
+  bookingId           String                 @unique @map("booking_id") @db.Uuid
+  /// Provider reviewed; ref profiles.provider_profile by ID (BP §25 Review "provider").
+  providerProfileId   String                 @map("provider_profile_id") @db.Uuid
+  /// Reviewing customer; ref profiles.customer_profile by ID (BP §19).
+  customerProfileId   String                 @map("customer_profile_id") @db.Uuid
+  /// Rating 1–5 (CHECK) (BP §19; REV-001; D-014).
+  rating              Int                    @db.SmallInt
+  /// Optional structured tags from config reviews.tags (BP §19; REV-001; OQ-043).
+  tags                String[]
+  /// Optional written review (BP §19; REV-002).
+  text                String?
+  /// Moderation state (BP §19; REV-005; RATING-ENF-002).
+  moderationStatus    ReviewModerationStatus @default(PENDING_MODERATION) @map("moderation_status")
+  /// Provider response under controlled rules (BP §19; REV-003).
+  providerResponse    String?                @map("provider_response")
+  /// When the provider responded (BP §19; REV-003).
+  providerRespondedAt DateTime?              @map("provider_responded_at") @db.Timestamptz(3)
+  /// When the customer submitted (BP §19; RATING-ENF-001).
+  submittedAt         DateTime               @default(now()) @map("submitted_at") @db.Timestamptz(3)
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt           DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt           DateTime               @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version             Int                    @default(1)
+  /// Flags/reports on this review (BP §19; REV-004).
+  flags               ReviewFlag[]
+
+  @@index([providerProfileId, moderationStatus])
+  @@map("review")
+}
+
+/// A flag/report on a review, decided in the moderation queue (BP §19; REV-004, REV-005; OPS-ADMIN-011).
+model ReviewFlag {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Flagged review (BP §19).
+  reviewId        String           @map("review_id") @db.Uuid
+  /// User who flagged it; ref identity.user_account by ID (BP §19 "flag/report review option").
+  flaggedByUserId String           @map("flagged_by_user_id") @db.Uuid
+  /// Flag reason (BP §19; REV-004).
+  reason          String
+  /// Queue state (BP §19; REV-005).
+  status          ReviewFlagStatus @default(OPEN)
+  /// Staff user who decided (BP §8.4 Risk/Trust; ADMIN-ROLE-006).
+  decidedByUserId String?          @map("decided_by_user_id") @db.Uuid
+  /// Decision time (REV-005).
+  decidedAt       DateTime?        @map("decided_at") @db.Timestamptz(3)
+  /// Decision reason; also audited (ROLE-003; REV-005).
+  decisionReason  String?          @map("decision_reason")
+  /// Row creation time = flagged at (technical field, ARCH §5; BP §25).
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version         Int              @default(1)
+  /// Relation to the review (BP §19).
+  review          Review           @relation(fields: [reviewId], references: [id], onDelete: Restrict)
+
+  @@index([reviewId])
+  @@index([status, createdAt])
+  @@map("review_flag")
+}

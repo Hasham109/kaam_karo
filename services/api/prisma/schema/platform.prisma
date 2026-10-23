@@ -1,0 +1,149 @@
+// ============================================================================
+// Module M18 platform — Audit & Events, outbox, idempotency. Owner: A01 (platform-devops).
+// ARCH §4 M18, §5.3 (IdempotencyKey, OutboxEvent), §5.4, §7; BP §24, §25, §26, §31.2, §66.
+// Tables: audit_log, marketplace_event (both APPEND-ONLY: no UPDATE/DELETE for the app role,
+// BP §26; DATA-004), outbox_event, idempotency_key.
+// Every module writes here through packages/platform (T2.2); nobody reads these tables directly
+// except the audit viewer (ARCH §4.1).
+// ============================================================================
+
+/// Actor role on events, audits and messages (BP §15.1, §66 "actor"). Shared type, used by most modules.
+enum ActorRole {
+  CUSTOMER
+  PROVIDER
+  ADMIN
+  SYSTEM
+
+  @@map("actor_role")
+}
+
+/// Outbox delivery state (ARCH §7; BP §31.2; REL-009).
+enum OutboxStatus {
+  PENDING
+  PUBLISHED
+  FAILED
+
+  @@map("outbox_status")
+}
+
+/// Append-only security/business change history: actor, action, object, before/after, reason (BP §25 Audit Log, §26, §29; DATA-004; SEC-BASE-010; ROLE-003; OPS-ADMIN-017). Personal data is masked before it is written, because rows are never edited (BP §26; SEC-AUTH-008).
+model AuditLog {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Acting user; null for system jobs; ref identity.user_account by ID (BP §25 "actor").
+  actorUserId    String?        @map("actor_user_id") @db.Uuid
+  /// Acting role (BP §25 "actor").
+  actorRole      ActorRole      @map("actor_role")
+  /// Admin sub-roles of the actor at the time (BP §8.4; OQ-053; OPS-ADMIN-017).
+  actorSubRoles  AdminSubRole[] @map("actor_sub_roles")
+  /// Action code, incl. sensitive reads such as READ_PAYMENT_SCREENSHOT (BP §25 "action"; BP §8.3; ABUSE-010).
+  action         String
+  /// Object type, e.g. booking, config_rule (BP §25 "object").
+  objectType     String         @map("object_type")
+  /// Object ID (BP §25 "object").
+  objectId       String?        @map("object_id")
+  /// Value before the change, PII masked (BP §66 "previous state"; OPS-ADMIN-017).
+  before         Json?
+  /// Value after the change, PII masked (BP §66 "new state"; OPS-ADMIN-017).
+  after          Json?
+  /// Reason; required for every admin write (BP §8.3, §11; ROLE-003).
+  reason         String?
+  /// Source/device metadata where needed, e.g. client and IP (BP §66 "source/device metadata").
+  sourceMetadata Json?          @map("source_metadata")
+  /// When it happened (BP §66 "timestamp").
+  occurredAt     DateTime       @default(now()) @map("occurred_at") @db.Timestamptz(3)
+
+  @@index([objectType, objectId])
+  @@index([actorUserId, occurredAt])
+  @@index([occurredAt])
+  @@map("audit_log")
+}
+
+/// Append-only marketplace event for state changes outside the booking (request, quote, fare line, verification, ledger, …) (BP §66 Marketplace Event; DATA-002; ARCH §4 M18).
+model MarketplaceEvent {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Acting user; null for system jobs; ref identity.user_account by ID (BP §66 "actor").
+  actorUserId    String?   @map("actor_user_id") @db.Uuid
+  /// Acting role (BP §66 "actor").
+  actorRole      ActorRole @map("actor_role")
+  /// Action code (BP §66 "action").
+  action         String
+  /// Object type (BP §66 "object").
+  objectType     String    @map("object_type")
+  /// Object ID (BP §66 "object").
+  objectId       String    @map("object_id")
+  /// Previous state (BP §66 "previous state").
+  previousState  String?   @map("previous_state")
+  /// New state (BP §66 "new state").
+  newState       String?   @map("new_state")
+  /// Source/device metadata where needed (BP §66 "source/device metadata").
+  sourceMetadata Json?     @map("source_metadata")
+  /// When it happened (BP §66 "timestamp").
+  occurredAt     DateTime  @default(now()) @map("occurred_at") @db.Timestamptz(3)
+
+  @@index([objectType, objectId, occurredAt])
+  @@map("marketplace_event")
+}
+
+/// Domain event written in the same DB transaction as the state change, then delivered by the BullMQ worker so nothing is lost (ARCH §5.3 OutboxEvent, §7; BP §24, §31.2; REL-009; NOTIF-001; D-001).
+model OutboxEvent {
+  /// Primary key = event ID used for consumer de-duplication (technical field, ARCH §5; BP §31.2).
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Event type from contracts/events, e.g. booking.accepted (ARCH §7; BP §24).
+  eventType     String       @map("event_type")
+  /// Event schema version (ARCH §8 contract-first; BP §24).
+  schemaVersion Int          @map("schema_version")
+  /// Aggregate type, e.g. booking (ARCH §7; BP §24).
+  aggregateType String       @map("aggregate_type")
+  /// Aggregate ID (ARCH §7; BP §24).
+  aggregateId   String       @map("aggregate_id")
+  /// Event payload, valid against the event schema (ARCH §7; BP §24).
+  payload       Json
+  /// Delivery state (BP §31.2; REL-009).
+  status        OutboxStatus @default(PENDING)
+  /// Delivery attempts so far (BP §31.2; REL-007 safe retries).
+  attempts      Int          @default(0)
+  /// Earliest next delivery attempt (BP §31.2; REL-007).
+  nextAttemptAt DateTime     @default(now()) @map("next_attempt_at") @db.Timestamptz(3)
+  /// When delivery succeeded (REL-009).
+  publishedAt   DateTime?    @map("published_at") @db.Timestamptz(3)
+  /// Last delivery error, without personal data (BP §31.2; INFRA-005).
+  lastError     String?      @map("last_error")
+  /// When the event happened (BP §66 "timestamp").
+  occurredAt    DateTime     @default(now()) @map("occurred_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt     DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([status, nextAttemptAt])
+  @@index([aggregateType, aggregateId])
+  @@map("outbox_event")
+}
+
+/// Stored result of an idempotent request: the same key twice returns the first result (ARCH §5.3 IdempotencyKey, §8; BP §31.2; REL-003, REL-008; PAY-002).
+model IdempotencyKey {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Who the key belongs to, e.g. a user ID, so keys of different callers never collide (BP §31.2; REL-008).
+  scope          String
+  /// Operation, e.g. booking.create, payment.initiate, quote.accept (REL-008).
+  operation      String
+  /// Client-supplied Idempotency-Key header value (BP §31.2; REL-008).
+  key            String
+  /// Hash of the request body; the same key with a different body is refused (BP §31.2; REL-008).
+  requestHash    String   @map("request_hash")
+  /// Stored response status; null while the first request is still running (REL-008; REL-006 pending state).
+  responseStatus Int?     @map("response_status")
+  /// Stored response body (REL-008).
+  responseBody   Json?    @map("response_body")
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// When the key may be purged; retention is a technical setting of T2.2 (BP §31.2; REL-008).
+  expiresAt      DateTime @map("expires_at") @db.Timestamptz(3)
+
+  @@unique([scope, operation, key])
+  @@index([expiresAt])
+  @@map("idempotency_key")
+}

@@ -15,9 +15,11 @@
   },
   "dependencies": {
     "@kaamkaro/i18n": "workspace:*",
+    "@kaamkaro/ui": "workspace:*",
     "expo": "catalog:",
     "expo-build-properties": "catalog:",
     "expo-dev-client": "catalog:",
+    "expo-font": "58.0.9",
     "react": "catalog:",
     "react-native": "catalog:"
   },

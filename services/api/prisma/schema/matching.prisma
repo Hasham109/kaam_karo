@@ -1,0 +1,56 @@
+// ============================================================================
+// Module M8 matching — Matching. Owner: A05 (matching-trust).
+// ARCH §4 M8, §9; BP §54, §61, §66, §68; D-005 (customer chooses), D-020.
+// Table: match_candidate. Weights and fairness caps live in config (D-010).
+// ============================================================================
+
+/// Hard eligibility result (BP §54.1 rules 73–79; D-020 balance rule; MATCH-ELIG-073…079).
+enum EligibilityResult {
+  ELIGIBLE
+  INELIGIBLE
+
+  @@map("eligibility_result")
+}
+
+/// Availability result for the requested time: available, may receive it for later confirmation, or not available (BP §54.1 rule 76; MATCH-ELIG-076).
+enum AvailabilityCheck {
+  AVAILABLE
+  LATER_CONFIRMATION
+  UNAVAILABLE
+
+  @@map("availability_check")
+}
+
+/// One supplier evaluated for one request in one ranking run (BP §66 Match Candidate; ARCH §9; MATCH-ELIG-073…079, MATCH-SCORE-001…013).
+model MatchCandidate {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Request; ref intake.customer_request by ID (BP §66 "request"; INFRA-001).
+  requestId         String            @map("request_id") @db.Uuid
+  /// Supplier; ref profiles.provider_profile by ID (BP §66 "supplier"; INFRA-001).
+  providerProfileId String            @map("provider_profile_id") @db.Uuid
+  /// Hard-filter result (BP §66 "eligibility result"; BP §54.1).
+  eligibility       EligibilityResult
+  /// Failed hard-rule codes, e.g. BP §54.1 rule numbers or UNPAID_COMMISSION; never shown to the customer (BP §54.1; D-020; MATCH-ELIG-073…079).
+  ineligibleReasons String[]          @map("ineligible_reasons")
+  /// Distance in metres (BP §66 "distance/ETA"; MATCH-SCORE-001; LOC-GEO-005).
+  distanceMeters    Int?              @map("distance_meters")
+  /// Estimated travel time in seconds (BP §66 "distance/ETA"; MATCH-SCORE-001; LOC-GEO-005).
+  etaSeconds        Int?              @map("eta_seconds")
+  /// Availability result (BP §66 "availability result"; MATCH-ELIG-076).
+  availability      AvailabilityCheck
+  /// "Why am I seeing this?" reasons (BP §54.3, §66 "match reason"; MATCH-EXPL-001).
+  matchReasons      Json?             @map("match_reasons")
+  /// Score from the configured signals; weights from config (BP §54.2; MATCH-SCORE-001…013; D-010).
+  score             Decimal?          @db.Decimal(12, 6)
+  /// Position shown to the customer; null when not shown (BP §54.2, §55.1; MATCH-FAIR-001…003).
+  rank              Int?
+  /// Ranking version stamped on the run (BP §66 "ranking version"; ARCH §4 M8).
+  rankingVersion    String            @map("ranking_version")
+  /// Row creation time = evaluation time (technical field, ARCH §5; BP §25).
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([requestId])
+  @@index([providerProfileId])
+  @@map("match_candidate")
+}

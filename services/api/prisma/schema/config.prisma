@@ -1,0 +1,40 @@
+// ============================================================================
+// Module M17 config — Configurable rules store. Owner: A03 (catalog-config).
+// ARCH §4 M17, §5.3 (ConfigRule), §19; BP §42, §64; CFG-RULE-001…012.
+// Table: config_rule. Values are seeded by T2.6 (decided values cite their D-number;
+// undecided values are null + TODO(OWNER)). This migration seeds nothing.
+// ============================================================================
+
+/// Scope a config value applies to (ARCH §5.3 "scope = global/city/category/service"; BP §42, §64).
+enum ConfigScope {
+  GLOBAL
+  CITY
+  CATEGORY
+  SERVICE
+
+  @@map("config_scope")
+}
+
+/// APPEND-ONLY versioned configurable rule value: a change is a new row, never an edit, and effective_from is never back-dated (CHECK) (ARCH §5.3; BP §26, §42, §64; CFG-RULE-001…012). Two-person approval columns wait for OQ-076 and can be added as nullable columns.
+model ConfigRule {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Rule key, e.g. commission.rate (ARCH §5.3 "key", §19; BP §42).
+  key             String
+  /// Scope kind (ARCH §5.3 "scope"; BP §64).
+  scope           ConfigScope
+  /// ID of the city/category/service the value applies to; null for GLOBAL; refs catalog by ID (ARCH §5.3; BP §64; CFG-RULE-001).
+  scopeRefId      String?     @map("scope_ref_id") @db.Uuid
+  /// The value as JSON; null = not decided by the owner yet, TODO(OWNER), and the safe behaviour applies (ARCH §5.3 "value"; BP §42; CFG-RULE-001…012).
+  value           Json?
+  /// When the value takes effect, without a deploy (ARCH §5.3 "effective_from"; BP §42).
+  effectiveFrom   DateTime    @map("effective_from") @db.Timestamptz(3)
+  /// Staff user who changed it; the change is also audited (ARCH §5.3 "changed_by"; BP §26; SEC-BASE-010).
+  changedByUserId String?     @map("changed_by_user_id") @db.Uuid
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([key, scope, effectiveFrom], where: raw("scope_ref_id IS NULL"), map: "config_rule_global_key")
+  @@unique([key, scope, scopeRefId, effectiveFrom], where: raw("scope_ref_id IS NOT NULL"), map: "config_rule_scoped_key")
+  @@map("config_rule")
+}

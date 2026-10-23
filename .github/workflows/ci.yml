@@ -42,6 +42,52 @@ jobs:
       - name: CI guards
         run: pnpm run guards
 
+  # T2.3 (DATA-001, DATA-004, LEDGER-005, PAY-003; BP §26): apply every migration to a fresh
+  # PostGIS database, then prove comments, no drift, append-only grants/triggers and CHECKs.
+  db-schema:
+    name: Database schema (migrate + append-only tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgis/postgis:18-3.6
+        env:
+          POSTGRES_USER: kaamkaro
+          POSTGRES_PASSWORD: ci-only-not-a-secret
+          POSTGRES_DB: kaamkaro_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U kaamkaro -d kaamkaro_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      APP_ENV: test
+      # Owner (migrations) and API login are different roles (BP §26, §29; SEC-REVIEW-T2.3 #1).
+      MIGRATION_DATABASE_URL: postgresql://kaamkaro:ci-only-not-a-secret@localhost:5432/kaamkaro_ci?schema=public
+      DATABASE_URL: postgresql://kaamkaro_api:ci-only-app-login@localhost:5432/kaamkaro_ci?schema=public
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+      - name: Validate schema
+        run: pnpm --filter @kaamkaro/api db:validate
+      - name: Bootstrap extension and roles (as in staging/production; infra/db/bootstrap.sql)
+        run: >-
+          psql "postgresql://kaamkaro:ci-only-not-a-secret@localhost:5432/kaamkaro_ci"
+          -v ON_ERROR_STOP=1 -v app_login=kaamkaro_api -v app_password=ci-only-app-login
+          -f infra/db/bootstrap.sql
+      - name: Apply migrations (owner login)
+        run: pnpm --filter @kaamkaro/api db:deploy
+      - name: DB tests through the real non-owner API login (comments, drift, privileges, triggers, CHECKs)
+        run: pnpm --filter @kaamkaro/api test:db
+
   secret-scan:
     name: Secret scan (gitleaks)
     runs-on: ubuntu-latest

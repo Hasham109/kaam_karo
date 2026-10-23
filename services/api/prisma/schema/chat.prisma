@@ -1,0 +1,55 @@
+// ============================================================================
+// Module M13 chat — Communication. Owner: A10 (comms-notify-reviews).
+// ARCH §4 M13; BP §20, §25, §82.
+// Tables: conversation, message. Masked calling is a CallRelay interface, no table (CHAT-002; D-009).
+// ============================================================================
+
+/// Delivery/moderation state of a message; content is checked before it reaches the other party (BP §20; REQ-AI-009; CHAT-003; ABUSE-008).
+enum MessageModerationStatus {
+  PENDING
+  DELIVERED
+  BLOCKED
+
+  @@map("message_moderation_status")
+}
+
+/// In-app chat channel bound to one booking's participants (BP §20, §25 Conversation "booking participants"; CHAT-001).
+model Conversation {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Booking whose customer and provider take part; ref booking.booking by ID (BP §25; CHAT-001).
+  bookingId String    @unique @map("booking_id") @db.Uuid
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Messages (BP §25 Message "conversation").
+  messages  Message[]
+
+  @@map("conversation")
+}
+
+/// One chat message (BP §20, §25 Message; CHAT-001, CHAT-003).
+model Message {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Conversation (BP §25 Message "conversation").
+  conversationId    String                  @map("conversation_id") @db.Uuid
+  /// Sender; ref identity.user_account by ID (BP §20; CHAT-001).
+  senderUserId      String                  @map("sender_user_id") @db.Uuid
+  /// Sender role (BP §20; CHAT-001).
+  senderRole        ActorRole               @map("sender_role")
+  /// Message text; phone numbers are not exposed (BP §20; CHAT-001; ABUSE-006).
+  body              String?
+  /// Attachment; ref media.media_object by ID; size/type-limited and scanned (BP §20; CHAT-003).
+  attachmentMediaId String?                 @map("attachment_media_id") @db.Uuid
+  /// Moderation/delivery state (BP §20; REQ-AI-009).
+  moderationStatus  MessageModerationStatus @default(PENDING) @map("moderation_status")
+  /// When it was sent (BP §20; NOTIF-007).
+  sentAt            DateTime                @default(now()) @map("sent_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt         DateTime                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Relation to the conversation (BP §25).
+  conversation      Conversation            @relation(fields: [conversationId], references: [id], onDelete: Restrict)
+
+  @@index([conversationId, sentAt])
+  @@map("message")
+}

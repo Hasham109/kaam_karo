@@ -1,0 +1,127 @@
+// ============================================================================
+// Module M5 availability — Availability & Service Area. Owner: A05 (matching-trust).
+// ARCH §4 M5, §6.5; BP §25, §59, §66.
+// Tables: availability_rule, service_area, provider_live_status.
+// ============================================================================
+
+/// Kind of availability rule (BP §59.1 weekly hours and breaks, §59.2 date-specific overrides; AVAIL-001…003).
+enum AvailabilityRuleKind {
+  WEEKLY_HOURS
+  BREAK
+  DATE_OVERRIDE
+
+  @@map("availability_rule_kind")
+}
+
+/// Date-specific override type, exact list of BP §59.2 (AVAIL-003; meaning of LIMITED is open, OQ-071).
+enum DateOverrideKind {
+  OPEN
+  CLOSED
+  LIMITED
+  FULLY_BOOKED
+  SPECIAL_HOURS
+
+  @@map("date_override_kind")
+}
+
+/// Service area kind: radius around a point or an active zone (BP §59.1 "preferred service areas and radius"; AVAIL-005).
+enum ServiceAreaKind {
+  RADIUS
+  ZONE
+
+  @@map("service_area_kind")
+}
+
+/// Provider live availability status, exact list of BP §59.3 (ARCH §6.5; AVAIL-007).
+enum AvailabilityStatus {
+  ONLINE_AVAILABLE
+  BUSY
+  OFFLINE
+  SCHEDULED_ONLY
+  EMERGENCY_AVAILABLE
+
+  @@map("availability_status")
+}
+
+/// When a provider serves: weekly schedule, breaks and date-specific overrides (BP §25 Availability, §59, §66 Availability Rule; AVAIL-001…004).
+model AvailabilityRule {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Provider; ref profiles.provider_profile by ID (BP §66 "provider"; INFRA-001).
+  providerProfileId String               @map("provider_profile_id") @db.Uuid
+  /// Rule kind (BP §66 "normal schedule, exceptions, date-specific slots").
+  kind              AvailabilityRuleKind
+  /// ISO day of week 1 = Monday … 7 = Sunday for weekly hours and breaks (BP §59.1 "weekly working hours by day"; AVAIL-001, AVAIL-002).
+  dayOfWeek         Int?                 @map("day_of_week") @db.SmallInt
+  /// Calendar date for a date override (BP §59.2; AVAIL-003).
+  date              DateTime?            @db.Date
+  /// Override type for DATE_OVERRIDE rows (BP §59.2; AVAIL-003).
+  overrideKind      DateOverrideKind?    @map("override_kind")
+  /// Start time of the slot, Pakistan local time (BP §59.1, §59.2; I18N-007).
+  startTime         DateTime?            @map("start_time") @db.Time(0)
+  /// End time of the slot, Pakistan local time (BP §59.1, §59.2; I18N-007).
+  endTime           DateTime?            @map("end_time") @db.Time(0)
+  /// Zone the rule applies to; ref catalog.service_zone by ID (BP §66 Availability Rule "zone").
+  serviceZoneId     String?              @map("service_zone_id") @db.Uuid
+  /// Service the rule applies to; null = all services; ref catalog.service by ID (BP §25 Availability "provider/service").
+  serviceId         String?              @map("service_id") @db.Uuid
+  /// Emergency availability flag (BP §59.1, §66 "emergency flag"; AVAIL-004).
+  isEmergency       Boolean              @default(false) @map("is_emergency")
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt         DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version           Int                  @default(1)
+
+  @@index([providerProfileId, kind])
+  @@map("availability_rule")
+}
+
+/// Where a provider serves: radius around a point or an active zone, inside active zones only (BP §25 Service Area, §59.1; AVAIL-005; MATCH-ELIG-075; CFG-RULE-006).
+model ServiceArea {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                String                                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Provider; ref profiles.provider_profile by ID (BP §25 "provider + geographic scope"; INFRA-001).
+  providerProfileId String                                @map("provider_profile_id") @db.Uuid
+  /// Area kind (BP §59.1; AVAIL-005).
+  kind              ServiceAreaKind
+  /// Centre point for RADIUS areas, WGS84 PostGIS geography (BP §25 "geographic scope", §59.1).
+  center            Unsupported("geography(Point,4326)")?
+  /// Radius in metres for RADIUS areas; limits from config (BP §59.1; CFG-RULE-006).
+  radiusMeters      Int?                                  @map("radius_meters")
+  /// Zone for ZONE areas; ref catalog.service_zone by ID (BP §59.1; AVAIL-005).
+  serviceZoneId     String?                               @map("service_zone_id") @db.Uuid
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt         DateTime                              @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt         DateTime                              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version           Int                                   @default(1)
+
+  @@index([providerProfileId])
+  @@index([center], type: Gist)
+  @@map("service_area")
+}
+
+/// A provider's one live status and capacity limit (BP §59.1 "maximum active jobs", §59.3; ARCH §6.5; AVAIL-006, AVAIL-007; MATCH-ELIG-079).
+model ProviderLiveStatus {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Provider; ref profiles.provider_profile by ID (BP §59.3; INFRA-001).
+  providerProfileId String             @unique @map("provider_profile_id") @db.Uuid
+  /// Current live status; a new provider starts Offline (BP §59.3; AVAIL-007).
+  status            AvailabilityStatus @default(OFFLINE)
+  /// Maximum active jobs; reaching it sets Busy; null = no capacity rule (BP §59.1; AVAIL-006; MATCH-ELIG-079).
+  maxActiveJobs     Int?               @map("max_active_jobs")
+  /// When the status last changed (BP §59.3; HEALTH-019).
+  statusChangedAt   DateTime           @default(now()) @map("status_changed_at") @db.Timestamptz(3)
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt         DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version           Int                @default(1)
+
+  @@map("provider_live_status")
+}

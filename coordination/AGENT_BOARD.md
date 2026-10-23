@@ -5,7 +5,9 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 ## Sync 2026-10-23
 - T2.1 DONE: QA PASS (docs/qa/T2.1-qa.md), SEC PASS after re-review 1 (docs/security/SEC-REVIEW-T2.1.md). Follow-ups due at Phase 2 gate: SEC #3, #6, #7, #9–#12, #14; QA F-04–F-06; first GitHub run of android-manifest job; Docker smoke test.
 - T1.1, T1.2, T1.3, T1.5 DONE: QA PASS (docs/qa/T1.1-1.3-qa.md re-check 2), SEC PASS (docs/security/SEC-REVIEW-T1.1-1.3.md re-review 1). Owner decision D-030 recorded. Open for owner: OQ-039…OQ-078. Leftovers for A14 (T1.4): F-03 shared copy catalogues, G9 No-show Urdu verb. A15 follow-up: permission policy v1.1 (no Partner location until OQ-025), KK-T5 threat.
-- T2.3 (A01) and T0.6 (A14) running in parallel.
+- T2.3 DONE: QA PASS (docs/qa/T2.3-qa.md), SEC PASS re-review 1 (docs/security/SEC-REVIEW-T2.3.md); test:db 49/49 on real Postgres via non-owner login. Follow-ups BUG-0001…0005 (A01, before T6.x). Local kaamkaro_dev DB still has the pre-fix migration (reset needs owner OK).
+- T0.6 BLOCKED-DEVICE: code QA PASS (docs/qa/T0.6-qa.md); device run needs JDK 17 + phone/emulator (owner).
+- Next: T2.2 (A01) + T2.6 (A03) in parallel, then T2.4 (A02), then T2.5.
 
 ## Sync 2026-10-22
 - Phase 0: T0.1–T0.5 DONE (QA PASS). T0.6 unblocked: owner chose Infinix Note 40 (D-027); it needs the Expo dev build from T2.1. Gate G0 met: coding may start (T2.1, T1.4, T1.1–T1.3).
@@ -13,7 +15,7 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 | Agent | Subagent file | Now doing (task) | Status | Branch | Blocked by | Next planned | Last update (UTC) |
 |---|---|---|---|---|---|---|---|
 | A00 | main session | Phase 0 T0.1–T0.3 | DONE | — | — | Owner answers (OQ-014…033), then T1.x / T2.1 | 2026-10-22 |
-| A01 | platform-devops | T2.1 Monorepo, CI, envs (PLAT-001, INFRA-001, INFRA-005, REL-011, SEC-BASE-001/008/011, PERM-006) | DONE | t2.1-monorepo | — | T2.2 | 2026-10-23 |
+| A01 | platform-devops | T2.3 DB schema v1 — review fixes done (SEC-REVIEW-T2.3 #1–#9, #11–#17, #19; QA 02–04); test:db 49/49 on real Postgres via non-owner login; A15/A16 re-review requested | DONE | t2.1-monorepo | — | T2.2, T2.7 | 2026-10-23 |
 | A02 | identity-profiles | — | IDLE | — | — | T2.4 | — |
 | A03 | catalog-config | — | IDLE | — | — | T2.6 | — |
 | A04 | booking-quotes | — | IDLE | — | — | T3.4 | — |
@@ -26,7 +28,7 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 | A11 | customer-app | T1.1 Screen specs C01–C42 — SEC-REVIEW fixes #3 #6 #9–#14 #18–#20 done, A15 re-check requested | DONE | t2.1-monorepo | — | T3.8 | 2026-10-23 |
 | A12 | partner-app | T1.2 Screen specs P01–P26 — review fixes QA F-01/F-02/F-05 + SEC #2/#6/#7/#10/#11/#13/#21/#23 done (UX-SCREEN-002/003) | DONE | t2.1-monorepo | — | T4.1 | 2026-10-23 |
 | A13 | admin-portal | T1.3 Admin screen specs A01–A26 + sub-role access matrix (OPS-ADMIN-001…026, ADMIN-ROLE-001…008, ROLE-003, UX-SCREEN-003, SEC-AUTH-005) | DONE | t2.1-monorepo (docs only) | — | T5.1 (T1.3 QA PASS; SEC fixes #1,4,5,6,8,15-18,22,24,25 + QA F-04 done, A15 re-review pending) | 2026-10-23 |
-| A14 | i18n-a11y | — | IDLE | — | — | T0.6 (on Infinix Note 40, after T2.1) | 2026-10-22 |
+| A14 | i18n-a11y | T0.6 Urdu Nastaliq smoke test (I18N-001…004, 006, 007, 008, A11Y-001, 002, 004) — code done, device run PENDING | IN_REVIEW (BLOCKED-DEVICE) | t2.1-monorepo | Device run: Infinix Note 40 via USB or emulator + JDK 17 (docs/qa/urdu-smoke/README.md) | T1.4 | 2026-10-23 |
 | A15 | security-reviewer | T0.4 Permission & threat policy | DONE | — | — | Rename OQ-P1…P6 → OQ-023…028 in policy; T2.8 | 2026-10-22 |
 | A16 | qa-tester | T0.5 Test strategy + device matrix | DONE | — | — | T3.12 | 2026-10-22 |
 | A17 | bug-hunter | — | IDLE | — | — | first sweep after Phase 2 | — |

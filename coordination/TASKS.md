@@ -11,7 +11,7 @@ Acceptance criteria and BP refs per task: docs/implementation.md §6 (same task 
 | T0.3 | Copy ARCH §21 conflicts and §22 decisions into `CONFLICTS.md` / `DECISIONS.md` (record D-001, D-002, D-003, D-005, D-006, D-007, D-014 as Accepted 2026-10-22); record D-004, D-015, D-016, D-018, D-019 and the D-017 threshold as Accepted too; record D-020 and D-021 Accepted too; ask the owner the rest of D-017 and D-022 | A00 | T0.1 | DONE | handoffs/T-0.1-0.3.md |
 | T0.4 | Permission & threat policy v1 | A15 | T0.1 | DONE | handoffs/T-0.4.md |
 | T0.5 | Test strategy + device matrix | A16 | T0.2 | DONE | handoffs/T-0.5.md |
-| T0.6 | **Urdu Nastaliq smoke test** (condition of D-001): one Expo dev-build screen with Noto Nastaliq Urdu, RTL layout, mixed Urdu/English label, a list, a bottom sheet and a text input, run on the cheapest phone in the device matrix | A14 + A01 | T0.5 | CLAIMED (phone: Infinix Note 40, D-027) | — |
+| T0.6 | **Urdu Nastaliq smoke test** (condition of D-001): one Expo dev-build screen with Noto Nastaliq Urdu, RTL layout, mixed Urdu/English label, a list, a bottom sheet and a text input, run on the cheapest phone in the device matrix | A14 + A01 | T0.5 | BLOCKED-DEVICE (code + tests done; device run PENDING: no phone/emulator/JDK 17 on A14 machine) | handoffs/T-0.6.md |
 | T1.1 | Screen specs for C01–C42 (fields, states: loading/empty/success/error/pending) | A11 + A00 | T0.2 | DONE | handoffs/T-1.1.md |
 | T1.2 | Screen specs for P01–P26 | A12 + A00 | T0.2 | DONE | handoffs/T-1.2.md |
 | T1.3 | Screen specs for A01–A26 with sub-role access per screen | A13 + A00 | T0.2 | DONE | handoffs/T-1.3.md |
@@ -19,7 +19,7 @@ Acceptance criteria and BP refs per task: docs/implementation.md §6 (same task 
 | T1.5 | Flow maps: request → match → book/quote → job → pay → review; supply gap; dispute | A00 | T1.1–T1.3 | DONE | handoffs/T-1.5.md |
 | T2.1 | Monorepo, CI (build/lint/typecheck/test), envs, secrets, Sentry, health check | A01 | G0 | DONE | handoffs/T-2.1.md |
 | T2.2 | Platform lib: config loader, error envelope, idempotency middleware, outbox + worker, append-only audit | A01 | T2.1 | TODO | — |
-| T2.3 | DB schema v1 for all ARCH §5 entities (technical fields per ARCH §5) + migrations | A01 with each owner | T2.1 | CLAIMED | — |
+| T2.3 | DB schema v1 for all ARCH §5 entities (technical fields per ARCH §5) + migrations | A01 with each owner | T2.1 | DONE | handoffs/T-2.3.md |
 | T2.4 | Identity: phone OTP login (D-002) with fake `OtpSender`, OTP expiry + attempt limits + resend cooldown (values in config, `TODO(OWNER)`), sessions, roles, admin sub-roles, MFA for admin | A02 | T2.2 | TODO | — |
 | T2.5 | Profiles + addresses + snapshot helper + favorites | A02 | T2.4 | TODO | — |
 | T2.6 | Catalog seed from BP §63 (all inactive) + launch-family flags + `ConfigRule` store + cities: **Lahore** `is_listed = true, is_active = true` (D-007); other Pakistani cities `is_listed = true, is_active = false`; whole Lahore seeded as one active service zone (D-019); provider radius/areas still work inside it (BP §59) | A03 | T2.3 | TODO | — |

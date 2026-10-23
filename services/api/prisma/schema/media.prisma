@@ -1,0 +1,105 @@
+// ============================================================================
+// Module M14 media — Media. Owner: A08 (media).
+// ARCH §4 M14, §5.3 (MediaObject), §11; BP §20, §74, §76; D-011 (limits/retention open).
+// Table: media_object. Files live in a private S3-compatible bucket, served by signed URLs (D-001; INFRA-003).
+// ============================================================================
+
+/// Media kind (ARCH §5.3 "kind = audio/video/photo/document"; BP §76).
+enum MediaKind {
+  AUDIO
+  VIDEO
+  PHOTO
+  DOCUMENT
+
+  @@map("media_kind")
+}
+
+/// Upload state of the object; a failed upload never loses the draft (ARCH §4 M14 "upload sessions"; MEDIA-009).
+enum MediaUploadStatus {
+  PENDING
+  UPLOADED
+  FAILED
+
+  @@map("media_upload_status")
+}
+
+/// Scan/validation state (ARCH §5.3 "scan status"; BP §20 "scanned/validated"; CHAT-003).
+enum MediaScanStatus {
+  PENDING
+  CLEAN
+  REJECTED
+
+  @@map("media_scan_status")
+}
+
+/// What a media file is for (BP §29 least privilege, §76; INFRA-003). Retention per purpose comes from config (D-011).
+enum MediaPurpose {
+  CHAT
+  REQUEST_ATTACHMENT
+  VOICE_RECORDING
+  VERIFICATION_DOCUMENT
+  PAYMENT_PROOF
+  DISPUTE_EVIDENCE
+  PROFILE_PHOTO
+  FARE_EVIDENCE
+  COMPLETION_EVIDENCE
+  SERVICE_IMAGE
+
+  @@map("media_purpose")
+}
+
+/// Access class of a media file (BP §29, §75 item 97; ABUSE-010; INFRA-003).
+enum MediaSensitivity {
+  STANDARD
+  RESTRICTED
+
+  @@map("media_sensitivity")
+}
+
+/// One stored media file with limits, thumbnail, transcript and retention metadata (ARCH §5.3 MediaObject; BP §20, §76; MEDIA-001…009; INFRA-003).
+model MediaObject {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Uploading user; ref identity.user_account by ID (BP §76; INFRA-003 access control).
+  ownerUserId      String            @map("owner_user_id") @db.Uuid
+  /// Kind (ARCH §5.3; BP §76).
+  kind             MediaKind
+  /// Why the file exists; set at upload and never changed (trigger); drives the signed-URL role check (BP §29, §76; INFRA-003; ADMIN-ROLE-004, ADMIN-ROLE-006).
+  purpose          MediaPurpose
+  /// RESTRICTED = verification documents and payment proofs: role-limited and every read is audited (CHECK ties it to purpose) (BP §29, §75 item 97; ABUSE-010; INFRA-003).
+  sensitivity      MediaSensitivity
+  /// MIME type, validated server-side (ARCH §5.3 "mime"; BP §20 "type-limited"; CHAT-003).
+  mimeType         String            @map("mime_type")
+  /// Size in bytes; maximum from config (ARCH §5.3 "size"; MEDIA-004; D-011).
+  sizeBytes        BigInt?           @map("size_bytes")
+  /// Duration in milliseconds for audio/video; maximum from config (ARCH §5.3 "duration"; MEDIA-001, MEDIA-002, MEDIA-004; D-011).
+  durationMs       Int?              @map("duration_ms")
+  /// Object key in the private bucket; never a public URL (D-001 storage; INFRA-003).
+  storageKey       String            @unique @map("storage_key")
+  /// Thumbnail object for a video (ARCH §5.3 "thumbnail ref"; MEDIA-005).
+  thumbnailMediaId String?           @map("thumbnail_media_id") @db.Uuid
+  /// Transcript reference from the SpeechToText interface (ARCH §5.3 "transcript ref"; MEDIA-006; D-009).
+  transcriptRef    String?           @map("transcript_ref")
+  /// Delete originals after this time; retention values from config (ARCH §5.3 "retention_until"; MEDIA-007; D-011).
+  retentionUntil   DateTime?         @map("retention_until") @db.Timestamptz(3)
+  /// Upload state (MEDIA-009).
+  uploadStatus     MediaUploadStatus @default(PENDING) @map("upload_status")
+  /// Scan state (ARCH §5.3; BP §20; CHAT-003).
+  scanStatus       MediaScanStatus   @default(PENDING) @map("scan_status")
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt        DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Time the stored file was deleted by retention; the row is kept for references (technical field, ARCH §5; MEDIA-007).
+  deletedAt        DateTime?         @map("deleted_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version          Int               @default(1)
+  /// Relation to the thumbnail object (MEDIA-005).
+  thumbnail        MediaObject?      @relation("MediaThumbnail", fields: [thumbnailMediaId], references: [id], onDelete: Restrict)
+  /// Objects that use this one as thumbnail (MEDIA-005).
+  thumbnailOf      MediaObject[]     @relation("MediaThumbnail")
+
+  @@index([ownerUserId])
+  @@index([retentionUntil])
+  @@map("media_object")
+}

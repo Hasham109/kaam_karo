@@ -11,6 +11,10 @@ packages:
 # @swc/core: its optional platform package already ships the binary; no script needed.
 allowBuilds:
   '@swc/core': false
+  # T2.3: Prisma's preinstall only checks the Node version; @prisma/engines' postinstall pre-downloads
+  # the schema engine, which the CLI also fetches on first use (checksum-verified by Prisma).
+  prisma: false
+  '@prisma/engines': false
 
 # Tracked dependency-vulnerability exceptions ONLY (SEC-BASE-008). Each GHSA here needs a row in
 # docs/security/dependency-exceptions.md (owner A15); no class-wide waivers in CI.
@@ -44,6 +48,10 @@ catalog:
   supertest: 7.3.1
   '@types/supertest': 7.2.1
   unplugin-swc: 2.0.0
+  # database (D-001: PostgreSQL + PostGIS, Prisma migrations; T2.3). Prisma 7 needs a driver adapter.
+  prisma: 7.10.1
+  '@prisma/client': 7.10.1
+  '@prisma/adapter-pg': 7.10.1
   '@swc/core': 1.16.20
   # contracts
   yaml: 2.9.1

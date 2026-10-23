@@ -1,0 +1,162 @@
+// ============================================================================
+// Module M16 support — Support & Disputes. Owner: A10 (comms-notify-reviews).
+// ARCH §4 M16, §6.1 fn¹; BP §12 C28/C29, §16, §25, §40, §61.3.
+// Tables: support_ticket, dispute, case_update. FAQ storage waits for OQ-056.
+// ============================================================================
+
+/// Support level L1–L5 (BP §40; SUP-002). L1 is self-help; tickets are handled from L2 up.
+enum SupportLevel {
+  L1
+  L2
+  L3
+  L4
+  L5
+
+  @@map("support_level")
+}
+
+/// Where a ticket came from (BP §12 C28/C29, §16 safety stop, §61.3 callback; OPS-ADMIN-012; OQ-021).
+enum TicketSource {
+  APP_TICKET
+  COMPLAINT
+  SAFETY_STOP
+  NO_SUPPLY_CALLBACK
+
+  @@map("ticket_source")
+}
+
+/// Ticket state: open until staff close it with a resolution note (BP §40; OPS-ADMIN-012).
+enum TicketStatus {
+  OPEN
+  CLOSED
+
+  @@map("ticket_status")
+}
+
+/// Dispute outcome stored on the dispute, not as a booking status (ARCH §6.1 fn¹; BP §15; SUP-003; OQ-009).
+enum DisputeOutcome {
+  RESOLVED
+  REFUNDED
+  REWORK
+  CLOSED
+
+  @@map("dispute_outcome")
+}
+
+/// Customer/provider support case (BP §25 Support Ticket "user + booking where relevant", §40; SUP-001, SUP-002, SUP-005; OPS-ADMIN-012).
+model SupportTicket {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Requester; ref identity.user_account by ID (BP §25 "user").
+  requesterUserId  String       @map("requester_user_id") @db.Uuid
+  /// Requester role, customer or provider (BP §25 "customer/provider support case").
+  requesterRole    ActorRole    @map("requester_role")
+  /// Booking, where relevant; ref booking.booking by ID (BP §25 "booking where relevant").
+  bookingId        String?      @map("booking_id") @db.Uuid
+  /// Category code from config; null = uncategorised while OQ-018 is open (BP §40, §42; CFG-RULE-012; REQ-AI-014).
+  categoryCode     String?      @map("category_code")
+  /// Current level; the owning admin team follows the level (BP §40; SUP-002).
+  level            SupportLevel
+  /// Assigned staff user; ref identity.user_account by ID (BP §40; OPS-ADMIN-012).
+  assignedToUserId String?      @map("assigned_to_user_id") @db.Uuid
+  /// Source of the ticket (BP §12, §16, §61.3; OQ-021).
+  source           TicketSource
+  /// Safety-flagged ticket from an emergency/unsafe stop (BP §16; BOOK-CANCEL-006).
+  isSafety         Boolean      @default(false) @map("is_safety")
+  /// Problem description (BP §12 C28, C29; SUP-005).
+  description      String
+  /// Evidence; refs media.media_object by ID (BP §12 C29; SUP-005).
+  evidenceMediaIds String[]     @map("evidence_media_ids") @db.Uuid
+  /// Ticket state (BP §40; OPS-ADMIN-012).
+  status           TicketStatus @default(OPEN)
+  /// When it was closed (BP §40; CFG-RULE-012 SLA).
+  closedAt         DateTime?    @map("closed_at") @db.Timestamptz(3)
+  /// Resolution note on close (BP §40; OPS-ADMIN-012).
+  resolutionNote   String?      @map("resolution_note")
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt        DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version; "taken by another agent" check (technical field, ARCH §5; BP §31.2).
+  version          Int          @default(1)
+  /// Disputes linked to this ticket (BP §40).
+  disputes         Dispute[]
+  /// Case updates (BP §24 "case update").
+  updates          CaseUpdate[]
+
+  @@index([status, level, createdAt])
+  @@index([requesterUserId])
+  @@map("support_ticket")
+}
+
+/// Formal transaction issue on a booking with an outcome (BP §25 Dispute "booking + parties", §16, §40; ARCH §6.1 fn¹; SUP-003, SUP-004; BOOK-STATUS-012).
+model Dispute {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Disputed booking; ref booking.booking by ID (BP §25 "booking"; SUP-003).
+  bookingId        String          @map("booking_id") @db.Uuid
+  /// User who opened it; ref identity.user_account by ID (BP §25 "parties").
+  openedByUserId   String          @map("opened_by_user_id") @db.Uuid
+  /// Party who opened it (BP §25 "parties"; OPS-ADMIN-010).
+  openedByRole     ActorRole       @map("opened_by_role")
+  /// Current level L2–L5 (BP §40; SUP-002).
+  level            SupportLevel
+  /// Issue type code chosen in the structured complaint flow (BP §12 C29; SUP-005).
+  issueType        String?         @map("issue_type")
+  /// Complaint text (BP §12 C29; SUP-005).
+  description      String
+  /// Evidence; refs media.media_object by ID (BP §12 C29; SUP-005).
+  evidenceMediaIds String[]        @map("evidence_media_ids") @db.Uuid
+  /// Raised by a safety stop (BP §16; BOOK-CANCEL-006).
+  isSafety         Boolean         @default(false) @map("is_safety")
+  /// Linked support ticket, if any (BP §40).
+  supportTicketId  String?         @map("support_ticket_id") @db.Uuid
+  /// Outcome; null while open (ARCH §6.1 fn¹; SUP-003).
+  outcome          DisputeOutcome?
+  /// Outcome reason; required with the outcome (CHECK) (BP §8.3; ROLE-003; SUP-003).
+  outcomeReason    String?         @map("outcome_reason")
+  /// Staff user who decided; ref identity.user_account by ID (BP §40; OPS-ADMIN-010).
+  decidedByUserId  String?         @map("decided_by_user_id") @db.Uuid
+  /// Decision time (SUP-003).
+  decidedAt        DateTime?       @map("decided_at") @db.Timestamptz(3)
+  /// Row creation time = opened at (technical field, ARCH §5; BP §25).
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt        DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version; "outcome already recorded" check (technical field, ARCH §5; BP §31.2).
+  version          Int             @default(1)
+  /// Relation to the ticket (BP §40).
+  supportTicket    SupportTicket?  @relation(fields: [supportTicketId], references: [id], onDelete: Restrict)
+  /// Case updates (BP §24 "case update").
+  updates          CaseUpdate[]
+
+  @@index([bookingId])
+  @@index([outcome, level])
+  @@map("dispute")
+}
+
+/// Case update on a ticket or dispute, sent to the parties (BP §24 "case update", §80; NOTIF-007; OPS-ADMIN-010, OPS-ADMIN-012). Exactly one of support_ticket_id / dispute_id is set (CHECK).
+model CaseUpdate {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Ticket the update belongs to (BP §40).
+  supportTicketId String?        @map("support_ticket_id") @db.Uuid
+  /// Dispute the update belongs to (BP §40).
+  disputeId       String?        @map("dispute_id") @db.Uuid
+  /// Author; ref identity.user_account by ID (OPS-ADMIN-010 "author").
+  authorUserId    String         @map("author_user_id") @db.Uuid
+  /// Author role (OPS-ADMIN-010).
+  authorRole      ActorRole      @map("author_role")
+  /// Update text; must not contain payment instructions (BP §24, §30; NOTIF-007).
+  text            String
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Relation to the ticket (BP §40).
+  supportTicket   SupportTicket? @relation(fields: [supportTicketId], references: [id], onDelete: Restrict)
+  /// Relation to the dispute (BP §40).
+  dispute         Dispute?       @relation(fields: [disputeId], references: [id], onDelete: Restrict)
+
+  @@index([supportTicketId])
+  @@index([disputeId])
+  @@map("case_update")
+}

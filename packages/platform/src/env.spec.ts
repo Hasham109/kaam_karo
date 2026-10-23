@@ -105,3 +105,31 @@ describe('[SEC-BASE-011] server environment separation', () => {
     expect((error as EnvConfigError).problems).toHaveLength(3);
   });
 });
+
+describe('[DATA-004] API vs migration database login (T2.3; SEC-REVIEW-T2.3 #1)', () => {
+  it.each(['development', 'staging', 'production'])(
+    '[DATA-004] %s refuses DATABASE_URL equal to MIGRATION_DATABASE_URL',
+    (appEnv) => {
+      expect(() =>
+        loadServerEnv({
+          APP_ENV: appEnv,
+          DATABASE_URL: REAL_DB,
+          MIGRATION_DATABASE_URL: REAL_DB,
+          REDIS_URL: REAL_REDIS,
+          SENTRY_DSN: REAL_DSN,
+        }),
+      ).toThrow(/not the migration owner/);
+    },
+  );
+
+  it('[DATA-004] separate logins are accepted', () => {
+    const env = loadServerEnv({
+      APP_ENV: 'production',
+      DATABASE_URL: REAL_DB,
+      MIGRATION_DATABASE_URL: 'postgresql://owner:Pq7wK3zR@db.internal:5432/kaamkaro',
+      REDIS_URL: REAL_REDIS,
+      SENTRY_DSN: REAL_DSN,
+    });
+    expect(env.databaseUrl).toBe(REAL_DB);
+  });
+});

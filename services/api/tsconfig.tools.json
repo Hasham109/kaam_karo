@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "//": "T2.3: Prisma config, schema tools and DB tests. Tools run with Node 24 type stripping (erasable syntax, .ts imports).",
+  "compilerOptions": {
+    "target": "es2023",
+    "lib": ["es2023"],
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true
+  },
+  "include": ["prisma.config.ts", "prisma/tools", "prisma/tests-db", "vitest.db.config.ts"]
+}

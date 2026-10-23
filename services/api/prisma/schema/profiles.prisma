@@ -1,0 +1,117 @@
+// ============================================================================
+// Module M2 profiles — Profiles. Owner: A02 (identity-profiles).
+// ARCH §4 M2; BP §21, §25, §55.2, §66; D-004 (usual team size display).
+// Tables: customer_profile, provider_profile, address, favorite.
+// A booking never points at an address row: it stores a location snapshot (BP §21; PROF-ADDR-002).
+// ============================================================================
+
+/// Kind of saved-address label (BP §21 "Home/Office"; PROF-ADDR-001 Home, Work, custom).
+enum AddressLabelKind {
+  HOME
+  WORK
+  CUSTOM
+
+  @@map("address_label_kind")
+}
+
+/// Customer-specific information (BP §25 Customer Profile "belongs to User").
+model CustomerProfile {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Owning user; ref identity.user_account by ID, no FK (BP §25 "belongs to User"; INFRA-001).
+  userId    String     @unique @map("user_id") @db.Uuid
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version   Int        @default(1)
+  /// Saved addresses (BP §21, §25 Address "belongs to Customer").
+  addresses Address[]
+  /// Saved favorite providers (BP §66 Favorite; PROF-FAV-001).
+  favorites Favorite[]
+
+  @@map("customer_profile")
+}
+
+/// Provider identity, business and trust presentation (BP §25 Provider Profile, §23). Only the team leader (account holder) is verified (D-018; PROV-CREW-006).
+model ProviderProfile {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Owning user = the team leader; ref identity.user_account by ID, no FK (BP §25; D-018; INFRA-001).
+  userId        String     @unique @map("user_id") @db.Uuid
+  /// Business/company name for company or team listings (BP §22.1 Business Verified, §25 "business data"; TRUST-VER-003).
+  businessName  String?    @map("business_name")
+  /// Profile photo; ref media.media_object by ID (BP §23 "identity/business presentation"; BP §4.2 images).
+  photoMediaId  String?    @map("photo_media_id") @db.Uuid
+  /// Optional "usual team size" shown before an offer states crew size; never used for price (ARCH §5.6; D-004, D-018; OQ-045).
+  usualTeamSize Int?       @map("usual_team_size")
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt     DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version       Int        @default(1)
+  /// Customers who saved this provider (BP §66 Favorite).
+  favoritedBy   Favorite[]
+
+  @@map("provider_profile")
+}
+
+/// Saved customer address; copied into a location snapshot when used for a job (BP §21, §25 Address; PROF-ADDR-001…003).
+model Address {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                String                                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Owning customer profile (BP §25 Address "belongs to Customer").
+  customerProfileId String                                @map("customer_profile_id") @db.Uuid
+  /// Label kind: Home, Work or custom (BP §21; PROF-ADDR-001).
+  labelKind         AddressLabelKind                      @map("label_kind")
+  /// Custom label text when label_kind = CUSTOM (BP §21; PROF-ADDR-001).
+  customLabel       String?                               @map("custom_label")
+  /// City of the address; ref catalog.city by ID (BP §57.2; SCOPE-GEO-001).
+  cityId            String                                @map("city_id") @db.Uuid
+  /// Area/locality name; the level of detail a provider sees before the job needs more (BP §21; PROF-ADDR-004).
+  areaName          String?                               @map("area_name")
+  /// Readable address confirmed or typed by the customer; manual entry works without location permission (BP §21; LOC-GEO-004; PROF-ADDR-003).
+  addressText       String                                @map("address_text")
+  /// Map point WGS84 (PostGIS geography); null for manual-only addresses (BP §21, §57; LOC-GEO-004, LOC-GEO-006).
+  point             Unsupported("geography(Point,4326)")?
+  /// Maps place/address reference returned by GeoService (BP §66 Location Snapshot "place/address reference"; LOC-GEO-004).
+  placeRef          String?                               @map("place_ref")
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt         DateTime                              @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt         DateTime                              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Soft-delete time; deleting an address never changes booking snapshots (technical field, ARCH §5; BP §21, §26).
+  deletedAt         DateTime?                             @map("deleted_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version           Int                                   @default(1)
+  /// Relation to the customer profile (BP §25).
+  customerProfile   CustomerProfile                       @relation(fields: [customerProfileId], references: [id], onDelete: Restrict)
+
+  @@index([customerProfileId])
+  @@index([point], type: Gist)
+  @@map("address")
+}
+
+/// Provider saved by a customer for quick rebooking; a user action, not the "Customer Favorite" badge (BP §55.2, §66 Favorite; PROF-FAV-001).
+model Favorite {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// The customer (BP §66 Favorite "customer").
+  customerProfileId String          @map("customer_profile_id") @db.Uuid
+  /// The saved provider (BP §66 Favorite "provider").
+  providerProfileId String          @map("provider_profile_id") @db.Uuid
+  /// Optional private note by the customer (BP §66 Favorite "optional notes").
+  notes             String?
+  /// Created date (BP §66 Favorite "created date").
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Relation to the customer profile (BP §66).
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Restrict)
+  /// Relation to the provider profile (BP §66).
+  providerProfile   ProviderProfile @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+
+  @@unique([customerProfileId, providerProfileId])
+  @@index([providerProfileId])
+  @@map("favorite")
+}

@@ -1,0 +1,23 @@
+// ============================================================================
+// Kaam Karo — database schema v1 (T2.3; DATA-001; BP §25, §26, §66; D-001).
+// One file per owning module (ARCH §4). Rules for every file: prisma/README.md.
+//  - Every model, field and enum has a `///` doc comment citing BP §n, D-xxx or a
+//    requirement ID. `pnpm --filter @kaamkaro/api test` fails otherwise, and the
+//    same text is written to Postgres as COMMENT ON (prisma/tools/comments.ts).
+//  - Relations (FK constraints) only between models of the SAME module file.
+//    Cross-module references are plain UUID columns named `<thing>Id` (INFRA-001).
+//  - Money: BigInt PKR minor units (paisa), never floats (BP §26; I18N-007).
+// ============================================================================
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../../src/generated/prisma"
+  moduleFormat        = "cjs"
+  importFileExtension = "js"
+  // Partial unique indexes enforce "recorded once" rules at DB level (LEDGER-002, LEDGER-PAY-005).
+  previewFeatures     = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+}

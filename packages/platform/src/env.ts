@@ -142,6 +142,19 @@ export function loadServerEnv(source: EnvSource): ServerEnv {
     }
   }
 
+  // T2.3 (BP §26, §29; SEC-REVIEW-T2.3 #1): the API must not use the migration owner's login.
+  // MIGRATION_DATABASE_URL is read only by Prisma; the API reads DATABASE_URL.
+  const apiDbUrl = emptyToNull(source['DATABASE_URL']);
+  if (
+    appEnv !== 'test' &&
+    apiDbUrl !== null &&
+    apiDbUrl === emptyToNull(source['MIGRATION_DATABASE_URL'])
+  ) {
+    problems.push(
+      'DATABASE_URL must be the API login (member of kaamkaro_app), not the migration owner in MIGRATION_DATABASE_URL',
+    );
+  }
+
   if (problems.length > 0) throw new EnvConfigError(problems);
 
   return {

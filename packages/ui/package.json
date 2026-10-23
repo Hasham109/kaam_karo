@@ -2,18 +2,20 @@
   "name": "@kaamkaro/ui",
   "version": "0.0.0",
   "private": true,
-  "description": "SKELETON created by A01 in T2.1 (bootstrap grant). Owner: A14.",
+  "description": "Shared UI kit: design tokens, RTL helpers, bundled Urdu font (owner A14; T2.1 skeleton by A01).",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./assets/*": "./assets/*"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "assets"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -22,8 +24,12 @@
     "test": "vitest run"
   },
   "devDependencies": {
+    "@types/node": "catalog:",
     "eslint": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "dependencies": {
+    "@kaamkaro/i18n": "workspace:*"
   }
 }

@@ -18,11 +18,17 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
+      # API login role created by infra/db/init/10-bootstrap.sh (T2.3; non-owner member of kaamkaro_app).
+      APP_DB_USER: ${APP_DB_USER:?set APP_DB_USER in .env}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?set APP_DB_PASSWORD in .env}
     ports:
       - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
     volumes:
       # PostgreSQL 18+ images keep data under /var/lib/postgresql/<major>/.
       - postgres-data:/var/lib/postgresql
+      # T2.3 bootstrap (first start only; for an existing volume run infra/db/bootstrap.sql by hand).
+      - ./db/bootstrap.sql:/kaamkaro-db/bootstrap.sql:ro
+      - ./db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
       interval: 5s

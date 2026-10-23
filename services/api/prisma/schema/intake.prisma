@@ -1,0 +1,142 @@
+// ============================================================================
+// Module M7 intake — Request & AI Intake (voice uses the same records). Owner: A07 (ai-intake-voice).
+// ARCH §4 M7, §6.2, §10; BP §56, §66, §67, §77, §79.
+// Tables: customer_request, ai_interaction.
+// The voice module (BP §77) has no table of its own: voice turns are ai_interaction rows
+// (input_class VOICE_TRANSCRIPT) and recordings are media.media_object rows.
+// ============================================================================
+
+/// Customer request status (ARCH §6.2; BP §56, §66 "status", §79). Only the customer moves a request to SUBMITTED (BP §67, §77.3).
+enum RequestStatus {
+  COMPOSING
+  INTERPRETING
+  NEEDS_CLARIFICATION
+  AWAITING_CONFIRMATION
+  SUBMITTED
+  MATCHING
+  MATCHES_SHOWN
+  NO_SUPPLY
+
+  @@map("request_status")
+}
+
+/// Time suggestion offered to the customer: Now / Today / Later (BP §56.1 item 84; REQ-AI-004).
+enum RequestedTimeHint {
+  NOW
+  TODAY
+  LATER
+
+  @@map("requested_time_hint")
+}
+
+/// Class of input the AI received (BP §66 AI Interaction "prompt/input class"; OPS-ADMIN-026).
+enum AiInputClass {
+  TEXT
+  VOICE_TRANSCRIPT
+  PHOTO
+
+  @@map("ai_input_class")
+}
+
+/// Safety result of an AI step: content allowed or blocked by moderation/guards (BP §66 "safety/approval state", §67; REQ-AI-009, REQ-AI-010).
+enum AiSafetyState {
+  ALLOWED
+  BLOCKED
+
+  @@map("ai_safety_state")
+}
+
+/// Human approval of an AI suggestion; AI never acts without the user (BP §66 "safety/approval state", §67; REQ-AI-005; VOICE-003).
+enum AiApprovalState {
+  PENDING
+  CONFIRMED
+  REJECTED
+
+  @@map("ai_approval_state")
+}
+
+/// Smart customer request before a booking exists (BP §56, §66 Customer Request, §79; ARCH §6.2; REQ-AI-001…006).
+model CustomerRequest {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                  String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Customer; ref profiles.customer_profile by ID (BP §66 "customer"; INFRA-001).
+  customerProfileId   String             @map("customer_profile_id") @db.Uuid
+  /// Request status (BP §66 "status"; ARCH §6.2).
+  status              RequestStatus      @default(COMPOSING)
+  /// What the customer said or typed, in their words (BP §56.1 item 80, §66 "intent"; REQ-AI-001).
+  intentText          String?            @map("intent_text")
+  /// Mapped catalog service; ref catalog.service by ID; null until mapped (BP §66 "service"; REQ-AI-002, REQ-AI-007).
+  serviceId           String?            @map("service_id") @db.Uuid
+  /// Problem description (BP §66 "description").
+  description         String?
+  /// Structured AI interpretation validated against the closed schema (BP §66 "AI interpretation"; REQ-AI-007).
+  aiInterpretation    Json?              @map("ai_interpretation")
+  /// AI confidence of the service mapping, 0–1 (REQ-AI-002, REQ-AI-006; D-010 threshold open).
+  aiConfidence        Decimal?           @map("ai_confidence") @db.Decimal(5, 4)
+  /// Short supplier-ready summary the customer confirmed (BP §56.3; REQ-AI-005).
+  supplierSummary     String?            @map("supplier_summary")
+  /// Language of the summary (BP §78.3; REQ-AI-005).
+  summaryLanguage     AppLanguage?       @map("summary_language")
+  /// Attachments (photo, audio, video); refs media.media_object by ID (BP §66 "attachments", §76).
+  attachmentMediaIds  String[]           @map("attachment_media_ids") @db.Uuid
+  /// Confirmed service location; ref location.location_snapshot by ID (BP §56.1 item 83, §66 "location").
+  locationSnapshotId  String?            @map("location_snapshot_id") @db.Uuid
+  /// Now / Today / Later choice (BP §56.1 item 84, §66 "requested time").
+  requestedTimeHint   RequestedTimeHint? @map("requested_time_hint")
+  /// Start of the requested time window (BP §66 "requested time"; REQ-AI-004).
+  requestedWindowFrom DateTime?          @map("requested_window_from") @db.Timestamptz(3)
+  /// End of the requested time window (BP §66 "requested time"; REQ-AI-004).
+  requestedWindowTo   DateTime?          @map("requested_window_to") @db.Timestamptz(3)
+  /// Emergency request; only for services with emergency allowed (BP §66 "urgency", §59.3; CAT-SVC-004).
+  isEmergency         Boolean            @default(false) @map("is_emergency")
+  /// When the customer submitted; only the customer submits (BP §67, §77.3; ARCH §6.2; REQ-AI-005).
+  submittedAt         DateTime?          @map("submitted_at") @db.Timestamptz(3)
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt           DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt           DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version             Int                @default(1)
+  /// AI steps logged for this request (BP §66 AI Interaction "request/session").
+  aiInteractions      AiInteraction[]
+
+  @@index([customerProfileId, status])
+  @@map("customer_request")
+}
+
+/// Log of one important AI decision, incl. voice turns (BP §66 AI Interaction, §67, §77; REQ-AI-008; OPS-ADMIN-026).
+model AiInteraction {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Request the step belongs to (BP §66 "request/session").
+  requestId      String?          @map("request_id") @db.Uuid
+  /// Session reference when there is no request yet, e.g. a voice session (BP §66 "request/session", §77).
+  sessionRef     String?          @map("session_ref")
+  /// Model version used (BP §66 "model/service version"; REQ-AI-008).
+  modelVersion   String           @map("model_version")
+  /// Service/prompt version used, incl. guidance version (BP §66 "model/service version"; CAT-SVC-007; REQ-AI-008).
+  serviceVersion String?          @map("service_version")
+  /// Input class (BP §66 "prompt/input class").
+  inputClass     AiInputClass     @map("input_class")
+  /// Short summary of the output; no hidden reasoning, no secrets (BP §66 "output summary", §67).
+  outputSummary  String?          @map("output_summary")
+  /// Confidence of the output, 0–1 (BP §67; REQ-AI-006).
+  confidence     Decimal?         @db.Decimal(5, 4)
+  /// Safety state (BP §66 "safety/approval state"; REQ-AI-009).
+  safetyState    AiSafetyState    @map("safety_state")
+  /// Approval state by the human (BP §66, §67; REQ-AI-005).
+  approvalState  AiApprovalState  @default(PENDING) @map("approval_state")
+  /// Latency in milliseconds (BP §66 "latency/error metrics").
+  latencyMs      Int?             @map("latency_ms")
+  /// Error code when the step failed; failure is never fatal (BP §66 "latency/error metrics"; REQ-AI-012).
+  errorCode      String?          @map("error_code")
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt      DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Relation to the request (BP §66).
+  request        CustomerRequest? @relation(fields: [requestId], references: [id], onDelete: Restrict)
+
+  @@index([requestId])
+  @@map("ai_interaction")
+}

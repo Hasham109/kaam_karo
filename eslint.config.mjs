@@ -19,6 +19,7 @@ export default defineConfig(
     '**/.turbo/',
     '**/web-build/',
     '**/next-env.d.ts',
+    'services/api/src/generated/',
     'apps/*/android/',
     'apps/*/ios/',
     'docs/',
@@ -55,7 +56,13 @@ export default defineConfig(
 
   // RQ-002 item 2 (docs/qa/test-strategy.md §3, P4): no focused or skipped tests.
   {
-    files: ['**/*.spec.{ts,tsx}', '**/*.e2e-spec.ts', '**/*.test.{ts,tsx}', '**/__tests__/**'],
+    files: [
+      '**/*.spec.{ts,tsx}',
+      '**/*.e2e-spec.ts',
+      '**/*.db-spec.ts',
+      '**/*.test.{ts,tsx}',
+      '**/__tests__/**',
+    ],
     plugins: { vitest },
     rules: {
       ...vitest.configs.recommended.rules,

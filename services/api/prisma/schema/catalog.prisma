@@ -1,0 +1,253 @@
+// ============================================================================
+// Module M4 catalog — Catalog, cities and zones. Owner: A03 (catalog-config).
+// ARCH §4 M4, §5.3 (City, ServiceZone), §5.5; BP §4, §25, §57.2, §63, §64; D-007, D-019, D-024.
+// Tables: city, service_zone, category, service, catalog_activation, provider_service.
+// Seeds (Lahore active, D-024 families) belong to T2.6, not to this migration.
+// ============================================================================
+
+/// How a service price is expressed (BP §4.1, §17; ARCH §5.5; CAT-SVC-001; OQ-010).
+enum PriceModel {
+  FIXED
+  FROM
+  INSPECTION_QUOTE
+
+  @@map("price_model")
+}
+
+/// Which customer flows a service allows (BP §53; ARCH §5.5; CAT-SVC-002; OQ-010). Shared type, also used by booking.
+enum SellingMode {
+  INSTANT
+  CHOOSE_SUPPLIER
+  REQUEST_QUOTES
+
+  @@map("selling_mode")
+}
+
+/// Materials policy of a service (BP §4.2 "included, customer-provided or charged separately"; CAT-SVC-010).
+enum MaterialsPolicy {
+  INCLUDED
+  CUSTOMER_PROVIDED
+  CHARGED_SEPARATELY
+
+  @@map("materials_policy")
+}
+
+/// Pakistani city; a city can be listed without the marketplace being active there (BP §57.2; ARCH §5.3; SCOPE-GEO-001; D-007, D-019).
+model City {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Stable code used by seeds and config scopes (BP §57.2; SCOPE-GEO-001).
+  code               String              @unique
+  /// City name in English (BP §57.2, §78; I18N-006).
+  nameEn             String              @map("name_en")
+  /// City name in Urdu (BP §57.2, §78; I18N-006).
+  nameUr             String              @map("name_ur")
+  /// Shown in city selection (BP §57.2 "can exist in the product"; SCOPE-GEO-001; OPS-ADMIN-023).
+  isListed           Boolean             @default(false) @map("is_listed")
+  /// Marketplace active in this city (BP §57.2; SCOPE-GEO-001, SCOPE-GEO-002; D-007, D-019; OPS-ADMIN-023).
+  isActive           Boolean             @default(false) @map("is_active")
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt          DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version            Int                 @default(1)
+  /// Service zones of the city (ARCH §5.3; BP §57.2).
+  zones              ServiceZone[]
+  /// Per-city catalog activation rows (CFG-RULE-001).
+  catalogActivations CatalogActivation[]
+
+  @@map("city")
+}
+
+/// Service zone inside a city; whole Lahore is one active zone at launch (ARCH §5.3; BP §57.2, §59.1; D-019; SCOPE-GEO-002; AVAIL-005).
+model ServiceZone {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id        String                                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// City the zone belongs to (ARCH §5.3; BP §57.2).
+  cityId    String                                       @map("city_id") @db.Uuid
+  /// Zone name in English (BP §57.2, §78; I18N-006).
+  nameEn    String                                       @map("name_en")
+  /// Zone name in Urdu (BP §57.2, §78; I18N-006).
+  nameUr    String                                       @map("name_ur")
+  /// Zone shape WGS84 (PostGIS geography); null = the whole city (BP §57.2; D-019; SCOPE-GEO-002).
+  area      Unsupported("geography(MultiPolygon,4326)")?
+  /// Zone active for new requests (BP §57.2; OPS-ADMIN-023; OQ-060).
+  isActive  Boolean                                      @default(false) @map("is_active")
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt DateTime                                     @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt DateTime                                     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version   Int                                          @default(1)
+  /// Relation to the city (ARCH §5.3; BP §57.2).
+  city      City                                         @relation(fields: [cityId], references: [id], onDelete: Restrict)
+
+  @@index([cityId])
+  @@index([area], type: Gist)
+  @@map("service_zone")
+}
+
+/// Service category hierarchy (family → sub-category) from the BP §63 tree (BP §25 Category "parent/child"; CAT-SVC-012; SCOPE-CAT-001).
+model Category {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Parent category; null for a top-level family (BP §25 "parent/child categories"; BP §63).
+  parentId           String?             @map("parent_id") @db.Uuid
+  /// Stable code used by seeds, config scopes and AI mapping (BP §63, §64; SCOPE-CAT-001; REQ-AI-007).
+  code               String              @unique
+  /// Category name in English (BP §63, §78; I18N-006).
+  nameEn             String              @map("name_en")
+  /// Category name in Urdu (BP §63, §78; I18N-006).
+  nameUr             String              @map("name_ur")
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt          DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version            Int                 @default(1)
+  /// Relation to the parent category (BP §25).
+  parent             Category?           @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
+  /// Child categories (BP §25).
+  children           Category[]          @relation("CategoryTree")
+  /// Services in this category (BP §25 Service "belongs to category").
+  services           Service[]
+  /// Per-city activation rows (CFG-RULE-001).
+  catalogActivations CatalogActivation[]
+
+  @@index([parentId])
+  @@map("category")
+}
+
+/// What is sold: one customer task with its listing anatomy and configuration (BP §4.2, §25 Service, §64; ARCH §5.5; CAT-SVC-001…012).
+model Service {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                        String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Category the service belongs to (BP §4.2 "service name and category", §25).
+  categoryId                String              @map("category_id") @db.Uuid
+  /// Stable code used by seeds, config scopes and AI mapping (BP §63, §64; REQ-AI-007).
+  code                      String              @unique
+  /// Service name in English (BP §4.2; CAT-SVC-011; I18N-006).
+  nameEn                    String              @map("name_en")
+  /// Service name in Urdu (BP §4.2; CAT-SVC-011; I18N-006).
+  nameUr                    String              @map("name_ur")
+  /// Plain-language description in English (BP §4.2; CAT-SVC-011).
+  descriptionEn             String?             @map("description_en")
+  /// Plain-language description in Urdu (BP §4.2; CAT-SVC-011).
+  descriptionUr             String?             @map("description_ur")
+  /// What is included, English (BP §4.2; CAT-SVC-008).
+  includedEn                String?             @map("included_en")
+  /// What is included, Urdu (BP §4.2; CAT-SVC-008).
+  includedUr                String?             @map("included_ur")
+  /// What is not included, English (BP §4.2; CAT-SVC-008).
+  excludedEn                String?             @map("excluded_en")
+  /// What is not included, Urdu (BP §4.2; CAT-SVC-008).
+  excludedUr                String?             @map("excluded_ur")
+  /// Price model (BP §4.1, §17; CAT-SVC-001).
+  priceModel                PriceModel          @map("price_model")
+  /// Allowed selling modes, one or more (BP §53; CAT-SVC-002).
+  sellingModes              SellingMode[]       @map("selling_modes")
+  /// Inspection expected before a price (BP §4.2, §64; CAT-SVC-003).
+  inspectionExpected        Boolean             @map("inspection_expected")
+  /// Quote required before booking (BP §4.2, §64; CAT-SVC-003; D-028).
+  quoteRequired             Boolean             @map("quote_required")
+  /// Emergency mode allowed for this service (BP §58.3, §64; CAT-SVC-004; FARE-013).
+  emergencyAllowed          Boolean             @default(false) @map("emergency_allowed")
+  /// Minimum provider verification level required; null = category rule from config (BP §22.1, §64; CAT-SVC-005; MATCH-ELIG-077).
+  requiredVerificationLevel VerificationLevel?  @map("required_verification_level")
+  /// Pricing unit code from the configurable unit list, e.g. job/hour/room (BP §4.2; CAT-SVC-009).
+  pricingUnit               String?             @map("pricing_unit")
+  /// Estimated duration in minutes (BP §4.2; CAT-SVC-011).
+  estimatedDurationMinutes  Int?                @map("estimated_duration_minutes")
+  /// Materials policy (BP §4.2; CAT-SVC-010).
+  materialsPolicy           MaterialsPolicy?    @map("materials_policy")
+  /// Warranty/rework policy text, English (BP §4.2; CAT-SVC-010).
+  warrantyPolicyEn          String?             @map("warranty_policy_en")
+  /// Warranty/rework policy text, Urdu (BP §4.2; CAT-SVC-010).
+  warrantyPolicyUr          String?             @map("warranty_policy_ur")
+  /// Customer questions / required customer information or photos, configured in the Admin Portal (BP §4.2, §64; CAT-SVC-006; OPS-ADMIN-024).
+  customerQuestions         Json?               @map("customer_questions")
+  /// AI guidance for intake on this service, configured in the Admin Portal (BP §64, §67; CAT-SVC-007; OPS-ADMIN-024).
+  aiGuidance                Json?               @map("ai_guidance")
+  /// Example images; refs media.media_object by ID (BP §4.2 "images/examples where useful").
+  imageMediaIds             String[]            @map("image_media_ids") @db.Uuid
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt                 DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt                 DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version                   Int                 @default(1)
+  /// Relation to the category (BP §25).
+  category                  Category            @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  /// Per-city activation rows (CFG-RULE-001).
+  catalogActivations        CatalogActivation[]
+  /// Providers offering this service (BP §25 Service "belongs to provider"; CAT-SVC-012).
+  providerServices          ProviderService[]
+
+  @@index([categoryId])
+  @@map("service")
+}
+
+/// Per-city activation of a category (family) or a single service; everything is seeded inactive (BP §42, §64; CFG-RULE-001; SCOPE-CAT-002; D-024; OPS-ADMIN-023). Exactly one of category_id / service_id is set (CHECK).
+model CatalogActivation {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// City the activation applies to (CFG-RULE-001; BP §57.2).
+  cityId          String    @map("city_id") @db.Uuid
+  /// Category (family) activated or deactivated (CFG-RULE-001; D-024).
+  categoryId      String?   @map("category_id") @db.Uuid
+  /// Single service activated or deactivated (BP §64; OPS-ADMIN-023; OQ-060).
+  serviceId       String?   @map("service_id") @db.Uuid
+  /// Active for new requests in this city (CFG-RULE-001; SCOPE-CAT-002).
+  isActive        Boolean   @default(false) @map("is_active")
+  /// Staff user who last changed it; the change is also audited (BP §11, §26; SEC-BASE-010).
+  changedByUserId String?   @map("changed_by_user_id") @db.Uuid
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version         Int       @default(1)
+  /// Relation to the city (CFG-RULE-001).
+  city            City      @relation(fields: [cityId], references: [id], onDelete: Restrict)
+  /// Relation to the category (CFG-RULE-001).
+  category        Category? @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  /// Relation to the service (BP §64).
+  service         Service?  @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+
+  @@unique([cityId, categoryId], where: raw("category_id IS NOT NULL"))
+  @@unique([cityId, serviceId], where: raw("service_id IS NOT NULL"))
+  @@map("catalog_activation")
+}
+
+/// Provider skill mapping: a provider offers a catalog service with its own amounts (BP §4.2, §8.2, §25 Service "belongs to category/provider"; CAT-SVC-012; MATCH-ELIG-074; OQ-072 default).
+model ProviderService {
+  /// Primary key, UUID (technical field, ARCH §5; BP §25).
+  id                      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Provider; ref profiles.provider_profile by ID (BP §25; INFRA-001).
+  providerProfileId       String   @map("provider_profile_id") @db.Uuid
+  /// Catalog service offered (BP §25; CAT-SVC-012).
+  serviceId               String   @map("service_id") @db.Uuid
+  /// Provider currently offers this service (BP §8.2 "define services"; MATCH-ELIG-074).
+  isActive                Boolean  @default(true) @map("is_active")
+  /// Fixed or starting ("from") price, PKR minor units; null until set; bounds from config TODO(OWNER) (BP §4.2 "base/starting/fixed price", §17; PRICE-001, PRICE-002; OQ-072).
+  basePriceMinor          BigInt?  @map("base_price_minor")
+  /// Minimum visit/call-out charge, PKR minor units, if applicable (BP §4.2, §58.1; PRICE-004; FARE-001; OQ-072).
+  visitFeeMinor           BigInt?  @map("visit_fee_minor")
+  /// Inspection/diagnosis fee, PKR minor units, if applicable; not charged when a quote is declined at launch (BP §17, §58.1; PRICE-003; D-023; OQ-072).
+  inspectionFeeMinor      BigInt?  @map("inspection_fee_minor")
+  /// Whether the inspection fee is deducted from the final repair (BP §58.1; PRICE-003; FARE-002).
+  inspectionFeeDeductible Boolean? @map("inspection_fee_deductible")
+  /// Row creation time (technical field, ARCH §5; BP §25).
+  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Last update time (technical field, ARCH §5; BP §25).
+  updatedAt               DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Optimistic-lock version (technical field, ARCH §5; BP §31.2).
+  version                 Int      @default(1)
+  /// Relation to the service (BP §25).
+  service                 Service  @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+
+  @@unique([providerProfileId, serviceId])
+  @@index([serviceId])
+  @@map("provider_service")
+}
