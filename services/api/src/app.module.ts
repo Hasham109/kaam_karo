@@ -7,6 +7,7 @@ import { SentryModule } from '@sentry/nestjs/setup';
 import type { ServerEnv } from '@kaamkaro/platform';
 import { FailClosedStartupCheck } from './config/fail-closed-startup';
 import { ServerEnvModule } from './config/server-env.module';
+import { AvailabilityModule } from './modules/availability';
 import { CatalogModule } from './modules/catalog';
 import { ConfigRulesModule } from './modules/config';
 import { HealthModule } from './modules/health';
@@ -37,6 +38,7 @@ export class AppModule {
         HealthModule,
         LocationModule,
         MediaModule,
+        AvailabilityModule,
       ],
       // RQ-008 item 5: refuse to start in staging/production without the security limits.
       providers: [FailClosedStartupCheck],

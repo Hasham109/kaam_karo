@@ -1,6 +1,14 @@
 # CHANGELOG — Kaam Karo
 
-Newest first. Every behaviour change, with task ID and requirement IDs.
+## 2026-10-24 — T3.6 Availability, Service Areas, Verification Levels (A05) — DONE
+- AVAIL-001, AVAIL-002, AVAIL-004: Weekly recurring schedule and daily break periods (`AvailabilityService.setWeeklySchedule`). Enforces interval validation (`startTime < endTime`), breaks within working hours, and atomic replacement via Prisma transactions.
+- AVAIL-003: Calendar date overrides (`setDateOverride`) supporting `OFF` (leave/holiday) and `CUSTOM_HOURS`, taking precedence over weekly schedules.
+- AVAIL-005, LOC-PAK-001: Service areas supporting radius mode (with coordinates strictly bounded inside Pakistan via `isInsidePakistan` and positive radius) and zone mode (referencing `service_zone_id`). Enforced in application and PostgreSQL check constraint `service_area_shape`.
+- AVAIL-006, AVAIL-007: Provider live status switch with 4 operational states (`ONLINE_AVAILABLE`, `ONLINE_BUSY`, `OFFLINE_MANUAL`, `OFFLINE_OUT_OF_SCHEDULE`). Positive capacity limit `max_active_jobs >= 1` (`provider_max_active_jobs_positive`) with automatic BUSY transition upon meeting/exceeding capacity.
+- TRUST-VER-001, TRUST-VER-002, TRUST-VER-003, TRUST-VER-004: Provider standing defaults to `BASIC` verification level and `GOOD_STANDING`. Verification submissions record `documentMediaIds` with `PENDING_REVIEW` status. Staff-audited decisions (`APPROVED`, `REJECTED`) require non-empty audit `decisionReason` and elevate verification level (`VERIFIED`, `BUSINESS_VERIFIED`). Suspended/banned providers and unverified providers excluded from matching dispatches.
+- MATCH-ELIG-075..079: Slot availability evaluation logic (`checkSlotAvailability`) computing slot overlap against weekly hours, breaks, date overrides, capacity limits, and standing eligibility.
+- Contracts: `contracts/availability.yaml` OpenAPI 3.1.0 v0.1.0 registered and validated.
+- Tests: 232 unit tests pass in `@kaamkaro/api` (including 17 availability tests and 7 trust tests); 120/120 DB integration tests pass (including 7 availability DB tests); 5/5 guards pass; 36/36 turbo tasks pass.
 
 ## 2026-10-24 — T3.2 Media Upload Sessions, Limits from Config, Thumbnails & Retention (A08) — DONE
 - MEDIA-001, INFRA-003, D-001: Object storage abstraction (`ObjectStorage`) with HMAC-SHA256 presigned URLs (`FakeStorageService`) for direct-to-storage uploads with short 900s TTL. Zero external AWS/S3 npm dependencies.

@@ -1,0 +1,731 @@
+openapi: 3.1.0
+info:
+  title: Availability & Trust Service
+  description: >
+    Provider availability schedules, breaks, date overrides, emergency flags,
+    live statuses, service areas, and verification levels (ARCH §4 M3, M5;
+    BP §22, §59; AVAIL-001..007, TRUST-VER-001..004).
+  version: 0.1.0
+
+paths:
+  /v1/providers/{providerId}/availability/schedule:
+    get:
+      summary: Get provider weekly availability schedule and breaks
+      operationId: getProviderSchedule
+      x-requirement-ids:
+        - AVAIL-001
+        - AVAIL-002
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Weekly schedule and breaks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeeklyScheduleResponse'
+        '404':
+          description: Provider not found
+    put:
+      summary: Update provider weekly availability schedule and breaks
+      operationId: updateProviderSchedule
+      x-requirement-ids:
+        - AVAIL-001
+        - AVAIL-002
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWeeklyScheduleRequest'
+      responses:
+        '200':
+          description: Schedule successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeeklyScheduleResponse'
+        '400':
+          description: Invalid working hours or overlapping breaks
+
+  /v1/providers/{providerId}/availability/date-overrides:
+    get:
+      summary: List provider date-specific availability overrides
+      operationId: listDateOverrides
+      x-requirement-ids:
+        - AVAIL-003
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: fromDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of date overrides
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DateOverrideListResponse'
+    post:
+      summary: Create or replace a date-specific availability override
+      operationId: setDateOverride
+      x-requirement-ids:
+        - AVAIL-003
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetDateOverrideRequest'
+      responses:
+        '201':
+          description: Date override successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DateOverrideResponse'
+        '400':
+          description: Invalid override details
+
+  /v1/providers/{providerId}/availability/date-overrides/{ruleId}:
+    delete:
+      summary: Remove a date-specific override
+      operationId: deleteDateOverride
+      x-requirement-ids:
+        - AVAIL-003
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: ruleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Date override removed
+        '404':
+          description: Date override not found
+
+  /v1/providers/{providerId}/availability/live-status:
+    get:
+      summary: Get provider live availability status and capacity limit
+      operationId: getLiveStatus
+      x-requirement-ids:
+        - AVAIL-006
+        - AVAIL-007
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Current live status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderLiveStatusResponse'
+    post:
+      summary: Update provider live availability status or capacity limit
+      operationId: updateLiveStatus
+      x-requirement-ids:
+        - AVAIL-004
+        - AVAIL-006
+        - AVAIL-007
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLiveStatusRequest'
+      responses:
+        '200':
+          description: Live status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderLiveStatusResponse'
+        '400':
+          description: Invalid status or missing requirements
+
+  /v1/providers/{providerId}/availability/service-area:
+    get:
+      summary: Get provider service area configuration
+      operationId: getServiceArea
+      x-requirement-ids:
+        - AVAIL-005
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Service area details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceAreaResponse'
+    put:
+      summary: Set provider service area radius or zones
+      operationId: setServiceArea
+      x-requirement-ids:
+        - AVAIL-005
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetServiceAreaRequest'
+      responses:
+        '200':
+          description: Service area saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceAreaResponse'
+        '400':
+          description: Invalid coordinates or zone
+
+  /v1/providers/{providerId}/availability/check:
+    post:
+      summary: Check provider availability for a requested appointment or emergency job
+      operationId: checkProviderAvailability
+      x-requirement-ids:
+        - AVAIL-001
+        - AVAIL-002
+        - AVAIL-003
+        - AVAIL-004
+        - AVAIL-005
+        - AVAIL-007
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckAvailabilityRequest'
+      responses:
+        '200':
+          description: Availability determination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckAvailabilityResponse'
+
+  /v1/providers/{providerId}/trust/standing:
+    get:
+      summary: Get provider verification standing
+      operationId: getProviderStanding
+      x-requirement-ids:
+        - TRUST-VER-001
+        - TRUST-VER-002
+        - TRUST-VER-003
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Current trust standing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderStandingResponse'
+
+  /v1/providers/{providerId}/trust/verification:
+    post:
+      summary: Submit verification application with documents
+      operationId: submitVerification
+      x-requirement-ids:
+        - TRUST-VER-002
+        - TRUST-VER-003
+        - TRUST-VER-004
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitVerificationRequest'
+      responses:
+        '201':
+          description: Verification submission created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationRecordResponse'
+        '400':
+          description: Invalid request level or missing documents
+
+  /v1/admin/trust/verification/{recordId}/decide:
+    post:
+      summary: Risk/Trust admin approves or rejects verification submission
+      operationId: decideVerification
+      x-requirement-ids:
+        - TRUST-VER-002
+        - TRUST-VER-003
+      parameters:
+        - name: recordId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecideVerificationRequest'
+      responses:
+        '200':
+          description: Decision recorded and standing updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationRecordResponse'
+        '400':
+          description: Decision reason missing or record already decided
+        '404':
+          description: Record not found
+
+components:
+  schemas:
+    DaySchedule:
+      type: object
+      required:
+        - dayOfWeek
+        - isWorking
+      properties:
+        dayOfWeek:
+          type: integer
+          minimum: 1
+          maximum: 7
+          description: ISO day of week (1 = Monday, 7 = Sunday)
+        isWorking:
+          type: boolean
+        startTime:
+          type: string
+          pattern: '^[0-2][0-9]:[0-5][0-9]:[0-5][0-9]$'
+          description: HH:mm:ss in PKT
+        endTime:
+          type: string
+          pattern: '^[0-2][0-9]:[0-5][0-9]:[0-5][0-9]$'
+          description: HH:mm:ss in PKT
+        isEmergency:
+          type: boolean
+          default: false
+        breaks:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeInterval'
+
+    TimeInterval:
+      type: object
+      required:
+        - startTime
+        - endTime
+      properties:
+        startTime:
+          type: string
+          pattern: '^[0-2][0-9]:[0-5][0-9]:[0-5][0-9]$'
+        endTime:
+          type: string
+          pattern: '^[0-2][0-9]:[0-5][0-9]:[0-5][0-9]$'
+
+    WeeklyScheduleResponse:
+      type: object
+      required:
+        - providerProfileId
+        - days
+      properties:
+        providerProfileId:
+          type: string
+          format: uuid
+        days:
+          type: array
+          items:
+            $ref: '#/components/schemas/DaySchedule'
+
+    UpdateWeeklyScheduleRequest:
+      type: object
+      required:
+        - days
+      properties:
+        days:
+          type: array
+          items:
+            $ref: '#/components/schemas/DaySchedule'
+
+    DateOverrideResponse:
+      type: object
+      required:
+        - id
+        - providerProfileId
+        - date
+        - overrideKind
+      properties:
+        id:
+          type: string
+          format: uuid
+        providerProfileId:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        overrideKind:
+          type: string
+          enum: [OPEN, CLOSED, LIMITED, FULLY_BOOKED, SPECIAL_HOURS]
+        startTime:
+          type: string
+          nullable: true
+        endTime:
+          type: string
+          nullable: true
+        limitedMaxJobs:
+          type: integer
+          nullable: true
+        isEmergency:
+          type: boolean
+          default: false
+
+    SetDateOverrideRequest:
+      type: object
+      required:
+        - date
+        - overrideKind
+      properties:
+        date:
+          type: string
+          format: date
+        overrideKind:
+          type: string
+          enum: [OPEN, CLOSED, LIMITED, FULLY_BOOKED, SPECIAL_HOURS]
+        startTime:
+          type: string
+          nullable: true
+        endTime:
+          type: string
+          nullable: true
+        limitedMaxJobs:
+          type: integer
+          minimum: 1
+          nullable: true
+        isEmergency:
+          type: boolean
+          default: false
+
+    DateOverrideListResponse:
+      type: object
+      required:
+        - overrides
+      properties:
+        overrides:
+          type: array
+          items:
+            $ref: '#/components/schemas/DateOverrideResponse'
+
+    ProviderLiveStatusResponse:
+      type: object
+      required:
+        - providerProfileId
+        - status
+        - statusChangedAt
+      properties:
+        providerProfileId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [ONLINE_AVAILABLE, BUSY, OFFLINE, SCHEDULED_ONLY, EMERGENCY_AVAILABLE]
+        maxActiveJobs:
+          type: integer
+          nullable: true
+        statusChangedAt:
+          type: string
+          format: date-time
+
+    UpdateLiveStatusRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ONLINE_AVAILABLE, BUSY, OFFLINE, SCHEDULED_ONLY, EMERGENCY_AVAILABLE]
+        maxActiveJobs:
+          type: integer
+          minimum: 1
+          nullable: true
+
+    ServiceAreaResponse:
+      type: object
+      required:
+        - providerProfileId
+        - areas
+      properties:
+        providerProfileId:
+          type: string
+          format: uuid
+        areas:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceAreaItem'
+
+    ServiceAreaItem:
+      type: object
+      required:
+        - id
+        - kind
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum: [RADIUS, ZONE]
+        centerLatitude:
+          type: number
+          nullable: true
+        centerLongitude:
+          type: number
+          nullable: true
+        radiusMeters:
+          type: integer
+          nullable: true
+        serviceZoneId:
+          type: string
+          format: uuid
+          nullable: true
+
+    SetServiceAreaRequest:
+      type: object
+      required:
+        - kind
+      properties:
+        kind:
+          type: string
+          enum: [RADIUS, ZONE]
+        centerLatitude:
+          type: number
+        centerLongitude:
+          type: number
+        radiusMeters:
+          type: integer
+          minimum: 500
+          maximum: 100000
+        serviceZoneId:
+          type: string
+          format: uuid
+
+    CheckAvailabilityRequest:
+      type: object
+      required:
+        - slotStart
+        - slotEnd
+      properties:
+        slotStart:
+          type: string
+          format: date-time
+        slotEnd:
+          type: string
+          format: date-time
+        isEmergency:
+          type: boolean
+          default: false
+        customerLatitude:
+          type: number
+        customerLongitude:
+          type: number
+        serviceZoneId:
+          type: string
+          format: uuid
+
+    CheckAvailabilityResponse:
+      type: object
+      required:
+        - isAvailable
+        - reasons
+      properties:
+        isAvailable:
+          type: boolean
+        reasons:
+          type: array
+          items:
+            type: string
+        standingEligible:
+          type: boolean
+        scheduleEligible:
+          type: boolean
+        capacityEligible:
+          type: boolean
+        serviceAreaEligible:
+          type: boolean
+
+    ProviderStandingResponse:
+      type: object
+      required:
+        - providerProfileId
+        - verificationLevel
+        - ratingStanding
+      properties:
+        providerProfileId:
+          type: string
+          format: uuid
+        verificationLevel:
+          type: string
+          enum: [BASIC, VERIFIED, BUSINESS_VERIFIED, SPECIALIZED_VERIFIED]
+        ratingStanding:
+          type: string
+          enum: [GOOD_STANDING, WARNING, BLOCKED_LOW_RATING]
+        ratingWarningCount:
+          type: integer
+        isEligibleForNormalJobs:
+          type: boolean
+
+    SubmitVerificationRequest:
+      type: object
+      required:
+        - requestedLevel
+        - documentMediaIds
+      properties:
+        requestedLevel:
+          type: string
+          enum: [VERIFIED, BUSINESS_VERIFIED, SPECIALIZED_VERIFIED]
+        categoryId:
+          type: string
+          format: uuid
+        documentMediaIds:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            format: uuid
+
+    DecideVerificationRequest:
+      type: object
+      required:
+        - decision
+        - reason
+        - decidedByUserId
+      properties:
+        decision:
+          type: string
+          enum: [APPROVED, REJECTED]
+        reason:
+          type: string
+          minLength: 5
+        decidedByUserId:
+          type: string
+          format: uuid
+
+    VerificationRecordResponse:
+      type: object
+      required:
+        - id
+        - providerProfileId
+        - requestedLevel
+        - status
+        - submittedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        providerProfileId:
+          type: string
+          format: uuid
+        requestedLevel:
+          type: string
+          enum: [VERIFIED, BUSINESS_VERIFIED, SPECIALIZED_VERIFIED]
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+        documentMediaIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        status:
+          type: string
+          enum: [SUBMITTED, APPROVED, REJECTED]
+        submittedAt:
+          type: string
+          format: date-time
+        decidedByUserId:
+          type: string
+          format: uuid
+          nullable: true
+        decidedAt:
+          type: string
+          format: date-time
+          nullable: true
+        decisionReason:
+          type: string
+          nullable: true
