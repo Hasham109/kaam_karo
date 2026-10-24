@@ -36,11 +36,12 @@ Parallel agents share one working tree, so give each agent explicit path limits.
 | `c84b7a5` | **T2.1** monorepo (pnpm + Turborepo), CI, envs, secrets scan, Sentry (PII-safe), `/health` | QA PASS, SEC PASS |
 | `6726dc9` | **T1.1, T1.2, T1.3, T1.5** screen specs `docs/screens/{customer,partner,admin,flows}.md`; owner decision **D-030** | QA PASS, SEC PASS |
 | `00284f7` | **T2.3** Prisma schema v1 (53 tables, append-only at DB level, separate owner/API logins) + **T0.6 code** (Urdu Nastaliq smoke screen) | QA PASS, SEC PASS |
-| `HEAD` | **T2.2** Platform lib + **T2.6** Catalog seed & ConfigRule store | QA PASS, SEC PASS |
+| `7780bc2` | **T2.2** Platform lib + **T2.6** Catalog seed & ConfigRule store | QA PASS, SEC PASS |
 | `674cd31` | **T2.4** Identity: phone OTP login, sessions, roles, admin MFA, staff RBAC lookup, anonymization lifecycle (contracts/identity.yaml v0.1.0) | QA PASS, SEC PASS |
 | `f658d5a` | **T2.5** Profiles, addresses, immutable location snapshots, favorites (contracts/profiles.yaml v0.1.0) | QA PASS, SEC PASS |
 | `9cd7f17` | **T2.7** Backup + restore drill in staging, BUG-0005 fixed, ops runbook & audit log | QA PASS, SEC PASS |
-| `HEAD` | **T2.8** Security review of T2.1–T2.6, OQ-023..028 renamed in policy, health connection exhaustion fix (SEC-REVIEW-T2.1 #3), Phase 2 Gate G1 | QA PASS, SEC PASS |
+| `d487eac` | **T2.8** Security review of T2.1–T2.6, OQ-023..028 renamed in policy, health connection exhaustion fix (SEC-REVIEW-T2.1 #3) | QA PASS, SEC PASS |
+| `03b2b6d` | **Bug Sweep Phase 2** (§7.3 A–F, 0 open S1/S2 bugs, docs/qa/bug-sweep-phase2.md) + **Gate G1: PASS** | SWEEP PASS, GATE PASS |
 
 Earlier commits: Phase 0 (T0.1–T0.5) docs and decisions D-001…D-029.
 

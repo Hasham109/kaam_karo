@@ -2,14 +2,23 @@
 
 Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate verdicts above the table.
 
+## Gate G1 (Phase 2): PASS (2026-10-24)
+- Phase 2 (Backend foundation — BP §44 Phase 2) exit condition met: "secure login and data model working".
+- All 8 tasks T2.1–T2.8 DONE with handoffs, QA PASS, and SEC PASS.
+- Bug sweep `/bug-sweep 2` complete: 0 open S1/S2 bugs (`docs/qa/bug-sweep-phase2.md`).
+- Verification passes: 36/36 turbo tasks, 112/112 DB tests, 22/22 QA E2E probes, 5/5 guards, format check.
+- Verdict: PASS. Phase 2 closed; Phase 3 unblocked.
+
 ## Sync 2026-10-24
-- T2.8 DONE: QA PASS (docs/qa/T2.8-qa.md), SEC PASS (docs/security/SEC-REVIEW-T2.8.md). Consolidated security review of Phase 2 (T2.1–T2.6). OQ-023..028 renamed in policy, health check connection exhaustion fix, OTP idempotency replay (F-06), role guards verified. Phase 2 Gate G1 met.
+- Gate G1 (Phase 2) PASSED. Exit condition "secure login and data model working" met with 0 open S1/S2 bugs, 112 DB tests, 22 QA E2E probes, 36/36 turbo tasks. Phase 2 formally closed.
+- Bug Sweep Phase 2: PASS (docs/qa/bug-sweep-phase2.md), 0 S1/S2 bugs open.
+- T2.8 DONE: QA PASS (docs/qa/T2.8-qa.md), SEC PASS (docs/security/SEC-REVIEW-T2.8.md). Consolidated security review of Phase 2 (T2.1–T2.6). OQ-023..028 renamed in policy, health check connection exhaustion fix, OTP idempotency replay (F-06), role guards verified.
 - T2.7 DONE: QA PASS (docs/qa/T2.7-qa.md, 112/112 DB tests), SEC PASS (docs/security/SEC-REVIEW-T2.7.md). Automated DR restore drill verified in staging, BUG-0005 fixed (CREATEROLE/CREATEDB guard), ops runbook docs/ops/backup-restore.md, audit log docs/ops/restore-drill-log.md.
 - T2.5 DONE: QA PASS (docs/qa/T2.5-qa.md, 109/109 DB tests), SEC PASS (docs/security/SEC-REVIEW-T2.5.md). Profiles, addresses, immutable location snapshots, favorites.
 - T2.4 DONE: QA PASS (docs/qa/T2.4-qa.md, 102/102 DB tests, 147/147 unit tests), SEC PASS (docs/security/SEC-REVIEW-T2.4.md). Identity OpenAPI v0.1.0, passwordless OTP, sessions, admin MFA, staff RBAC lookup. RQ-012 and RQ-013 closed.
 - T2.2 DONE: QA PASS (docs/qa/T2.2-qa.md re-check 1, 12/12 probes), SEC PASS (docs/security/SEC-REVIEW-T2.2.md re-review 1, all #1–#16 resolved). Gate 36/36, format, guards, DB 92/92 pass.
 - T2.6 DONE: QA PASS (docs/qa/T2.6-qa.md re-check 1, 10/10 probes), SEC PASS (docs/security/SEC-REVIEW-T2.6.md re-review 1, all #1–#11 resolved). Contracts draft v0.2.0 approved.
-- Next: T1.4 i18n kit (A14) / Phase 3 tasks.
+- Next: T1.4 i18n kit (A14) / Phase 3 tasks (T3.1 GeoService by A06).
 
 ## Sync 2026-10-23
 - T2.1 DONE: QA PASS (docs/qa/T2.1-qa.md), SEC PASS after re-review 1 (docs/security/SEC-REVIEW-T2.1.md). Follow-ups due at Phase 2 gate: SEC #3, #6, #7, #9–#12, #14; QA F-04–F-06; first GitHub run of android-manifest job; Docker smoke test.
@@ -40,4 +49,4 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 | A14 | i18n-a11y | T0.6 Urdu Nastaliq smoke test (I18N-001…004, 006, 007, 008, A11Y-001, 002, 004) — code done, device run PENDING | IN_REVIEW (BLOCKED-DEVICE) | t2.1-monorepo | Device run: Infinix Note 40 via USB or emulator + JDK 17 (docs/qa/urdu-smoke/README.md) | T1.4 | 2026-10-23 |
 | A15 | security-reviewer | T2.8 Security review of T2.1–T2.6 | DONE | t2.8-security-review | — | Phase 3 security review | 2026-10-24 |
 | A16 | qa-tester | T0.5 Test strategy + device matrix | DONE | — | — | T3.12 | 2026-10-22 |
-| A17 | bug-hunter | — | IDLE | — | — | first sweep after Phase 2 | — |
+| A17 | bug-hunter | Phase 2 bug sweep (docs/qa/bug-sweep-phase2.md, 0 S1/S2) | DONE | — | — | Phase 3 bug sweep | 2026-10-24 |
