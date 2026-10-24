@@ -42,7 +42,7 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 | A05 | matching-trust | — | IDLE | — | — | T3.6 | — |
 | A06 | location-maps | T3.1 GeoService + Pakistan boundary + Location Snapshot + fallback (LOC-GEO-001..006, 008, SCOPE-GEO-001..002) | DONE | t3.1-location-maps | — | T4.5 (with A12) | 2026-10-24 |
 | A07 | ai-intake-voice | — | IDLE | — | — | T3.3 | — |
-| A08 | media | — | IDLE | — | — | T3.2 | — |
+| A08 | media | T3.2 Media upload sessions, limits from config, thumbnails, retention job | IN_PROGRESS | t3.2-media | — | T4.3 (with A12) | 2026-10-24 |
 | A09 | payments-ledger | — | IDLE | — | — | T6.1 | — |
 | A10 | comms-notify-reviews | — | IDLE | — | — | T7.1 | — |
 | A11 | customer-app | T1.1 Screen specs C01–C42 — SEC-REVIEW fixes #3 #6 #9–#14 #18–#20 done, A15 re-check requested | DONE | t2.1-monorepo | — | T3.8 | 2026-10-23 |
