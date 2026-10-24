@@ -10,6 +10,7 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 - Verdict: PASS. Phase 2 closed; Phase 3 unblocked.
 
 ## Sync 2026-10-24
+- T3.1 DONE: QA PASS (docs/qa/T3.1-qa.md, 120/120 DB tests, 192 unit tests, Maps fallback tested), SEC PASS (docs/security/SEC-REVIEW-T3.1.md). GeoService, Pakistan boundary, Google Maps server client, straight-line Haversine + urban duration fallback, location contract contracts/location.yaml (OpenAPI 3.1.0).
 - Gate G1 (Phase 2) PASSED. Exit condition "secure login and data model working" met with 0 open S1/S2 bugs, 112 DB tests, 22 QA E2E probes, 36/36 turbo tasks. Phase 2 formally closed.
 - Bug Sweep Phase 2: PASS (docs/qa/bug-sweep-phase2.md), 0 S1/S2 bugs open.
 - T2.8 DONE: QA PASS (docs/qa/T2.8-qa.md), SEC PASS (docs/security/SEC-REVIEW-T2.8.md). Consolidated security review of Phase 2 (T2.1–T2.6). OQ-023..028 renamed in policy, health check connection exhaustion fix, OTP idempotency replay (F-06), role guards verified.
@@ -38,7 +39,7 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 | A03 | catalog-config | T2.6 Catalog + Config | DONE | t2.6-catalog-config | — | T6.2 (with A09); controllers after T2.4 | 2026-10-24 |
 | A04 | booking-quotes | — | IDLE | — | — | T3.4 | — |
 | A05 | matching-trust | — | IDLE | — | — | T3.6 | — |
-| A06 | location-maps | — | IDLE | — | — | T3.1 | — |
+| A06 | location-maps | T3.1 GeoService + Pakistan boundary + Location Snapshot + fallback (LOC-GEO-001..006, 008, SCOPE-GEO-001..002) | DONE | t3.1-location-maps | — | T4.5 (with A12) | 2026-10-24 |
 | A07 | ai-intake-voice | — | IDLE | — | — | T3.3 | — |
 | A08 | media | — | IDLE | — | — | T3.2 | — |
 | A09 | payments-ledger | — | IDLE | — | — | T6.1 | — |

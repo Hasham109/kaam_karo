@@ -11,6 +11,7 @@ import { CatalogModule } from './modules/catalog';
 import { ConfigRulesModule } from './modules/config';
 import { HealthModule } from './modules/health';
 import { IdentityModule } from './modules/identity';
+import { LocationModule } from './modules/location';
 import { ProfilesModule } from './modules/profiles';
 import { PlatformModule } from './platform';
 
@@ -33,6 +34,7 @@ export class AppModule {
         CatalogModule,
         ConfigRulesModule,
         HealthModule,
+        LocationModule,
       ],
       // RQ-008 item 5: refuse to start in staging/production without the security limits.
       providers: [FailClosedStartupCheck],

@@ -42,6 +42,7 @@ Parallel agents share one working tree, so give each agent explicit path limits.
 | `9cd7f17` | **T2.7** Backup + restore drill in staging, BUG-0005 fixed, ops runbook & audit log | QA PASS, SEC PASS |
 | `d487eac` | **T2.8** Security review of T2.1–T2.6, OQ-023..028 renamed in policy, health connection exhaustion fix (SEC-REVIEW-T2.1 #3) | QA PASS, SEC PASS |
 | `03b2b6d` | **Bug Sweep Phase 2** (§7.3 A–F, 0 open S1/S2 bugs, docs/qa/bug-sweep-phase2.md) + **Gate G1: PASS** | SWEEP PASS, GATE PASS |
+| `cea0b63` | **T3.1** `GeoService` + Pakistan boundary + Location Snapshot + fallback (contracts/location.yaml v0.1.0) | QA PASS, SEC PASS |
 
 Earlier commits: Phase 0 (T0.1–T0.5) docs and decisions D-001…D-029.
 
@@ -58,8 +59,7 @@ Earlier commits: Phase 0 (T0.1–T0.5) docs and decisions D-001…D-029.
 ## 5. Next steps (agreed order with the owner)
 
 1. **T1.4** i18n kit (A14; includes RQ-010 Urdu names review, QA F-03 shared copy catalogues, G9 No-show verb).
-2. **T3.1** `GeoService` + Pakistan boundary + Location Snapshot + fallback (A06).
-3. Phase 3 feature development.
+2. Phase 3 feature development: **T3.2** media upload sessions (A08), **T3.3** intake AI (A07), **T3.4** booking state machine (A04).
 
 ---
 

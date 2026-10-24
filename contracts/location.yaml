@@ -1,0 +1,470 @@
+# Contract: location (owner A06, M6 location).
+# Contract-first per ARCH §8 rule 7 / IMPL §3.4.
+# Requirement IDs: LOC-GEO-001, LOC-GEO-002, LOC-GEO-003, LOC-GEO-004, LOC-GEO-005, LOC-GEO-006, LOC-GEO-008, SCOPE-GEO-001, SCOPE-GEO-002
+# BP §57, §81; ARCH §4 M6, §12, §18; D-007, D-019
+openapi: 3.1.0
+info:
+  title: Kaam Karo — Location & Maps Service
+  version: 0.1.0
+  description: |
+    Location services wrapping Google Maps Platform with straight-line/database fallbacks (T3.1, A06).
+    - Pakistan boundary check (BP §57.2, SCOPE-GEO-001).
+    - City listed vs active status (D-007, D-019, SCOPE-GEO-002).
+    - City/area suggestion with visible change action (LOC-GEO-002).
+    - Autocomplete place search restricted to Pakistan with fallback (LOC-GEO-003).
+    - Reverse geocoding to human-readable address (LOC-GEO-004).
+    - Routes distance & duration calculation with straight-line fallback (LOC-GEO-005, LOC-GEO-006).
+    - Secure server-side keys only (LOC-GEO-008).
+paths:
+  /v1/location/suggest:
+    post:
+      summary: Suggest city and locality without silently locking
+      description: |
+        Suggests nearest Pakistani city and locality for a GPS position, or defaults to Lahore (D-007).
+        Always returns canChangeCity=true and available cities list (LOC-GEO-002).
+      operationId: suggestLocation
+      x-requirement-ids:
+        - LOC-GEO-002
+        - SCOPE-GEO-001
+        - SCOPE-GEO-002
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuggestLocationRequest'
+      responses:
+        '200':
+          description: Suggested city and locality details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuggestLocationResponse'
+        '400':
+          description: Location invalid
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/ErrorEnvelope'
+
+  /v1/location/autocomplete:
+    post:
+      summary: Search places and addresses in Pakistan with fallback
+      description: |
+        Autocomplete place search. Uses Google Places Autocomplete when enabled,
+        or falls back to database catalog cities/areas (LOC-GEO-003, LOC-GEO-006).
+      operationId: autocompleteLocation
+      x-requirement-ids:
+        - LOC-GEO-003
+        - LOC-GEO-006
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AutocompleteRequest'
+      responses:
+        '200':
+          description: Autocomplete predictions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutocompleteResponse'
+        '400':
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/ErrorEnvelope'
+
+  /v1/location/geocode:
+    post:
+      summary: Geocode address string to coordinates
+      description: |
+        Converts text address to coordinates. Enforces Pakistan geographic boundary (LOC-GEO-003, SCOPE-GEO-001).
+      operationId: geocodeAddress
+      x-requirement-ids:
+        - LOC-GEO-003
+        - LOC-GEO-006
+        - SCOPE-GEO-001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GeocodeRequest'
+      responses:
+        '200':
+          description: Geocoded coordinates and address details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeocodeResponse'
+        '400':
+          description: Invalid address or outside Pakistan
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/ErrorEnvelope'
+
+  /v1/location/reverse-geocode:
+    post:
+      summary: Reverse geocode coordinates to readable address
+      description: |
+        Converts coordinates to human-readable address with city and locality.
+        Enforces Pakistan boundary (LOC-GEO-004, SCOPE-GEO-001).
+      operationId: reverseGeocodeLocation
+      x-requirement-ids:
+        - LOC-GEO-004
+        - SCOPE-GEO-001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReverseGeocodeRequest'
+      responses:
+        '200':
+          description: Reverse geocoded address
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReverseGeocodeResponse'
+        '400':
+          description: Coordinates outside Pakistan or invalid
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/ErrorEnvelope'
+
+  /v1/location/route:
+    post:
+      summary: Compute distance and duration between two locations
+      description: |
+        Computes route distance in metres and duration in seconds. Uses Google Routes API
+        when enabled; falls back gracefully to straight-line Haversine distance and urban ETA
+        when Maps is disabled or fails (LOC-GEO-005, LOC-GEO-006).
+      operationId: computeRoute
+      x-requirement-ids:
+        - LOC-GEO-005
+        - LOC-GEO-006
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RouteRequest'
+      responses:
+        '200':
+          description: Computed route distance and duration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RouteResponse'
+        '400':
+          description: Invalid coordinates
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/ErrorEnvelope'
+
+  /v1/location/validate:
+    post:
+      summary: Validate coordinates and check city marketplace status
+      description: |
+        Verifies coordinates are inside Pakistan and checks whether the city is active
+        in the marketplace (Lahore = active; others = listed but inactive) (SCOPE-GEO-001, SCOPE-GEO-002).
+      operationId: validateLocation
+      x-requirement-ids:
+        - SCOPE-GEO-001
+        - SCOPE-GEO-002
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateLocationRequest'
+      responses:
+        '200':
+          description: Location validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateLocationResponse'
+        '400':
+          description: Invalid coordinates
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/ErrorEnvelope'
+
+components:
+  schemas:
+    Coordinates:
+      type: object
+      required:
+        - latitude
+        - longitude
+      properties:
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+          description: Latitude in WGS84 decimal degrees.
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+          description: Longitude in WGS84 decimal degrees.
+
+    CitySummary:
+      type: object
+      required:
+        - id
+        - nameEn
+        - nameUr
+        - isListed
+        - isActive
+      properties:
+        id:
+          type: string
+          format: uuid
+        nameEn:
+          type: string
+        nameUr:
+          type: string
+        isListed:
+          type: boolean
+        isActive:
+          type: boolean
+
+    SuggestLocationRequest:
+      type: object
+      properties:
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+
+    SuggestLocationResponse:
+      type: object
+      required:
+        - suggestedCity
+        - suggestionMessageEn
+        - suggestionMessageUr
+        - canChangeCity
+        - availableCities
+      properties:
+        suggestedCity:
+          $ref: '#/components/schemas/CitySummary'
+        areaName:
+          type: string
+          nullable: true
+        suggestionMessageEn:
+          type: string
+          example: 'We think you are in Lahore'
+        suggestionMessageUr:
+          type: string
+          example: 'ہمیں لگتا ہے کہ آپ لاہور میں ہیں'
+        canChangeCity:
+          type: boolean
+          example: true
+        availableCities:
+          type: array
+          items:
+            $ref: '#/components/schemas/CitySummary'
+
+    AutocompleteRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          minLength: 2
+          maxLength: 120
+        sessionToken:
+          type: string
+          nullable: true
+        latitude:
+          type: number
+          nullable: true
+        longitude:
+          type: number
+          nullable: true
+
+    AutocompletePrediction:
+      type: object
+      required:
+        - placeId
+        - primaryText
+        - secondaryText
+        - fullText
+      properties:
+        placeId:
+          type: string
+        primaryText:
+          type: string
+        secondaryText:
+          type: string
+        fullText:
+          type: string
+
+    AutocompleteResponse:
+      type: object
+      required:
+        - predictions
+        - isFallback
+      properties:
+        predictions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AutocompletePrediction'
+        isFallback:
+          type: boolean
+
+    GeocodeRequest:
+      type: object
+      required:
+        - address
+      properties:
+        address:
+          type: string
+          minLength: 3
+          maxLength: 250
+        cityId:
+          type: string
+          format: uuid
+          nullable: true
+
+    GeocodeResponse:
+      type: object
+      required:
+        - formattedAddress
+        - latitude
+        - longitude
+        - isInsidePakistan
+        - isFallback
+      properties:
+        formattedAddress:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        cityId:
+          type: string
+          format: uuid
+          nullable: true
+        areaName:
+          type: string
+          nullable: true
+        placeRef:
+          type: string
+          nullable: true
+        isInsidePakistan:
+          type: boolean
+        isFallback:
+          type: boolean
+
+    ReverseGeocodeRequest:
+      type: object
+      required:
+        - latitude
+        - longitude
+      properties:
+        latitude:
+          type: number
+        longitude:
+          type: number
+
+    ReverseGeocodeResponse:
+      type: object
+      required:
+        - formattedAddress
+        - isInsidePakistan
+        - isFallback
+      properties:
+        formattedAddress:
+          type: string
+        cityId:
+          type: string
+          format: uuid
+          nullable: true
+        cityName:
+          type: string
+          nullable: true
+        areaName:
+          type: string
+          nullable: true
+        placeRef:
+          type: string
+          nullable: true
+        isInsidePakistan:
+          type: boolean
+        isFallback:
+          type: boolean
+
+    RouteRequest:
+      type: object
+      required:
+        - origin
+        - destination
+      properties:
+        origin:
+          $ref: '#/components/schemas/Coordinates'
+        destination:
+          $ref: '#/components/schemas/Coordinates'
+
+    RouteResponse:
+      type: object
+      required:
+        - distanceMeters
+        - durationSeconds
+        - isFallback
+      properties:
+        distanceMeters:
+          type: integer
+          minimum: 0
+          description: Road distance or straight-line distance in metres.
+        durationSeconds:
+          type: integer
+          minimum: 0
+          description: Estimated travel time in seconds.
+        isFallback:
+          type: boolean
+          description: True when computed via straight-line Haversine rather than Google Routes.
+
+    ValidateLocationRequest:
+      type: object
+      required:
+        - latitude
+        - longitude
+      properties:
+        latitude:
+          type: number
+        longitude:
+          type: number
+
+    ValidateLocationResponse:
+      type: object
+      required:
+        - isInsidePakistan
+        - isMarketplaceActive
+      properties:
+        isInsidePakistan:
+          type: boolean
+        cityId:
+          type: string
+          format: uuid
+          nullable: true
+        cityName:
+          type: string
+          nullable: true
+        isMarketplaceActive:
+          type: boolean
+          description: True if city is both listed and active (e.g. Lahore).

@@ -26,5 +26,6 @@ Published contracts:
 | `config.yaml`   | 0.1.0   | A03   | CFG-RULE-001…012, SEC-BASE-010 (T2.6)                                                                                  |
 | `identity.yaml` | 0.1.0   | A02   | SEC-AUTH-001..008, ADMIN-ROLE-001..008 (T2.4)                                                                          |
 | `profiles.yaml` | 0.1.0   | A02   | PROF-ADDR-001..004, PROF-FAV-001, LOC-GEO-003..004, ROLE-001, ROLE-002 (T2.5)                                          |
+| `location.yaml` | 0.1.0   | A06   | LOC-GEO-001..006, LOC-GEO-008, SCOPE-GEO-001..002 (T3.1)                                                               |
 
 TODO(A01, T2.2+): generate TypeScript types from the contracts for apps and the API.
