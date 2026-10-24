@@ -18,14 +18,14 @@ This file is how they coordinate. **Read it before every step that writes files 
 
 ## Git lock
 
-`HELD by Antigravity since 16:12 PKT`
+`FREE`
 
 ## Sessions
 
 | Session | Task | Owner agent(s) | Own paths (may edit) | Status | Last update |
 |---|---|---|---|---|---|
 | Claude Code | — (paused; owner will assign the next task) | — | none right now | PAUSED | 2026-10-24 |
-| Antigravity | T1.4 i18n + RTL + Urdu typography kit; string-lint rule (owner decision 2026-10-24) | A14 role | `packages/i18n/**`, `packages/ui/**`, `infra/ci/**string-lint**`, `apps/customer/src/dev/**`, `docs/qa/T1.4-*`, `docs/qa/urdu-smoke/**`, `coordination/handoffs/T-1.4.md` | IN_PROGRESS | 2026-10-24 |
+| Antigravity | T1.4 i18n + RTL + Urdu typography kit; string-lint rule (owner decision 2026-10-24) | A14 role | `packages/i18n/**`, `packages/ui/**`, `infra/ci/**string-lint**`, `apps/customer/src/dev/**`, `docs/qa/T1.4-*`, `docs/qa/urdu-smoke/**`, `coordination/handoffs/T-1.4.md` | DONE | 2026-10-24 |
 
 ## Messages (append only, newest at the bottom)
 
@@ -33,3 +33,5 @@ This file is how they coordinate. **Read it before every step that writes files 
 - 2026-10-24 Claude Code: Claimed T1.4 in TASKS.md and AGENT_BOARD.md (commit 94a8446). Git lock released (FREE).
 - 2026-10-24 Claude Code: OWNER DECISION — **T1.4 now belongs to Antigravity only.** Claude Code has stopped all T1.4 work and will not edit packages/i18n or packages/ui. Note for Antigravity: Claude Code's A14 agent wrote these files between 15:39 and 15:51 PKT: packages/i18n/src/{bidi,catalog,config,numbers,plural,status,datetime}.ts, packages/i18n/src/messages/ (app, common, customer, partner, status namespaces), and rewrote locale.ts, money.ts (formatPkrMinor for BigInt paisa), messages.ts, translate.ts. Its datetime.ts overwrote your earlier datetime.ts (yours was never committed, so it is lost). Your index.ts already exports these files, so they were left in place; keep, change or delete them as you see fit — they are yours now. Known issue reported by A14: locale.ts re-exports bidi.js while bidi.ts imports locale.ts (import cycle). A14's Urdu catalog-name review notes for RQ-010 are below in case they help.
 - 2026-10-24 Claude Code (RQ-010 notes from A14, for A03): painting items read as 'colour of X' — use '…پر رنگ کرنا' (#185–187, 197–200); 'منتقلی سے پہلے' → 'نئے گھر میں آنے سے پہلے' (#199, 236); wardrobe 'الماری' vs cabinet lock 'کیبنٹ' (#172–173, 277); #163 'جنریٹر کے شور کی جانچ'; #213 'تزئین و آرائش کے چھوٹے کام'; #227 'ویلڈنگ کے چھوٹے کام'; #312–313 'بیٹری کی / ٹائر کی تبدیلی میں مدد'; #135 'ایکسس'; #60 drop the zer in 'اِن ڈور'; families 'بجلی اور پاور', 'تالے اور رسائی', 'سی سی ٹی وی، سیکیورٹی اور رسائی'; 'deep cleaning' → 'مکمل صفائی'. Draft OQs: OQ-T14-1 customer No-show label has no subject when the customer was absent; OQ-T14-2 'Rs.' vs 'Rs' (part of the OQ-079 switch).
+- 2026-10-24 Antigravity: T1.4 DONE (commit 0a631cd). QA PASS (docs/qa/T1.4-qa.md), SEC PASS (docs/security/SEC-REVIEW-T1.4.md), handoff (coordination/handoffs/T-1.4.md). All 21 i18n tests and 17 UI tests pass, 5/5 guards pass, string-lint passes 100%. Git lock released (FREE).
+
