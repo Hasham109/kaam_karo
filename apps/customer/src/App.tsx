@@ -1,30 +1,69 @@
 /**
- * App root — SKELETON (T2.1, created by A01 under the A00 bootstrap grant). Owner: A11.
- * No feature, no network call and no permission request yet (PERM-001..006: permissions are
- * asked only when the user taps the related feature, docs/security/permission-policy.md §2).
- * TODO(A11): navigation, screens, Urdu font + RTL layout (with A14, T1.4).
- *
- * T0.6 (A14, A00-authorised): in development builds only, the placeholder home has a button
- * that opens the Urdu Nastaliq smoke-test screen (condition of D-001; BP §78.2). The dev module
- * is loaded with a `__DEV__`-guarded `require`, so release bundles do not contain it.
+ * Customer App Root & Screen Router (T3.8; BP §12, ARCH §3.1, docs/screens/customer.md).
+ * Screens: C01-C11 + C41.
+ * Owner: A11 (customer-app).
  */
-import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { COLOR, SPACING, textTokens } from '@kaamkaro/ui';
-import { placeholderLines } from './placeholder';
+import React, { useCallback, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { COLOR } from '@kaamkaro/ui';
+import { CustomerAppProvider, useCustomerApp } from './state/CustomerContext';
+import { C01SplashScreen } from './screens/C01SplashScreen';
+import { C02WelcomeScreen } from './screens/C02WelcomeScreen';
+import { C03LoginScreen } from './screens/C03LoginScreen';
+import { C04RegisterScreen } from './screens/C04RegisterScreen';
+import { C05OtpScreen } from './screens/C05OtpScreen';
+import { C06HomeScreen } from './screens/C06HomeScreen';
+import { C07SearchScreen } from './screens/C07SearchScreen';
+import { C08SearchResultsScreen } from './screens/C08SearchResultsScreen';
+import { C09CategoryScreen } from './screens/C09CategoryScreen';
+import { C10ServiceDetailScreen } from './screens/C10ServiceDetailScreen';
+import { C11ProviderProfileScreen } from './screens/C11ProviderProfileScreen';
+import { C41LanguageScreen } from './screens/C41LanguageScreen';
 
-// Type-only import: erased at compile time, so it never pulls the dev module into a bundle.
+// Type-only import for DevSmoke entry (erased at compile time)
 import type * as DevSmokeEntry from './dev/urdu-smoke/entry';
 
 type DevSmokeModule = typeof DevSmokeEntry;
 
-// Metro inlines __DEV__ = false in release builds and drops this require (T0.6 QA S4).
 const devSmoke: DevSmokeModule | null = __DEV__
-  ? // eslint-disable-next-line @typescript-eslint/no-require-imports -- dev-only lazy load, see above
+  ? // eslint-disable-next-line @typescript-eslint/no-require-imports -- dev-only lazy load (T0.6)
     (require('./dev/urdu-smoke/entry') as DevSmokeModule)
   : null;
 
-export default function App() {
+function CustomerRouter(): React.JSX.Element {
+  const { currentScreen } = useCustomerApp();
+
+  switch (currentScreen) {
+    case 'C01':
+      return <C01SplashScreen />;
+    case 'C02':
+      return <C02WelcomeScreen />;
+    case 'C03':
+      return <C03LoginScreen />;
+    case 'C04':
+      return <C04RegisterScreen />;
+    case 'C05':
+      return <C05OtpScreen />;
+    case 'C06':
+      return <C06HomeScreen />;
+    case 'C07':
+      return <C07SearchScreen />;
+    case 'C08':
+      return <C08SearchResultsScreen />;
+    case 'C09':
+      return <C09CategoryScreen />;
+    case 'C10':
+      return <C10ServiceDetailScreen />;
+    case 'C11':
+      return <C11ProviderProfileScreen />;
+    case 'C41':
+      return <C41LanguageScreen />;
+    default:
+      return <C06HomeScreen />;
+  }
+}
+
+export default function App(): React.JSX.Element {
   const [showSmoke, setShowSmoke] = useState(false);
   const closeSmoke = useCallback(() => setShowSmoke(false), []);
 
@@ -33,34 +72,20 @@ export default function App() {
   }
 
   return (
-    <View style={styles.root} testID="app-root">
-      {placeholderLines().map((line) => (
-        <Text
-          key={line.locale}
-          testID={line.testID}
-          style={[
-            styles.title,
-            textTokens(line.locale, 'title'),
-            { writingDirection: line.direction },
-          ]}
-        >
-          {line.text}
-        </Text>
-      ))}
-      {devSmoke !== null ? (
-        <devSmoke.UrduSmokeEntryButton onPress={() => setShowSmoke(true)} />
-      ) : null}
-    </View>
+    <CustomerAppProvider initialScreen="C01" initialLocale="en">
+      <View testID="app-root" style={styles.root}>
+        <CustomerRouter />
+        {devSmoke !== null ? (
+          <devSmoke.UrduSmokeEntryButton onPress={() => setShowSmoke(true)} />
+        ) : null}
+      </View>
+    </CustomerAppProvider>
   );
 }
 
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    alignItems: 'stretch',
-    justifyContent: 'center',
     backgroundColor: COLOR.background,
-    padding: SPACING.lg,
   },
-  title: { textAlign: 'auto', color: COLOR.text },
 });

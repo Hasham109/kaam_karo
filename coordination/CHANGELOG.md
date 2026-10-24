@@ -1,5 +1,35 @@
 # CHANGELOG — Kaam Karo
 
+## 2026-10-24 — T3.8 Customer App Core UI (A11) — DONE
+- Screens: Implemented Customer App Core screens C01–C11 + C41 in English and Urdu (`apps/customer/src/screens/`):
+  - C01 Splash: Brand identity, Urdu/English tagline, automatic session check & routing (`APP-START-001`, `BRAND-001`).
+  - C02 Welcome: Value proposition, Log in, Create account, Continue as guest, Language toggle (`ONBOARD-001`, `D-004`).
+  - C03 Login: Mobile number input with +92 prefix, validation, zero-account-reveal flow (`AUTH-OTP-001`, `AUTH-PRIV-001`).
+  - C04 Register: Full name, active/inactive city picker (Lahore active, Karachi/Islamabad inactive warning banner), optional area, terms acceptance (`REG-NAME-001`, `LAUNCH-CITY-001`).
+  - C05 OTP Verification: 6-digit code entry, 60s cooldown countdown, resend action, verified session creation (`AUTH-OTP-002`, `AUTH-OTP-003`).
+  - C06 Home: Service location chip, "What do you need?" intake banner, search entry & mic trigger, categories grid, popular services, active booking card, guest mode prompt banner (`HOME-DISC-001`, `INTAKE-001`).
+  - C07 Search & Intake Entry: Search query input with clear, voice search button, recent searches with clear, "Describe problem" CTA (`SEARCH-INPUT-001`, `VOICE-001`).
+  - C08 Search Results: Segmented Services / Providers tabs, category filters, service price model representations, provider cards with verification badge, rating, distance, completed jobs (`SEARCH-RES-001`, `TRUST-VER-001`).
+  - C09 Category View: Category banner, subcategory tabs, service cards with price model badges, "Not sure? Describe it" CTA (`CAT-VIEW-001`, `CAT-SVC-001`).
+  - C10 Service Detail: Service title, Urdu/English description, what is included vs excluded, pricing models [FIXED, FROM, INSPECTION_QUOTE], visit/inspection fee breakdown, reviews, "Book now" CTA (`SVC-DETAIL-001`, `PRICE-MODEL-001`).
+  - C11 Provider Profile: Business name, avatar, verification badge (`BASIC`, `VERIFIED`, `BUSINESS_VERIFIED`), rating summary, completed jobs, bio, services offered, reviews, favorite button toggle (`TRUST-VER-001`, `PROF-FAV-001`).
+  - C41 Language Selection: English vs اردو cards, immediate live RTL layout and text flip without app restart (`I18N-001`, `I18N-002`, `I18N-003`).
+- Design System & Accessibility:
+  - 48×48 dp minimum tap targets on all interactive elements (`minTapTargetStyle()`; A11Y-002).
+  - RTL mirroring in Urdu: row-reverse, right text alignment, directional icon flipping, Noto Nastaliq Urdu typography with 2.5× line height ratio preventing diacritic clipping (`getAppMirroring()`, `textTokens()`; BP §78; I18N-001..004).
+  - 5-state handling (Loading, Empty, Success, Error, Pending) in `StateView`.
+  - Status indicators enforce text + icon, never color alone (A11Y-003).
+  - All interactive elements use `interactiveProps()` enforcing stable `testID` and `accessibilityLabel` (A11Y-004).
+- Privacy & Security:
+  - Zero permissions requested at install, splash, or onboarding (PERM-JUST-001..003).
+  - Zero-account-reveal login flow (AUTH-PRIV-001).
+  - Safe guest browsing across C06–C11 without authentication (D-004).
+- Tests & Guards:
+  - 25/25 unit tests pass in `@kaamkaro/customer` (`customer-core.spec.ts`).
+  - 0 hardcoded strings in 25 UI files scanned by `guard:string-lint`; catalogs 100% synchronized.
+  - 5/5 CI guards pass (`guard:permissions`, `guard:hardcoded`, `guard:string-lint`, `guard:transition-table`, `guard:traceability`).
+  - 0 TypeScript errors, 0 ESLint warnings.
+
 ## 2026-10-24 — T3.7 Matching Engine, Hard Filters 73–79, Configurable Scoring & Fairness (A05) — DONE
 - MATCH-ELIG-073..079, BP §54.1: Evaluated suppliers against 7 hard eligibility filters (Account active and not suspended, requested service skill mapping, service area radius/zone coverage, live slot availability, minimum verification level, no active safety dispute, active job capacity limit) and unpaid commission block (`LEDGER-NEG-001`, `D-020`). Failure codes stamped in `match_candidate.ineligible_reasons`.
 - MATCH-SCORE-001..013, BP §54.2, D-010: 13 normalized scoring signals computed via `MatchingScorer.computeScore` (Distance/ETA, window availability, exact service match, preferences, verification level, rating volume & quality, completed jobs count, response speed, cancellation rate, repeat customer rate, price competitiveness, reliability standing, and new provider boost).
