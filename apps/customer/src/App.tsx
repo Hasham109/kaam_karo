@@ -19,11 +19,17 @@ import { C09CategoryScreen } from './screens/C09CategoryScreen';
 import { C10ServiceDetailScreen } from './screens/C10ServiceDetailScreen';
 import { C11ProviderProfileScreen } from './screens/C11ProviderProfileScreen';
 import { C12RequestScreen } from './screens/C12RequestScreen';
+import { C13QuoteDetailScreen } from './screens/C13QuoteDetailScreen';
+import { C14BookingReviewScreen } from './screens/C14BookingReviewScreen';
+import { C15BookingConfirmationScreen } from './screens/C15BookingConfirmationScreen';
 import { C31ComposerScreen } from './screens/C31ComposerScreen';
 import { C32AudioRecorderScreen } from './screens/C32AudioRecorderScreen';
 import { C33VideoRecorderScreen } from './screens/C33VideoRecorderScreen';
 import { C34SummaryScreen } from './screens/C34SummaryScreen';
+import { C35SupplierMatchResultsScreen } from './screens/C35SupplierMatchResultsScreen';
+import { C36OffersComparisonScreen } from './screens/C36OffersComparisonScreen';
 import { C39LocationConfirmScreen } from './screens/C39LocationConfirmScreen';
+import { C40SupplyGapScreen } from './screens/C40SupplyGapScreen';
 import { C41LanguageScreen } from './screens/C41LanguageScreen';
 
 // Type-only import for DevSmoke entry (erased at compile time)
@@ -64,6 +70,12 @@ function CustomerRouter(): React.JSX.Element {
       return <C11ProviderProfileScreen />;
     case 'C12':
       return <C12RequestScreen />;
+    case 'C13':
+      return <C13QuoteDetailScreen />;
+    case 'C14':
+      return <C14BookingReviewScreen />;
+    case 'C15':
+      return <C15BookingConfirmationScreen />;
     case 'C31':
       return <C31ComposerScreen />;
     case 'C32':
@@ -72,8 +84,14 @@ function CustomerRouter(): React.JSX.Element {
       return <C33VideoRecorderScreen />;
     case 'C34':
       return <C34SummaryScreen />;
+    case 'C35':
+      return <C35SupplierMatchResultsScreen />;
+    case 'C36':
+      return <C36OffersComparisonScreen />;
     case 'C39':
       return <C39LocationConfirmScreen />;
+    case 'C40':
+      return <C40SupplyGapScreen />;
     case 'C41':
       return <C41LanguageScreen />;
     default:

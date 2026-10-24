@@ -1,5 +1,29 @@
 # CHANGELOG — Kaam Karo
 
+## 2026-10-25 — T3.10 Customer App Match Results, Comparison, Quotes, Booking Confirmation & Supply-Gap (A11) — DONE
+- Screens: Implemented Customer App Match Results, Comparison, Quotes, Booking Confirmation, and Supply-Gap screens C35, C36, C13, C14, C15, C40 in English and Urdu (`apps/customer/src/screens/`):
+  - C35 Supplier Match Results: Discovery-only candidate cards (`D-005`), "Why am I seeing this?" expandable rationale accordions (`BP §55.1`), filter/sort chips, coarse service-zone map privacy toggle with privacy notice, quote invite CTA (`BP §54`).
+  - C36 Multi-Supplier Offers Comparison: Side-by-side and card quote comparisons, invited providers status tracking (`WAITING`, `OFFERED`, `DECLINED`, `EXPIRED`), crew size indicators (`D-004`), validity countdown timers, fare line items breakdown, accept offer confirmation dialog (`BP §53`, `BP §58`).
+  - C13 Quote Detail: Granular fare lines for labor, materials, tools, transport, and tax (`D-029`); materials classification tags (`INCLUDED`, `NOT_INCLUDED`, `EXTRA`); deductible inspection fee banner; crew size indicator (`D-004`); server-driven `allowedNextActions` buttons (`BP §12`, `BP §18`).
+  - C14 Booking Review: Priced draft summary, confirmed crew size badge (`D-004`), address snapshot preview, scheduled timing display, fee breakdown, free cancellation banner (`D-023`), payment timing notice (`D-003`: pay after job completion), confirm submission modal (`BP §12`).
+  - C15 Booking Confirmation: Confirmed booking reference (e.g. `KK-88102`), server-driven status chip (`REQUESTED`, `QUOTE_PENDING`, `ACCEPTED`, `SCHEDULED`), status-specific next-step guidance, crew size display (`D-004`), educational notification permission pre-prompt card (`PERM-JUST-004`, `NOTIF-010`), "Track booking" CTA (`REL-005`, `D-030`).
+  - C40 Supply Gap / No Supply: Empathetic explanation with allow-listed reason codes (`NONE_AT_TIME`, `NONE_NEARBY`, `NO_SUPPLY_GENERAL`), 5 structured recovery options (`BP §61.3`): broaden radius, choose another time, join waitlist, request callback, try related service.
+- Server-Driven Transitions & Customer Choice (IMPL §6 T3.10 Acceptance Criteria):
+  - Action buttons driven strictly by server `allowedNextActions` (client never guesses transitions).
+  - Customer chooses provider (`D-005`, zero auto-assignment code paths).
+- Design System, i18n & Accessibility:
+  - 100% localized in English and Urdu (`packages/i18n/src/messages/customer.ts`).
+  - Currency formatted exclusively via `formatPkr(locale, amount)`. Zero hardcoded currency literals in JSX (`guard:string-lint` verified across 38 UI files).
+  - RTL mirroring and Noto Nastaliq Urdu typography with 2.5× line-height ratio in Urdu (`getAppMirroring()`, `textTokens()`; `BP §78`; `I18N-001..004`).
+  - 48×48 dp minimum tap targets on all interactive touchables (`minTapTargetStyle()`; `A11Y-002`).
+  - Stable test IDs and accessibility labels on all interactive controls (`interactiveProps()`; `A11Y-004`).
+- Tests & Quality Verification:
+  - 18/18 tests pass in `apps/customer/src/matches-booking-flow.spec.ts`.
+  - 60/60 total unit & flow tests pass in `@kaamkaro/customer`.
+  - 21/21 tests pass in `@kaamkaro/i18n`.
+  - 5/5 repository quality guards pass (`guard:arch`, `guard:contracts`, `guard:values`, `guard:string-lint`, `guard:transition-table`, `guard:traceability`).
+  - 0 TypeScript errors (`tsc -p tsconfig.json --noEmit`), 0 ESLint warnings (`eslint .`).
+
 ## 2026-10-25 — T3.9 Customer App Intake Flow & Media/Location (A11) — DONE
 - Screens: Implemented Customer App Intake and Media/Location screens C12, C31, C32, C33, C34, C39 in English and Urdu (`apps/customer/src/screens/`):
   - C12 Request / Simple Form: Direct non-AI structured booking entry, service picker, provider preset badge when entering from C11, address preview & change tap, when chip picker, problem description textarea, attachments preview, validation error banner, submission to C34 (`REQ-SIMPLE-001`, `REQ-AI-009`, `D-004`).

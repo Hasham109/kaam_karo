@@ -17,11 +17,17 @@ export type ScreenId =
   | 'C10' // Service Detail
   | 'C11' // Provider Profile
   | 'C12' // Request / Booking (Simple Form)
+  | 'C13' // Quote Details
+  | 'C14' // Booking Review
+  | 'C15' // Booking Confirmation
   | 'C31' // "What do you need?" Conversational Composer
   | 'C32' // Audio Note Recorder
   | 'C33' // Problem Video Recorder
   | 'C34' // Request Summary Confirmation
+  | 'C35' // Supplier Match Results
+  | 'C36' // Multi-supplier Offers Comparison
   | 'C39' // Location Confirm
+  | 'C40' // No-supply / Supply-gap Screen
   | 'C41'; // Language Selection
 
 export type ScreenState = 'L' | 'E' | 'S' | 'X' | 'P';
@@ -29,24 +35,77 @@ export type ScreenState = 'L' | 'E' | 'S' | 'X' | 'P';
 export type OtpMode = 'login' | 'changeNumberCurrent' | 'changeNumberNew' | 'delete';
 
 export interface ScreenParams {
-  C01?: Record<string, never>;
-  C02?: Record<string, never>;
-  C03?: { returnTo?: ScreenId };
-  C04?: { phone: string };
-  C05?: { phone: string; mode?: OtpMode; isNewUser?: boolean; returnTo?: ScreenId };
-  C06?: Record<string, never>;
-  C07?: { initialQuery?: string };
-  C08?: { query: string; categoryId?: string };
-  C09?: { categoryId: string };
-  C10?: { serviceId: string };
-  C11?: { providerId: string };
-  C12?: { serviceId?: string; providerId?: string; returnTo?: ScreenId };
-  C31?: { initialText?: string; serviceHint?: string; returnTo?: ScreenId };
-  C32?: { returnTo?: ScreenId };
-  C33?: { returnTo?: ScreenId };
-  C34?: { returnTo?: ScreenId };
-  C39?: { returnTo?: ScreenId };
-  C41?: { returnTo?: ScreenId; isOnboarding?: boolean };
+  C01?: Record<string, never> | undefined;
+  C02?: Record<string, never> | undefined;
+  C03?: { returnTo?: ScreenId | undefined } | undefined;
+  C04?: { phone: string } | undefined;
+  C05?:
+    | {
+        phone: string;
+        mode?: OtpMode | undefined;
+        isNewUser?: boolean | undefined;
+        returnTo?: ScreenId | undefined;
+      }
+    | undefined;
+  C06?: Record<string, never> | undefined;
+  C07?: { initialQuery?: string | undefined } | undefined;
+  C08?: { query: string; categoryId?: string | undefined } | undefined;
+  C09?: { categoryId: string } | undefined;
+  C10?: { serviceId: string } | undefined;
+  C11?: { providerId: string } | undefined;
+  C12?:
+    | {
+        serviceId?: string | undefined;
+        providerId?: string | undefined;
+        returnTo?: ScreenId | undefined;
+      }
+    | undefined;
+  C13?:
+    | { quoteId: string; bookingId?: string | undefined; returnTo?: ScreenId | undefined }
+    | undefined;
+  C14?:
+    | {
+        bookingId?: string | undefined;
+        providerId?: string | undefined;
+        serviceId?: string | undefined;
+        returnTo?: ScreenId | undefined;
+      }
+    | undefined;
+  C15?:
+    | { bookingId: string; status?: BookingStatus | undefined; returnTo?: ScreenId | undefined }
+    | undefined;
+  C31?:
+    | {
+        initialText?: string | undefined;
+        serviceHint?: string | undefined;
+        returnTo?: ScreenId | undefined;
+      }
+    | undefined;
+  C32?: { returnTo?: ScreenId | undefined } | undefined;
+  C33?: { returnTo?: ScreenId | undefined } | undefined;
+  C34?: { returnTo?: ScreenId | undefined } | undefined;
+  C35?:
+    | {
+        requestId?: string | undefined;
+        serviceId?: string | undefined;
+        returnTo?: ScreenId | undefined;
+      }
+    | undefined;
+  C36?:
+    | {
+        bookingId?: string | undefined;
+        requestId?: string | undefined;
+        returnTo?: ScreenId | undefined;
+      }
+    | undefined;
+  C39?: { returnTo?: ScreenId | undefined } | undefined;
+  C40?:
+    | {
+        reasonCode?: 'NONE_AT_TIME' | 'NONE_NEARBY' | 'NO_SUPPLY_GENERAL' | undefined;
+        returnTo?: ScreenId | undefined;
+      }
+    | undefined;
+  C41?: { returnTo?: ScreenId | undefined; isOnboarding?: boolean | undefined } | undefined;
 }
 
 export interface CustomerUser {
@@ -204,7 +263,135 @@ export interface IntakeDraft {
   readonly preferences: readonly string[];
   readonly aiInterpretedServiceId?: string | undefined;
   readonly aiSummary?: string | undefined;
-  readonly aiQuestions?: readonly { readonly id: string; readonly question: string; readonly answer?: string }[] | undefined;
+  readonly aiQuestions?:
+    | readonly { readonly id: string; readonly question: string; readonly answer?: string }[]
+    | undefined;
+}
+
+export interface MatchReason {
+  readonly key: string;
+  readonly en: string;
+  readonly ur: string;
+}
+
+export interface MatchCandidateCard {
+  readonly candidateId: string;
+  readonly providerProfileId: string;
+  readonly providerName: string;
+  readonly businessName: string | null;
+  readonly avatarMediaId: string | null;
+  readonly verificationLevel: 'BASIC' | 'VERIFIED' | 'BUSINESS_VERIFIED';
+  readonly distanceMeters: number | null;
+  readonly etaSeconds: number | null;
+  readonly ratingAverage: number | null;
+  readonly ratingCount: number;
+  readonly completedJobsCount: number;
+  readonly isExactServiceMatch: boolean;
+  readonly score: number;
+  readonly rank: number;
+  readonly badges: readonly string[];
+  readonly matchReasons: readonly MatchReason[];
+  readonly crewSize: number;
+  readonly basePricePkr?: number;
+  readonly priceModel: PriceModel;
+}
+
+export type FareLineType =
+  | 'LABOR'
+  | 'PARTS'
+  | 'TOOLS'
+  | 'TRANSPORT'
+  | 'ADDITIONAL_SERVICE'
+  | 'DISCOUNT'
+  | 'EMERGENCY'
+  | 'TAX';
+
+export interface FareLineItem {
+  readonly id: string;
+  readonly lineType: FareLineType;
+  readonly description: string;
+  readonly amountPkr: number;
+  readonly isDeductible?: boolean;
+  readonly materialsClass?: 'INCLUDED' | 'CUSTOMER_PROVIDED' | 'CHARGED_SEPARATELY';
+}
+
+export type QuoteStatus = 'WAITING' | 'OFFERED' | 'DECLINED' | 'EXPIRED';
+
+export interface QuoteOfferCard {
+  readonly id: string;
+  readonly bookingId: string;
+  readonly providerProfileId: string;
+  readonly providerName: string;
+  readonly businessName: string | null;
+  readonly avatarMediaId: string | null;
+  readonly verificationLevel: 'BASIC' | 'VERIFIED' | 'BUSINESS_VERIFIED';
+  readonly ratingAverage: number | null;
+  readonly totalAmountPkr: number;
+  readonly isEstimate: boolean;
+  readonly crewSize: number;
+  readonly validUntil: string;
+  readonly status: QuoteStatus;
+  readonly lines: readonly FareLineItem[];
+  readonly inclusions?: string;
+  readonly exclusions?: string;
+  readonly expectedDurationMinutes?: number;
+}
+
+export interface ServerAllowedAction {
+  readonly action: string;
+  readonly targetStatus: BookingStatus;
+  readonly labelEn: string;
+  readonly labelUr: string;
+  readonly requiresConfirmation?: boolean;
+  readonly destructive?: boolean;
+}
+
+export interface BookingReviewData {
+  readonly bookingId: string;
+  readonly bookingNumber: string;
+  readonly serviceId: string;
+  readonly serviceName: string;
+  readonly providerProfileId: string;
+  readonly providerName: string;
+  readonly businessName: string | null;
+  readonly verificationLevel: 'BASIC' | 'VERIFIED' | 'BUSINESS_VERIFIED';
+  readonly crewSize: number;
+  readonly crewSizeConfirmed: boolean;
+  readonly addressSnapshot: string;
+  readonly scheduledAt: string;
+  readonly priceLines: readonly FareLineItem[];
+  readonly totalOrEstimatedPkr: number;
+  readonly isEstimate: boolean;
+  readonly status: BookingStatus;
+  readonly allowedNextActions: readonly ServerAllowedAction[];
+}
+
+export interface SupplyGapRecoveryOptionItem {
+  readonly action:
+    | 'BROADEN_RADIUS'
+    | 'CHOOSE_ANOTHER_TIME'
+    | 'REQUEST_CALLBACK'
+    | 'JOIN_WAITLIST'
+    | 'TRY_RELATED_SERVICE';
+  readonly titleEn: string;
+  readonly titleUr: string;
+  readonly descriptionEn: string;
+  readonly descriptionUr: string;
+  readonly suggestedServiceId?: string;
+}
+
+export type SupplyGapReasonCode = 'NONE_AT_TIME' | 'NONE_NEARBY' | 'NO_SUPPLY_GENERAL';
+
+export interface BookingConfirmationInfo {
+  readonly bookingId: string;
+  readonly bookingNumber: string;
+  readonly status: 'REQUESTED' | 'QUOTE_PENDING' | 'ACCEPTED' | 'SCHEDULED';
+  readonly providerName: string;
+  readonly serviceName: string;
+  readonly scheduledTime: string;
+  readonly totalPkr: number;
+  readonly crewSize: number;
+  readonly address: string;
 }
 
 export type PermissionKind = 'location' | 'camera' | 'microphone';
@@ -236,4 +423,3 @@ export interface CustomerAppContextValue {
   readonly permissionStatus: Record<PermissionKind, PermissionStateValue>;
   readonly setPermissionStatus: (kind: PermissionKind, state: PermissionStateValue) => void;
 }
-

@@ -52,7 +52,7 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 | A08 | media | T3.2 Media upload sessions, limits from config, thumbnails, retention job | DONE | t3.2-media | — | T4.3 (with A12) | 2026-10-24 |
 | A09 | payments-ledger | — | IDLE | — | — | T6.1 | — |
 | A10 | comms-notify-reviews | — | IDLE | — | — | T7.1 | — |
-| A11 | customer-app | T3.9 Customer app: "What do you need?" composer, audio/video recorders, photo picker, location confirm, summary confirm (C12, C31–C34, C39 in en/ur) | DONE | t3.9-customer-intake | — | T3.10 | 2026-10-25 |
+| A11 | customer-app | T3.10 Customer app: match results, comparison, reasons, offers comparison, booking review/confirmation, supply-gap screen (C35, C36, C13, C14, C15, C40 in en/ur) | DONE | t3.10-customer-matches | — | T3.11 | 2026-10-25 |
 | A12 | partner-app | T1.2 Screen specs P01–P26 — review fixes QA F-01/F-02/F-05 + SEC #2/#6/#7/#10/#11/#13/#21/#23 done (UX-SCREEN-002/003) | DONE | t2.1-monorepo | — | T4.1 | 2026-10-23 |
 | A13 | admin-portal | T1.3 Admin screen specs A01–A26 + sub-role access matrix (OPS-ADMIN-001…026, ADMIN-ROLE-001…008, ROLE-003, UX-SCREEN-003, SEC-AUTH-005) | DONE | t2.1-monorepo (docs only) | — | T5.1 (T1.3 QA PASS; SEC fixes #1,4,5,6,8,15-18,22,24,25 + QA F-04 done, A15 re-review pending) | 2026-10-23 |
 | A14 | i18n-a11y | T1.4 i18n + RTL + Urdu typography kit; string-lint rule (I18N-001..008, A11Y-001..008) | DONE | work/parallel-t1.4-t3.2 | — | T3.8 / T3.9 | 2026-10-24 |

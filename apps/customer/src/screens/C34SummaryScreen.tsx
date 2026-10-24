@@ -4,14 +4,7 @@
  * Requirement IDs: REQ-AI-005, REQ-AI-006, REQ-AI-011, PERF-002, PERF-003, VOICE-007, REL-003.
  */
 import React, { useState } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { translate } from '@kaamkaro/i18n';
 import {
   COLOR,
@@ -28,19 +21,10 @@ import { useCustomerApp } from '../state/CustomerContext';
 import { getAppMirroring } from '../utils/rtl';
 
 export function C34SummaryScreen(): React.JSX.Element {
-  const {
-    locale,
-    draft,
-    updateDraft,
-    navigate,
-    user,
-    isGuest,
-  } = useCustomerApp();
+  const { locale, draft, updateDraft, navigate, user, isGuest } = useCustomerApp();
   const mirror = getAppMirroring(locale);
 
-  const [summaryText, setSummaryText] = useState(
-    draft.aiSummary || draft.description,
-  );
+  const [summaryText, setSummaryText] = useState(draft.aiSummary || draft.description);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -83,8 +67,12 @@ export function C34SummaryScreen(): React.JSX.Element {
 
     setTimeout(() => {
       setIsSubmitting(false);
-      // Navigates to home (or C06/C17 active booking tracking)
-      navigate('C06');
+      // If provider was already chosen, go to C14 Booking Review, else C35 Match Results
+      if (draft.providerId) {
+        navigate('C14', { providerId: draft.providerId });
+      } else {
+        navigate('C35', { serviceId: draft.serviceId });
+      }
     }, 400);
   };
 
@@ -98,22 +86,14 @@ export function C34SummaryScreen(): React.JSX.Element {
   const isFindDisabled = !draft.location?.isConfirmed || isSubmitting;
 
   return (
-    <ScreenContainer
-      testID="c34-summary-screen"
-      title={translate(locale, 'customer.c34.title')}
-    >
+    <ScreenContainer testID="c34-summary-screen" title={translate(locale, 'customer.c34.title')}>
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled"
       >
         {/* Service Card */}
         <View style={styles.card} testID="c34-service-card">
-          <View
-            style={[
-              styles.cardHeaderRow,
-              { flexDirection: mirror.row },
-            ]}
-          >
+          <View style={[styles.cardHeaderRow, { flexDirection: mirror.row }]}>
             <Text
               style={[
                 styles.cardLabel,
@@ -139,11 +119,7 @@ export function C34SummaryScreen(): React.JSX.Element {
           </View>
           <Text
             testID="c34-service-title"
-            style={[
-              styles.cardValue,
-              textTokens(locale, 'title'),
-              { textAlign: mirror.textAlign },
-            ]}
+            style={[styles.cardValue, textTokens(locale, 'title'), { textAlign: mirror.textAlign }]}
           >
             {serviceName}
           </Text>
@@ -151,12 +127,7 @@ export function C34SummaryScreen(): React.JSX.Element {
 
         {/* AI Interpretation / Problem Summary */}
         <View style={styles.card} testID="c34-summary-card">
-          <View
-            style={[
-              styles.cardHeaderRow,
-              { flexDirection: mirror.row },
-            ]}
-          >
+          <View style={[styles.cardHeaderRow, { flexDirection: mirror.row }]}>
             <Text
               style={[
                 styles.cardLabel,
@@ -182,12 +153,7 @@ export function C34SummaryScreen(): React.JSX.Element {
 
         {/* Location Snapshot Card */}
         <View style={styles.card} testID="c34-location-card">
-          <View
-            style={[
-              styles.cardHeaderRow,
-              { flexDirection: mirror.row },
-            ]}
-          >
+          <View style={[styles.cardHeaderRow, { flexDirection: mirror.row }]}>
             <Text
               style={[
                 styles.cardLabel,
@@ -213,11 +179,7 @@ export function C34SummaryScreen(): React.JSX.Element {
           </View>
           <Text
             testID="c34-location-address"
-            style={[
-              styles.cardValue,
-              textTokens(locale, 'body'),
-              { textAlign: mirror.textAlign },
-            ]}
+            style={[styles.cardValue, textTokens(locale, 'body'), { textAlign: mirror.textAlign }]}
           >
             {draft.location?.isConfirmed
               ? draft.location.address
@@ -227,12 +189,7 @@ export function C34SummaryScreen(): React.JSX.Element {
 
         {/* When Card */}
         <View style={styles.card} testID="c34-when-card">
-          <View
-            style={[
-              styles.cardHeaderRow,
-              { flexDirection: mirror.row },
-            ]}
-          >
+          <View style={[styles.cardHeaderRow, { flexDirection: mirror.row }]}>
             <Text
               style={[
                 styles.cardLabel,
@@ -258,18 +215,14 @@ export function C34SummaryScreen(): React.JSX.Element {
           </View>
           <Text
             testID="c34-when-value"
-            style={[
-              styles.cardValue,
-              textTokens(locale, 'body'),
-              { textAlign: mirror.textAlign },
-            ]}
+            style={[styles.cardValue, textTokens(locale, 'body'), { textAlign: mirror.textAlign }]}
           >
             {translate(locale, timeLabelKey)}
           </Text>
         </View>
 
         {/* Attachments Section */}
-        {(draft.photos.length > 0 || draft.audioNote || draft.video) ? (
+        {draft.photos.length > 0 || draft.audioNote || draft.video ? (
           <View style={styles.card} testID="c34-attachments-card">
             <Text
               style={[
@@ -285,25 +238,17 @@ export function C34SummaryScreen(): React.JSX.Element {
                 <View
                   key={p.id}
                   testID={`c34-photo-${p.id}`}
-                  style={[
-                    styles.attachmentItem,
-                    { flexDirection: mirror.row },
-                  ]}
+                  style={[styles.attachmentItem, { flexDirection: mirror.row }]}
                 >
                   <Text>🖼️</Text>
-                  <Text style={[styles.attachmentName, textTokens(locale, 'label')]}>
-                    {p.name}
-                  </Text>
+                  <Text style={[styles.attachmentName, textTokens(locale, 'label')]}>{p.name}</Text>
                 </View>
               ))}
 
               {draft.audioNote ? (
                 <View
                   testID="c34-audio-note"
-                  style={[
-                    styles.attachmentItem,
-                    { flexDirection: mirror.row },
-                  ]}
+                  style={[styles.attachmentItem, { flexDirection: mirror.row }]}
                 >
                   <Text>🎙️</Text>
                   <Text style={[styles.attachmentName, textTokens(locale, 'label')]}>
@@ -318,10 +263,7 @@ export function C34SummaryScreen(): React.JSX.Element {
               {draft.video ? (
                 <View
                   testID="c34-video"
-                  style={[
-                    styles.attachmentItem,
-                    { flexDirection: mirror.row },
-                  ]}
+                  style={[styles.attachmentItem, { flexDirection: mirror.row }]}
                 >
                   <Text>🎬</Text>
                   <Text style={[styles.attachmentName, textTokens(locale, 'label')]}>
@@ -364,11 +306,7 @@ export function C34SummaryScreen(): React.JSX.Element {
         <TouchableOpacity
           onPress={handleFindProviders}
           disabled={isFindDisabled}
-          style={[
-            styles.findBtn,
-            minTapTargetStyle(),
-            isFindDisabled && styles.disabledBtn,
-          ]}
+          style={[styles.findBtn, minTapTargetStyle(), isFindDisabled && styles.disabledBtn]}
           {...interactiveProps({
             testID: 'c34-find-providers-btn',
             accessibilityLabel: translate(locale, 'customer.c34.findProviders'),
