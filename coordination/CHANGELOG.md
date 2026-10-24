@@ -2,6 +2,19 @@
 
 Newest first. Every behaviour change, with task ID and requirement IDs.
 
+## 2026-10-24 — T3.2 Media Upload Sessions, Limits from Config, Thumbnails & Retention (A08) — DONE
+- MEDIA-001, INFRA-003, D-001: Object storage abstraction (`ObjectStorage`) with HMAC-SHA256 presigned URLs (`FakeStorageService`) for direct-to-storage uploads with short 900s TTL. Zero external AWS/S3 npm dependencies.
+- MEDIA-002, CHAT-003: Strict MIME whitelist (`ALLOWED_MIME_TYPES`) per kind (PHOTO, VIDEO, AUDIO, DOCUMENT). Voice notes restricted to audio types with 120s max duration limit.
+- MEDIA-003, ABUSE-010, BP §29: Key isolation (`generateStorageKey`). Automatic sensitivity escalation: `VERIFICATION_DOCUMENT` and `PAYMENT_PROOF` forced to `RESTRICTED` sensitivity, validated by PostgreSQL check constraint `media_object_restricted_purposes`.
+- MEDIA-004, BP §76, D-011: Dynamic limits resolved from `ConfigService`: `media.max_upload_bytes` (25 MiB), `media.video.max_seconds` (30s), `media.audio.max_seconds` (120s), `media.retention_days` (30d). Fails closed (`LIMIT_NOT_CONFIGURED`) when limits missing outside dev.
+- MEDIA-005: Video thumbnail generation (`ThumbnailService`). Automatically saves JPEG thumbnail to storage and links `thumbnailMediaId` on parent `MediaObject`.
+- MEDIA-006: Audio speech-to-text transcription (`SpeechToText` / `FakeSpeechToTextService`). Graceful failure fallback leaves the audio file fully playable and finalized without aborting finalization.
+- MEDIA-007: Soft delete (`DELETE /v1/media/{id}`) and retention cleanup job (`runRetentionJob`) supporting dry-run inspection and bulk soft-deletion of expired media.
+- MEDIA-008: Storage health probe integration (`checkStorageHealth`) for Kubernetes readiness checks.
+- MEDIA-009 (Acceptance Criterion): Oversize (>25 MiB) or overlong (>30s video, >120s audio) media rejected during finalization; updates `uploadStatus = FAILED` without deleting the database record so client draft survives failure.
+- Contracts: `contracts/media.yaml` OpenAPI 3.1.0 v0.1.0 registered and validated.
+- Tests: 208 unit tests pass in `@kaamkaro/api` (including 16 media tests in `media.service.spec.ts`); 113/113 DB integration tests pass (including 8 media tests in `media.db-spec.ts`); 5/5 guards pass; 36/36 turbo tasks pass.
+
 ## 2026-10-24 — T1.4 i18n, RTL, Urdu Typography Kit & String-lint Rule (A14) — DONE
 - I18N-001, I18N-006 (BP §37, BP §78): Modularized message catalogs into typed namespaces (`app`, `common`, `customer`, `partner`, `status`) under `packages/i18n/src/messages/`. Complete key parity between English and Urdu with placeholder alignment. Quarantined dev-only smoke strings in `@kaamkaro/i18n/dev-smoke`.
 - I18N-003, I18N-004 (BP §38; ARCH §17): RTL layout and text direction helpers (`packages/ui/src/rtl.ts`). Directional icon mirroring rule (`DIRECTIONAL_ICONS`, `shouldMirrorIcon`) mirrors navigation icons while keeping media/clock/phone unmirrored. Typography metrics and minimum 1.5x line heights preventing Nastaliq clipping.

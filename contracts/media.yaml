@@ -1,0 +1,450 @@
+# Contract: media (owner A08, M14 media).
+# Contract-first per ARCH §8 rule 7 / IMPL §3.4.
+# Requirement IDs: MEDIA-001, MEDIA-002, MEDIA-004, MEDIA-005, MEDIA-006, MEDIA-007, MEDIA-009, INFRA-003, CHAT-003
+# BP §20, §74, §76; ARCH §4 M14, §5.3 (MediaObject); D-001, D-011
+openapi: 3.1.0
+info:
+  title: Kaam Karo — Media Service
+  version: 0.1.0
+  description: |
+    Media upload sessions, signed URLs, validation against config limits, video thumbnails,
+    audio transcription jobs, and retention management (T3.2, A08).
+    - Upload sessions with signed time-limited S3 URLs (D-001, INFRA-003, MEDIA-009).
+    - Size and duration validation against config limits (MEDIA-004, D-011).
+    - Video thumbnail reference generation (MEDIA-005).
+    - Speech-to-text transcript creation (MEDIA-006, D-009).
+    - Retention expiration and deletion worker (MEDIA-007).
+paths:
+  /v1/media/upload-session:
+    post:
+      summary: Initiate a media upload session
+      description: |
+        Creates a pending MediaObject and generates a signed time-limited upload URL.
+        Validates MIME type and checks initial size/duration bounds against config limits.
+      operationId: createUploadSession
+      x-requirement-ids:
+        - MEDIA-004
+        - MEDIA-009
+        - INFRA-003
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUploadSessionRequest'
+      responses:
+        '201':
+          description: Upload session initiated with signed upload URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateUploadSessionResponse'
+        '400':
+          description: Invalid input or unsupported MIME type
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/ErrorEnvelope'
+        '413':
+          description: Size or duration exceeds configured maximum limits
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Required media limit not configured in non-dev environment
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/ErrorEnvelope'
+
+  /v1/media/upload-session/{id}/finalize:
+    post:
+      summary: Finalize media upload session
+      description: |
+        Marks upload as complete, validates actual file size and duration against limits.
+        If validation fails, marks status as FAILED without losing the client draft.
+        Schedules thumbnail generation for video and speech-to-text for audio.
+      operationId: finalizeUploadSession
+      x-requirement-ids:
+        - MEDIA-004
+        - MEDIA-005
+        - MEDIA-006
+        - MEDIA-007
+        - MEDIA-009
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: MediaObject UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinalizeUploadSessionRequest'
+      responses:
+        '200':
+          description: Media upload finalized successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaObjectResponse'
+        '400':
+          description: Media invalid or duration exceeds limit
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Media session not found
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/ErrorEnvelope'
+        '413':
+          description: Uploaded file size exceeds limit
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/ErrorEnvelope'
+
+  /v1/media/{id}/download-url:
+    get:
+      summary: Get signed download URL
+      description: |
+        Generates a signed, time-limited download URL for a private MediaObject.
+      operationId: getMediaDownloadUrl
+      x-requirement-ids:
+        - INFRA-003
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: MediaObject UUID
+          schema:
+            type: string
+            format: uuid
+        - name: expirySeconds
+          in: query
+          required: false
+          description: URL validity duration in seconds (default 900)
+          schema:
+            type: integer
+            minimum: 60
+            maximum: 86400
+      responses:
+        '200':
+          description: Signed download URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetMediaDownloadUrlResponse'
+        '404':
+          description: Media not found
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/ErrorEnvelope'
+
+  /v1/media/{id}:
+    get:
+      summary: Get media object metadata
+      description: |
+        Retrieves metadata and processing state of a MediaObject.
+      operationId: getMediaObject
+      x-requirement-ids:
+        - MEDIA-004
+        - INFRA-003
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: MediaObject UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: MediaObject details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaObjectResponse'
+        '404':
+          description: Media not found
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/ErrorEnvelope'
+
+    delete:
+      summary: Delete media object
+      description: Marks media object as deleted and removes original storage file.
+      operationId: deleteMediaObject
+      x-requirement-ids:
+        - MEDIA-007
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Media deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteMediaResponse'
+        '404':
+          description: Media not found
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/ErrorEnvelope'
+
+  /v1/media/retention/run:
+    post:
+      summary: Execute media retention cleanup job
+      description: |
+        Scans for media past their retention_until timestamp and deletes files.
+        Dry-run mode only logs when media.retention_days is unconfigured.
+      operationId: runMediaRetentionJob
+      x-requirement-ids:
+        - MEDIA-007
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetentionJobRequest'
+      responses:
+        '200':
+          description: Retention job execution summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetentionJobResponse'
+
+components:
+  schemas:
+    MediaKind:
+      type: string
+      enum:
+        - AUDIO
+        - VIDEO
+        - PHOTO
+        - DOCUMENT
+
+    MediaPurpose:
+      type: string
+      enum:
+        - CHAT
+        - REQUEST_ATTACHMENT
+        - VOICE_RECORDING
+        - VERIFICATION_DOCUMENT
+        - PAYMENT_PROOF
+        - DISPUTE_EVIDENCE
+        - PROFILE_PHOTO
+        - FARE_EVIDENCE
+        - COMPLETION_EVIDENCE
+        - SERVICE_IMAGE
+
+    MediaSensitivity:
+      type: string
+      enum:
+        - STANDARD
+        - RESTRICTED
+
+    MediaUploadStatus:
+      type: string
+      enum:
+        - PENDING
+        - UPLOADED
+        - FAILED
+
+    MediaScanStatus:
+      type: string
+      enum:
+        - PENDING
+        - CLEAN
+        - REJECTED
+
+    CreateUploadSessionRequest:
+      type: object
+      required:
+        - ownerUserId
+        - kind
+        - purpose
+        - mimeType
+      properties:
+        ownerUserId:
+          type: string
+          format: uuid
+        kind:
+          $ref: '#/components/schemas/MediaKind'
+        purpose:
+          $ref: '#/components/schemas/MediaPurpose'
+        mimeType:
+          type: string
+        expectedSizeBytes:
+          type: integer
+          minimum: 0
+        durationMs:
+          type: integer
+          minimum: 0
+
+    CreateUploadSessionResponse:
+      type: object
+      required:
+        - mediaId
+        - uploadUrl
+        - storageKey
+        - expiresAt
+        - uploadStatus
+      properties:
+        mediaId:
+          type: string
+          format: uuid
+        uploadUrl:
+          type: string
+        storageKey:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        uploadStatus:
+          $ref: '#/components/schemas/MediaUploadStatus'
+
+    FinalizeUploadSessionRequest:
+      type: object
+      required:
+        - actualSizeBytes
+      properties:
+        actualSizeBytes:
+          type: integer
+          minimum: 0
+        durationMs:
+          type: integer
+          minimum: 0
+
+    GetMediaDownloadUrlResponse:
+      type: object
+      required:
+        - mediaId
+        - downloadUrl
+        - expiresAt
+      properties:
+        mediaId:
+          type: string
+          format: uuid
+        downloadUrl:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+
+    MediaObjectData:
+      type: object
+      required:
+        - id
+        - ownerUserId
+        - kind
+        - purpose
+        - sensitivity
+        - mimeType
+        - storageKey
+        - uploadStatus
+        - scanStatus
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        ownerUserId:
+          type: string
+          format: uuid
+        kind:
+          $ref: '#/components/schemas/MediaKind'
+        purpose:
+          $ref: '#/components/schemas/MediaPurpose'
+        sensitivity:
+          $ref: '#/components/schemas/MediaSensitivity'
+        mimeType:
+          type: string
+        sizeBytes:
+          type: integer
+        durationMs:
+          type: integer
+        storageKey:
+          type: string
+        thumbnailMediaId:
+          type: string
+          format: uuid
+          nullable: true
+        transcriptRef:
+          type: string
+          nullable: true
+        retentionUntil:
+          type: string
+          format: date-time
+          nullable: true
+        uploadStatus:
+          $ref: '#/components/schemas/MediaUploadStatus'
+        scanStatus:
+          $ref: '#/components/schemas/MediaScanStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    MediaObjectResponse:
+      type: object
+      required:
+        - media
+      properties:
+        media:
+          $ref: '#/components/schemas/MediaObjectData'
+
+    DeleteMediaResponse:
+      type: object
+      required:
+        - success
+        - mediaId
+      properties:
+        success:
+          type: boolean
+        mediaId:
+          type: string
+          format: uuid
+
+    RetentionJobRequest:
+      type: object
+      properties:
+        dryRun:
+          type: boolean
+
+    RetentionJobResponse:
+      type: object
+      required:
+        - scannedCount
+        - deletedCount
+        - dryRun
+      properties:
+        scannedCount:
+          type: integer
+        deletedCount:
+          type: integer
+        dryRun:
+          type: boolean

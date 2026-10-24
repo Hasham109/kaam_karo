@@ -10,6 +10,7 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 - Verdict: PASS. Phase 2 closed; Phase 3 unblocked.
 
 ## Sync 2026-10-24
+- T3.2 DONE: QA PASS (docs/qa/T3.2-qa.md, 16 unit tests, 8 DB tests, 113/113 total DB tests pass), SEC PASS (docs/security/SEC-REVIEW-T3.2.md). Media upload sessions, private S3 storage signed URLs (INFRA-003, D-001), dynamic limits via ConfigService (media.max_upload_bytes, video/audio limits, BP §76), acceptance criterion tested (oversize/overlong rejected, draft survives failure in FAILED status, MEDIA-009), video thumbnail generation (MEDIA-005), speech-to-text with graceful failure fallback (MEDIA-006), retention cleanup job (MEDIA-007), media contract contracts/media.yaml (OpenAPI 3.1.0).
 - T1.4 DONE: QA PASS (docs/qa/T1.4-qa.md, 21 i18n tests, 17 UI tests), SEC PASS (docs/security/SEC-REVIEW-T1.4.md). Modular message catalog (messages/ namespace split), bidi Unicode isolation (LRI/RLI/FSI/PDI), PKT date/time & relative time formatting, status visuals with contrast & icons (A11Y-003), min 48dp tap targets (A11Y-002), mandatory testID & accessibilityLabel (A11Y-004), directional icon mirroring (A11Y-007), small device sample screen (360x640 dp), string-lint CI guard passing 100% (I18N-006).
 - T3.1 DONE: QA PASS (docs/qa/T3.1-qa.md, 120/120 DB tests, 192 unit tests, Maps fallback tested), SEC PASS (docs/security/SEC-REVIEW-T3.1.md). GeoService, Pakistan boundary, Google Maps server client, straight-line Haversine + urban duration fallback, location contract contracts/location.yaml (OpenAPI 3.1.0).
 - Gate G1 (Phase 2) PASSED. Exit condition "secure login and data model working" met with 0 open S1/S2 bugs, 112 DB tests, 22 QA E2E probes, 36/36 turbo tasks. Phase 2 formally closed.
@@ -42,7 +43,7 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 | A05 | matching-trust | — | IDLE | — | — | T3.6 | — |
 | A06 | location-maps | T3.1 GeoService + Pakistan boundary + Location Snapshot + fallback (LOC-GEO-001..006, 008, SCOPE-GEO-001..002) | DONE | t3.1-location-maps | — | T4.5 (with A12) | 2026-10-24 |
 | A07 | ai-intake-voice | — | IDLE | — | — | T3.3 | — |
-| A08 | media | T3.2 Media upload sessions, limits from config, thumbnails, retention job | IN_PROGRESS | t3.2-media | — | T4.3 (with A12) | 2026-10-24 |
+| A08 | media | T3.2 Media upload sessions, limits from config, thumbnails, retention job | DONE | t3.2-media | — | T4.3 (with A12) | 2026-10-24 |
 | A09 | payments-ledger | — | IDLE | — | — | T6.1 | — |
 | A10 | comms-notify-reviews | — | IDLE | — | — | T7.1 | — |
 | A11 | customer-app | T1.1 Screen specs C01–C42 — SEC-REVIEW fixes #3 #6 #9–#14 #18–#20 done, A15 re-check requested | DONE | t2.1-monorepo | — | T3.8 | 2026-10-23 |
