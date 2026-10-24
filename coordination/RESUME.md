@@ -38,7 +38,7 @@ Parallel agents share one working tree, so give each agent explicit path limits.
 | `00284f7` | **T2.3** Prisma schema v1 (53 tables, append-only at DB level, separate owner/API logins) + **T0.6 code** (Urdu Nastaliq smoke screen) | QA PASS, SEC PASS |
 | `HEAD` | **T2.2** Platform lib + **T2.6** Catalog seed & ConfigRule store | QA PASS, SEC PASS |
 | `674cd31` | **T2.4** Identity: phone OTP login, sessions, roles, admin MFA, staff RBAC lookup, anonymization lifecycle (contracts/identity.yaml v0.1.0) | QA PASS, SEC PASS |
-| `t2.5-profiles` | **T2.5** Profiles, addresses, immutable location snapshots, favorites (contracts/profiles.yaml v0.1.0) | QA PASS, SEC PASS |
+| `f658d5a` | **T2.5** Profiles, addresses, immutable location snapshots, favorites (contracts/profiles.yaml v0.1.0) | QA PASS, SEC PASS |
 
 Earlier commits: Phase 0 (T0.1–T0.5) docs and decisions D-001…D-029.
 
