@@ -29,7 +29,7 @@ Acceptance criteria and BP refs per task: docs/implementation.md §6 (same task 
 | T3.2 | Media upload sessions, limits from config, thumbnails, retention job | A08 | T2.2 | DONE | handoffs/T-3.2.md |
 | T3.3 | `IntakeAI` fake + closed schema + catalog validation + confidence fallback + AI logs | A07 | T2.6 | TODO | — |
 | T3.4 | Booking state machine + Job Events + cancellation rules (config) | A04 | T2.6 | DONE | handoffs/T-3.4.md |
-| T3.5 | Quotes + multi-supplier offers + fare lines (proposed/approved/rejected/final) + **crew size** (ARCH §5.6) | A04 | T3.4 | TODO | — |
+| T3.5 | Quotes + multi-supplier offers + fare lines (proposed/approved/rejected/final) + **crew size** (ARCH §5.6) | A04 | T3.4 | DONE | handoffs/T-3.5.md |
 | T3.6 | Availability, service areas, verification levels | A05 | T2.5 | DONE | handoffs/T-3.6.md |
 | T3.7 | Matching: hard filters 73–79, configurable scoring, fairness, reasons, ranking_version, supply gap | A05 | T3.1, T3.3, T3.6 | TODO | — |
 | T3.8 | Customer app: onboarding, language choice, login, home, search, category, service detail, provider profile | A11 | T2.4, T2.6, T1.4 | TODO | — |

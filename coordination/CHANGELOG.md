@@ -1,5 +1,15 @@
 # CHANGELOG — Kaam Karo
 
+## 2026-10-24 — T3.5 Quotes, Multi-Supplier Offers, Fare Lines & Crew Size (A04) — DONE
+- QUOTE-001..009, ARCH §4 M10, ARCH §5.6: Quotes lifecycle management (`QuotesService`). Direct request (`createDirectQuote`) and multi-supplier request dispatch (`dispatchMultiSupplierRequest`). Provider quote submission (`submitQuote`) enforcing positive validity window (`QUOTE-004`), optional note/description (`QUOTE-005`), and automatic competitor rejection (`QUOTE-009`) when a customer accepts an offer (`acceptQuote`).
+- D-004, PROV-CREW-001 (Acceptance Criterion 2): Mandatory crew size enforcement. Provider quote submission strictly rejects missing, zero, negative, or fractional `crew_size` (`CREW_SIZE_REQUIRED`), backed by DB check constraint `quote_crew_size_positive`. Quote acceptance copies `crew_size` to booking.
+- FARE-001..013, PRICE-001..007: Granular fare breakdown by line type (`LABOR`, `PARTS`, `TOOLS`, `TRANSPORT`, `ADDITIONAL_SERVICE`, `DISCOUNT`, `EMERGENCY`). Type-specific validation: `PARTS` requires `materialsClass` (`PRICE-005`); `TOOLS` requires non-empty description/reason (`FARE-004`); `PLATFORM_FEE` rejected at launch (`D-025`); `EMERGENCY` fails closed (`FARE_EMERGENCY_DISABLED`, `K-10`) when `fare.emergency_exception_enabled = false`.
+- FARE-012, PRICE-007 (Acceptance Criterion 1): Payable summary calculation (`getPayableSummary`). Sums only line items in `APPROVED` or `FINAL` state. Lines in `PROPOSED` or `REJECTED` state are strictly excluded from `totalPayableMinor`.
+- D-015, COMM-003, D-018: Commission base isolation (`commissionableLabourMinor`). Calculates commission base strictly from `APPROVED` or `FINAL` line items of type `LABOR`. Parts, materials, tools, transport, and crew size do not alter commission base or fee multipliers.
+- ARCH §5.6, QUOTE-008 (Acceptance Criterion 3): Mid-job crew size change workflow (`proposeCrewSizeChange`, `decideCrewSizeChange`). Crew size modification after quote acceptance transitions booking to `AWAITING_APPROVAL` with immutable `CREW_SIZE_CHANGE_PROPOSED` job event audit trail. Resumes active status upon customer decision (`CREW_SIZE_CHANGE_DECIDED`).
+- Contracts: `contracts/quotes.yaml` OpenAPI 3.1.0 v0.1.0 registered and validated.
+- Tests: 14/14 unit tests pass in `quotes.service.spec.ts` (282 total unit tests in `@kaamkaro/api`); 7/7 DB integration tests pass in `quotes.db-spec.ts` (133 total DB tests in `@kaamkaro/api`); 5/5 CI guards pass; 36/36 turbo tasks pass.
+
 ## 2026-10-24 — T3.4 Booking State Machine, Job Events & Cancellation Rules (A04) — DONE
 - BOOK-STATUS-001..017, ARCH §6.1, BP §15, §16: Canonical transition table (`transition-table.ts`) defining 17 statuses and 38 valid transitions with actor authorization (`CUSTOMER`, `PROVIDER`, `ADMIN`, `SYSTEM`), bilingual labels (English and Urdu), and business rule guards.
 - BOOK-STATUS-016, SEC-BASE-007: Client status refusal rule (`CLIENT_STATUS_FORBIDDEN`) rejecting any client payload attempting to specify or manipulate `status`. Server-driven allowed actions computed dynamically via `getAllowedNextActions(status, role)`.

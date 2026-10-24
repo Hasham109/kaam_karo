@@ -30,5 +30,6 @@ Published contracts:
 | `media.yaml`        | 0.1.0   | A08   | MEDIA-004..007, MEDIA-009, INFRA-003 (T3.2)                                                                            |
 | `availability.yaml` | 0.1.0   | A05   | AVAIL-001..007, TRUST-VER-001..004 (T3.6)                                                                              |
 | `booking.yaml`      | 0.1.0   | A04   | BOOK-STATUS-001..017, BOOK-CANCEL-001..006, DATA-002, DATA-004 (T3.4)                                                  |
+| `quotes.yaml`       | 0.1.0   | A04   | QUOTE-001..009, FARE-001..013, PRICE-001..007, BOOK-STATUS-010, COMM-003 (T3.5)                                        |
 
 TODO(A01, T2.2+): generate TypeScript types from the contracts for apps and the API.

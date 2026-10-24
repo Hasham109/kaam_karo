@@ -1,0 +1,965 @@
+openapi: 3.1.0
+info:
+  title: Quotes & Fare Service
+  description: >
+    Quotes, multi-supplier offers comparison, commercial fare lines, crew size enforcement,
+    and extra charges approval workflows (ARCH §4 M10, §5.6, §6.3, §6.6; BP §17, §18, §53, §58;
+    D-004, D-015, D-018, D-025, D-028, D-029; QUOTE-001..009, FARE-001..013, PRICE-001..007).
+  version: 0.1.0
+
+paths:
+  /v1/quotes:
+    post:
+      summary: Submit a quote or commercial offer for a booking
+      description: >
+        Creates and sends a commercial quote with structured fare lines. Requires crew_size >= 1
+        (D-004, PROV-CREW-001). Quotes without crew_size are strictly rejected (ARCH §5.6).
+      operationId: createQuote
+      x-requirement-ids:
+        - QUOTE-001
+        - QUOTE-002
+        - QUOTE-003
+        - QUOTE-004
+        - QUOTE-005
+        - PRICE-001
+        - PRICE-002
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuoteRequest'
+      responses:
+        '201':
+          description: Quote created and sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteResponse'
+        '400':
+          description: Invalid request parameters or missing crew size
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Booking not in a quotable state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/quotes/{id}:
+    get:
+      summary: Retrieve quote details with structured fare lines
+      description: >
+        Returns the quote details, inclusions, exclusions, expected duration, and fare lines (QUOTE-005).
+      operationId: getQuote
+      x-requirement-ids:
+        - QUOTE-005
+        - PRICE-006
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Quote details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteResponse'
+        '404':
+          description: Quote not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/bookings/{bookingId}/quotes:
+    get:
+      summary: Compare multi-supplier quotes for a booking
+      description: >
+        Returns all quotes/offers submitted for a booking or request, enabling side-by-side
+        comparison of structured fare lines and crew sizes (BP §53, §55.1; QUOTE-009).
+      operationId: getBookingQuotes
+      x-requirement-ids:
+        - QUOTE-009
+        - PRICE-001
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of supplier quotes for comparison
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/QuoteResponse'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/quotes/{id}/accept:
+    post:
+      summary: Customer accepts a quote
+      description: >
+        Accepts the quote as the commercial basis for the booking. Copies fare lines and crew_size to the booking,
+        advances booking status to ACCEPTED, and marks other competing offers DECLINED (BP §18, §53; QUOTE-006, QUOTE-007).
+        Rejects if the quote has expired (QUOTE-004).
+      operationId: acceptQuote
+      x-requirement-ids:
+        - QUOTE-004
+        - QUOTE-006
+        - QUOTE-007
+        - QUOTE-009
+        - PRICE-007
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Quote accepted and booking updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteResponse'
+        '404':
+          description: Quote not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Quote expired or state transition conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/quotes/{id}/decline:
+    post:
+      summary: Customer declines a quote
+      description: >
+        Declines a submitted quote with an optional reason (BP §18 step 60; QUOTE-006; ARCH §6.6).
+      operationId: declineQuote
+      x-requirement-ids:
+        - QUOTE-006
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Quote declined successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteResponse'
+        '404':
+          description: Quote not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Quote not in a state that can be declined
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/quotes/{id}/clarification:
+    post:
+      summary: Customer requests clarification on a quote
+      description: >
+        Requests clarification on a quote without declining it (BP §18 step 60; QUOTE-006).
+      operationId: requestQuoteClarification
+      x-requirement-ids:
+        - QUOTE-006
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - message
+              properties:
+                message:
+                  type: string
+                  minLength: 1
+      responses:
+        '200':
+          description: Clarification requested successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteResponse'
+        '404':
+          description: Quote not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/bookings/{bookingId}/fare-lines:
+    post:
+      summary: Propose an extra charge / fare line for a booking
+      description: >
+        Proposes an extra charge during job execution. Initial state is PROPOSED. Automatically moves
+        booking to AWAITING_APPROVAL. An unapproved line is never payable (BP §58.2; FARE-001..013; BOOK-STATUS-010).
+      operationId: proposeFareLine
+      x-requirement-ids:
+        - FARE-001
+        - FARE-002
+        - FARE-003
+        - FARE-004
+        - FARE-005
+        - FARE-006
+        - FARE-007
+        - FARE-008
+        - FARE-009
+        - FARE-010
+        - FARE-011
+        - FARE-012
+        - FARE-013
+        - PRICE-003
+        - PRICE-004
+        - PRICE-005
+        - PRICE-007
+        - BOOK-STATUS-010
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProposeFareLineRequest'
+      responses:
+        '201':
+          description: Fare line proposed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FareLineResponse'
+        '400':
+          description: Invalid line parameters or disabled line type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Booking not in a state allowing extra charges
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+    get:
+      summary: List all fare lines for a booking
+      description: >
+        Retrieves all fare lines (quote lines and proposed/approved extras) associated with the booking.
+      operationId: getBookingFareLines
+      x-requirement-ids:
+        - FARE-012
+        - PRICE-006
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of fare lines
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FareLineResponse'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/fare-lines/{id}/approve:
+    post:
+      summary: Customer approves a proposed fare line
+      description: >
+        Customer approves a proposed extra charge. Transitions state from PROPOSED to APPROVED.
+        If all pending proposals are decided, returns booking from AWAITING_APPROVAL to IN_PROGRESS (BP §58.2; FARE-012).
+      operationId: approveFareLine
+      x-requirement-ids:
+        - FARE-012
+        - PRICE-007
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Fare line approved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FareLineResponse'
+        '404':
+          description: Fare line not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Fare line not in PROPOSED state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/fare-lines/{id}/reject:
+    post:
+      summary: Customer rejects a proposed fare line
+      description: >
+        Customer rejects a proposed extra charge. Transitions state from PROPOSED to REJECTED (BP §58.2; FARE-012).
+      operationId: rejectFareLine
+      x-requirement-ids:
+        - FARE-012
+        - PRICE-007
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Fare line rejected successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FareLineResponse'
+        '404':
+          description: Fare line not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Fare line not in PROPOSED state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/bookings/{bookingId}/crew-size-change:
+    post:
+      summary: Propose crew size change after acceptance
+      description: >
+        Any change to crew size after quote acceptance is a scope change requiring customer approval
+        (ARCH §5.6; QUOTE-008). Moves booking to AWAITING_APPROVAL. Crew size never changes price (D-018).
+      operationId: proposeCrewSizeChange
+      x-requirement-ids:
+        - QUOTE-008
+        - BOOK-STATUS-010
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProposeCrewSizeChangeRequest'
+      responses:
+        '200':
+          description: Crew size change request submitted
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - bookingId
+                  - proposedCrewSize
+                  - status
+                properties:
+                  bookingId:
+                    type: string
+                    format: uuid
+                  proposedCrewSize:
+                    type: integer
+                    minimum: 1
+                  status:
+                    type: string
+                    example: AWAITING_APPROVAL
+        '400':
+          description: Invalid crew size (must be >= 1)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/bookings/{bookingId}/crew-size-change/decide:
+    post:
+      summary: Customer approves or rejects proposed crew size change
+      description: >
+        Customer accepts or declines the proposed crew size change (ARCH §5.6; QUOTE-008).
+      operationId: decideCrewSizeChange
+      x-requirement-ids:
+        - QUOTE-008
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - approved
+              properties:
+                approved:
+                  type: boolean
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Crew size decision recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - bookingId
+                  - crewSize
+                  - status
+                properties:
+                  bookingId:
+                    type: string
+                    format: uuid
+                  crewSize:
+                    type: integer
+                  status:
+                    type: string
+        '404':
+          description: Booking not found or no pending crew change
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/bookings/{bookingId}/payable-summary:
+    get:
+      summary: Calculate payable amount and commissionable base
+      description: >
+        Computes the payable total from APPROVED and FINAL fare lines only. Unapproved (PROPOSED) lines
+        are strictly excluded from the payable total (BP §58.2; FARE-012; PRICE-007). Calculates commissionable
+        labour amount (LABOR type lines only, D-015; COMM-003).
+      operationId: getPayableSummary
+      x-requirement-ids:
+        - FARE-012
+        - PRICE-007
+        - COMM-003
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Payable total and commission base breakdown
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayableSummaryResponse'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+components:
+  schemas:
+    QuoteStatus:
+      type: string
+      enum:
+        - DRAFT
+        - SENT
+        - ACCEPTED
+        - DECLINED
+        - EXPIRED
+        - WITHDRAWN
+
+    QuoteCustomerResponse:
+      type: string
+      enum:
+        - ACCEPTED
+        - DECLINED
+        - CLARIFICATION_REQUESTED
+
+    FareLineType:
+      type: string
+      enum:
+        - VISIT
+        - INSPECTION
+        - LABOR
+        - TOOLS
+        - CONSUMABLES
+        - PARTS
+        - EMERGENCY
+        - TRAVEL
+        - PLATFORM_FEE
+        - TAX
+        - DISCOUNT
+
+    FareLineState:
+      type: string
+      enum:
+        - PROPOSED
+        - APPROVED
+        - REJECTED
+        - FINAL
+
+    MaterialsClass:
+      type: string
+      enum:
+        - INCLUDED
+        - EXCLUDED
+        - CUSTOMER_APPROVED_EXTRA
+
+    CreateFareLineItem:
+      type: object
+      required:
+        - lineType
+        - description
+        - amountMinor
+      properties:
+        lineType:
+          $ref: '#/components/schemas/FareLineType'
+        description:
+          type: string
+          minLength: 1
+        quantity:
+          type: number
+          nullable: true
+        unit:
+          type: string
+          nullable: true
+        amountMinor:
+          type: integer
+          minimum: 0
+        materialsClass:
+          $ref: '#/components/schemas/MaterialsClass'
+        isDeductible:
+          type: boolean
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        evidenceMediaIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        applicableRule:
+          type: string
+          nullable: true
+        isEmergencyException:
+          type: boolean
+
+    CreateQuoteRequest:
+      type: object
+      required:
+        - bookingId
+        - crewSize
+      properties:
+        bookingId:
+          type: string
+          format: uuid
+        requestId:
+          type: string
+          format: uuid
+          nullable: true
+        crewSize:
+          type: integer
+          minimum: 1
+          description: Number of workers who will come. Required >= 1 (D-004). Never changes price (D-018).
+        inclusions:
+          type: string
+          nullable: true
+        exclusions:
+          type: string
+          nullable: true
+        expectedDurationMinutes:
+          type: integer
+          minimum: 1
+          nullable: true
+        validUntil:
+          type: string
+          format: date-time
+          nullable: true
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreateFareLineItem'
+
+    QuoteResponse:
+      type: object
+      required:
+        - id
+        - bookingId
+        - providerProfileId
+        - status
+        - crewSize
+        - createdAt
+        - updatedAt
+        - version
+        - lines
+      properties:
+        id:
+          type: string
+          format: uuid
+        bookingId:
+          type: string
+          format: uuid
+        providerProfileId:
+          type: string
+          format: uuid
+        requestId:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          $ref: '#/components/schemas/QuoteStatus'
+        validUntil:
+          type: string
+          format: date-time
+          nullable: true
+        crewSize:
+          type: integer
+          minimum: 1
+        inclusions:
+          type: string
+          nullable: true
+        exclusions:
+          type: string
+          nullable: true
+        expectedDurationMinutes:
+          type: integer
+          nullable: true
+        customerResponse:
+          $ref: '#/components/schemas/QuoteCustomerResponse'
+        respondedAt:
+          type: string
+          format: date-time
+          nullable: true
+        sentAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        version:
+          type: integer
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/FareLineResponse'
+
+    ProposeFareLineRequest:
+      type: object
+      required:
+        - lineType
+        - description
+        - amountMinor
+      properties:
+        lineType:
+          $ref: '#/components/schemas/FareLineType'
+        description:
+          type: string
+          minLength: 1
+        quantity:
+          type: number
+          nullable: true
+        unit:
+          type: string
+          nullable: true
+        amountMinor:
+          type: integer
+          minimum: 0
+        materialsClass:
+          $ref: '#/components/schemas/MaterialsClass'
+        isDeductible:
+          type: boolean
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        evidenceMediaIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        applicableRule:
+          type: string
+          nullable: true
+        isEmergencyException:
+          type: boolean
+
+    FareLineResponse:
+      type: object
+      required:
+        - id
+        - lineType
+        - description
+        - amountMinor
+        - proposedByRole
+        - state
+        - createdAt
+        - updatedAt
+        - version
+      properties:
+        id:
+          type: string
+          format: uuid
+        quoteId:
+          type: string
+          format: uuid
+          nullable: true
+        bookingId:
+          type: string
+          format: uuid
+          nullable: true
+        lineType:
+          $ref: '#/components/schemas/FareLineType'
+        description:
+          type: string
+        quantity:
+          type: number
+          nullable: true
+        unit:
+          type: string
+          nullable: true
+        amountMinor:
+          type: integer
+        proposedByRole:
+          type: string
+          enum:
+            - CUSTOMER
+            - PROVIDER
+            - ADMIN
+            - SYSTEM
+        proposedByUserId:
+          type: string
+          format: uuid
+          nullable: true
+        state:
+          $ref: '#/components/schemas/FareLineState'
+        materialsClass:
+          $ref: '#/components/schemas/MaterialsClass'
+        isDeductible:
+          type: boolean
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        evidenceMediaIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        applicableRule:
+          type: string
+          nullable: true
+        isEmergencyException:
+          type: boolean
+        decidedByUserId:
+          type: string
+          format: uuid
+          nullable: true
+        decidedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        version:
+          type: integer
+
+    ProposeCrewSizeChangeRequest:
+      type: object
+      required:
+        - proposedCrewSize
+      properties:
+        proposedCrewSize:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+          nullable: true
+
+    PayableSummaryResponse:
+      type: object
+      required:
+        - bookingId
+        - totalPayableMinor
+        - approvedLinesCount
+        - unapprovedLinesCount
+        - commissionableLabourMinor
+      properties:
+        bookingId:
+          type: string
+          format: uuid
+        totalPayableMinor:
+          type: integer
+          description: Sum of APPROVED and FINAL lines only (PROPOSED lines strictly excluded).
+        approvedLinesCount:
+          type: integer
+        unapprovedLinesCount:
+          type: integer
+        commissionableLabourMinor:
+          type: integer
+          description: Sum of LABOR lines only (D-015, COMM-003).
+        breakdown:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - lineType
+              - description
+              - amountMinor
+              - state
+              - isPayable
+              - isCommissionable
+            properties:
+              id:
+                type: string
+                format: uuid
+              lineType:
+                $ref: '#/components/schemas/FareLineType'
+              description:
+                type: string
+              amountMinor:
+                type: integer
+              state:
+                $ref: '#/components/schemas/FareLineState'
+              isPayable:
+                type: boolean
+              isCommissionable:
+                type: boolean
+
+    ErrorEnvelope:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
