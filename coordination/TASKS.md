@@ -35,7 +35,7 @@ Acceptance criteria and BP refs per task: docs/implementation.md §6 (same task 
 | T3.8 | Customer app: onboarding, language choice, login, home, search, category, service detail, provider profile | A11 | T2.4, T2.6, T1.4 | DONE | handoffs/T-3.8.md |
 | T3.9 | Customer app: "What do you need?" composer, audio/video recorders, photo picker, location confirm, summary confirm | A11 | T3.1–T3.3 | DONE | handoffs/T-3.9.md |
 | T3.10 | Customer app: match results, comparison, reasons, offers comparison, booking review/confirmation, supply-gap screen | A11 | T3.5, T3.7 | DONE | handoffs/T-3.10.md |
-| T3.11 | Voice assistant v1 (push-to-talk, intents only, confirmation dialogs) | A07 + A11 | T3.3, T3.9 | TODO | — |
+| T3.11 | Voice assistant v1 (push-to-talk, intents only, confirmation dialogs) | A07 + A11 | T3.3, T3.9 | DONE | handoffs/T-3.11.md |
 | T3.12 | QA: customer journey E2E (BP §9 steps up to "Confirm request/booking") | A16 | T3.8–T3.11 | TODO | — |
 | T4.1 | Partner onboarding + verification upload (document picker) | A12 | T2.4, T3.6 | TODO | — |
 | T4.2 | Service setup, availability, overrides, status switch, service area | A12 | T3.6 | TODO | — |

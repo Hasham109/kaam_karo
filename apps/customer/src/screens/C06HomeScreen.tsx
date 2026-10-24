@@ -115,7 +115,7 @@ export function C06HomeScreen(): React.JSX.Element {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => navigate('C07')}
+            onPress={() => navigate('C38', { returnTo: 'C06' })}
             style={[styles.voiceButton, minTapTargetStyle()]}
             {...interactiveProps({
               testID: 'c06-voice-button',

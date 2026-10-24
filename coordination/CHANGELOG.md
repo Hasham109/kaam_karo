@@ -1,5 +1,28 @@
 # CHANGELOG — Kaam Karo
 
+## 2026-10-25 — T3.11 Voice Assistant v1 (A07 + A11) — DONE
+- Screens & Engine: Implemented Voice Assistant v1 and C38 Voice Assistant Screen in English and Urdu (`apps/customer/src/screens/C38VoiceAssistantScreen.tsx`, `apps/customer/src/services/voice-assistant.ts`):
+  - Push-to-Talk Interface: Explicit customer press starts microphone capture; returns to idle upon utterance completion with strictly zero always-listening wake word or background capture (`VOICE-001`, `BP §77.1`).
+  - Active Listening Indicator: Visual animated pill and indicator copy rendered while recording is active (`VOICE-002`).
+  - Recognized Speech Preview: Transcription card renders heard speech before consequential commands are executed (`VOICE-003`).
+  - Multi-Level Undo Stack: Undo button and voice triggers ("undo", "cancel that", "wapas karo", "pehle jaisa karo") revert draft state modifications safely (`VOICE-004`).
+  - Operational Text Fallback: Full input parity with text submission bar preventing audio denial trap states (`VOICE-005`).
+  - Trilingual Intent Engine: Parser supports English, Urdu script, and Roman Urdu across navigation, draft creation/updates, search, and support (`VOICE-006`).
+  - Mandatory Confirmation Dialogs: Explicit blocking confirmation dialogs before all 5 consequential actions (`PLACE_BOOKING`, `ACCEPT_QUOTE`, `PAY_BOOKING`, `CANCEL_BOOKING`, `SUBMIT_COMPLAINT`); no request is sent without user confirmation (`VOICE-007`, IMPL §6 verbatim acceptance criteria).
+  - Strict Allow-List Enforcement: Assistant strictly operates within `BP §77.3` actions; out-of-bounds queries (banking, fund transfers, credentials, deletion) are rejected cleanly (`VOICE-008`).
+  - Educational Permission Pre-Prompt: Microphone permission requested only upon explicit customer action with in-context rationale dialog (`PERM-003`, `PERM-JUST-002`).
+- Design System, i18n & Accessibility:
+  - 100% localized in English and Urdu (`packages/i18n/src/messages/customer.ts`).
+  - 0 hardcoded user-facing literals; `guard:string-lint` verified across 39 UI files.
+  - RTL mirroring and Noto Nastaliq Urdu typography with 2.5× line-height ratio in Urdu (`BP §78`, `I18N-001..004`).
+  - 48×48 dp minimum touch targets on all interactive controls (`A11Y-002`).
+- Tests & Quality Verification:
+  - 20/20 tests pass in `apps/customer/src/voice-assistant-flow.spec.ts`.
+  - 80/80 total unit & flow tests pass in `@kaamkaro/customer`.
+  - 21/21 tests pass in `@kaamkaro/i18n`.
+  - 5/5 repository quality guards pass (`guard:arch`, `guard:contracts`, `guard:values`, `guard:string-lint`, `guard:transition-table`, `guard:traceability`).
+  - 0 TypeScript errors (`tsc -p tsconfig.json --noEmit`), 0 ESLint warnings (`eslint .`).
+
 ## 2026-10-25 — T3.10 Customer App Match Results, Comparison, Quotes, Booking Confirmation & Supply-Gap (A11) — DONE
 - Screens: Implemented Customer App Match Results, Comparison, Quotes, Booking Confirmation, and Supply-Gap screens C35, C36, C13, C14, C15, C40 in English and Urdu (`apps/customer/src/screens/`):
   - C35 Supplier Match Results: Discovery-only candidate cards (`D-005`), "Why am I seeing this?" expandable rationale accordions (`BP §55.1`), filter/sort chips, coarse service-zone map privacy toggle with privacy notice, quote invite CTA (`BP §54`).

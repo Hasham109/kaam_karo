@@ -28,6 +28,7 @@ import { C33VideoRecorderScreen } from './screens/C33VideoRecorderScreen';
 import { C34SummaryScreen } from './screens/C34SummaryScreen';
 import { C35SupplierMatchResultsScreen } from './screens/C35SupplierMatchResultsScreen';
 import { C36OffersComparisonScreen } from './screens/C36OffersComparisonScreen';
+import { C38VoiceAssistantScreen } from './screens/C38VoiceAssistantScreen';
 import { C39LocationConfirmScreen } from './screens/C39LocationConfirmScreen';
 import { C40SupplyGapScreen } from './screens/C40SupplyGapScreen';
 import { C41LanguageScreen } from './screens/C41LanguageScreen';
@@ -88,6 +89,8 @@ function CustomerRouter(): React.JSX.Element {
       return <C35SupplierMatchResultsScreen />;
     case 'C36':
       return <C36OffersComparisonScreen />;
+    case 'C38':
+      return <C38VoiceAssistantScreen />;
     case 'C39':
       return <C39LocationConfirmScreen />;
     case 'C40':

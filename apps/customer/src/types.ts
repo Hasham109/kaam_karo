@@ -2,7 +2,7 @@
  * Customer App Core Types (T3.8; BP §12, ARCH §3.1, docs/screens/customer.md).
  * Screens: C01-C11 + C41.
  */
-import type { BookingStatus, Locale } from '@kaamkaro/i18n';
+import type { BookingStatus, Locale, MessageKey } from '@kaamkaro/i18n';
 
 export type ScreenId =
   | 'C01' // Splash / App start
@@ -26,6 +26,7 @@ export type ScreenId =
   | 'C34' // Request Summary Confirmation
   | 'C35' // Supplier Match Results
   | 'C36' // Multi-supplier Offers Comparison
+  | 'C38' // Voice Assistant Overlay (VOICE-001..008, BP §77)
   | 'C39' // Location Confirm
   | 'C40' // No-supply / Supply-gap Screen
   | 'C41'; // Language Selection
@@ -95,6 +96,12 @@ export interface ScreenParams {
     | {
         bookingId?: string | undefined;
         requestId?: string | undefined;
+        returnTo?: ScreenId | undefined;
+      }
+    | undefined;
+  C38?:
+    | {
+        initialQuery?: string | undefined;
         returnTo?: ScreenId | undefined;
       }
     | undefined;
@@ -423,3 +430,49 @@ export interface CustomerAppContextValue {
   readonly permissionStatus: Record<PermissionKind, PermissionStateValue>;
   readonly setPermissionStatus: (kind: PermissionKind, state: PermissionStateValue) => void;
 }
+
+export type VoiceActionType =
+  | 'SEARCH'
+  | 'NAVIGATE'
+  | 'DRAFT_UPDATE'
+  | 'LOCATION_SET'
+  | 'FILTER_PREFERENCE'
+  | 'EXPLAIN'
+  | 'SUPPORT'
+  | 'PLACE_BOOKING'
+  | 'ACCEPT_QUOTE'
+  | 'PAY_BOOKING'
+  | 'CANCEL_BOOKING'
+  | 'SUBMIT_COMPLAINT'
+  | 'UNDO'
+  | 'UNSUPPORTED';
+
+export interface ConsequentialConfirmationPrompt {
+  readonly actionType:
+    | 'PLACE_BOOKING'
+    | 'ACCEPT_QUOTE'
+    | 'PAY_BOOKING'
+    | 'CANCEL_BOOKING'
+    | 'SUBMIT_COMPLAINT';
+  readonly titleKey: MessageKey;
+  readonly messageKey: MessageKey;
+  readonly params: Record<string, string | number>;
+  readonly targetScreen?: ScreenId;
+  readonly payload?: Record<string, unknown>;
+}
+
+export interface VoiceAssistantResult {
+  readonly recognizedText: string;
+  readonly intentType: VoiceActionType;
+  readonly detectedLanguage: 'en' | 'ur';
+  readonly explanationEn: string;
+  readonly explanationUr: string;
+  readonly targetScreen?: ScreenId;
+  readonly requiresConfirmation: boolean;
+  readonly confirmationPrompt?: ConsequentialConfirmationPrompt;
+  readonly draftUpdates?: Partial<IntakeDraft>;
+  readonly isUndoRevert?: boolean;
+  readonly searchQuery?: string;
+  readonly filterPreference?: string;
+}
+

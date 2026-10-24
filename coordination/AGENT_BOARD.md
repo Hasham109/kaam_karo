@@ -9,6 +9,9 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 - Verification passes: 36/36 turbo tasks, 112/112 DB tests, 22/22 QA E2E probes, 5/5 guards, format check.
 - Verdict: PASS. Phase 2 closed; Phase 3 unblocked.
 
+## Sync 2026-10-25
+- T3.11 DONE: QA PASS (docs/qa/T3.11-qa.md, 20 unit/flow tests, 80/80 total customer app tests pass), SEC PASS (docs/security/SEC-REVIEW-T3.11.md). Voice Assistant v1 (push-to-talk, intents only, confirmation dialogs, screen C38 in en/ur; VOICE-001..008; BP §77, §78). Push-to-talk zero background listening, visible listening indicator, recognized text preview card, multi-level undo stack, operational text fallback, trilingual intent engine (en/ur/roman urdu), mandatory confirmation dialogs for all 5 consequential actions (PLACE_BOOKING, ACCEPT_QUOTE, PAY_BOOKING, CANCEL_BOOKING, SUBMIT_COMPLAINT), strict BP §77.3 out-of-bounds rejection, educational microphone permission pre-prompt, 48x48 dp touch targets, RTL Nastaliq typography, and 100% localized message catalogs (guard:string-lint PASS).
+
 ## Sync 2026-10-24
 - T3.8 DONE: QA PASS (docs/qa/T3.8-qa.md, 25 tests pass in customer app), SEC PASS (docs/security/SEC-REVIEW-T3.8.md). Customer app core UI screens C01–C11 + C41 in English and Urdu with live RTL layout switch, Nastaliq typography, 48×48 dp tap targets, zero hardcoded strings (guard:string-lint PASS), zero permissions at onboarding, and safe guest browsing.
 - T3.7 DONE: QA PASS (docs/qa/T3.7-qa.md, 20 unit tests, 5 DB tests, 155/155 total DB tests pass), SEC PASS (docs/security/SEC-REVIEW-T3.7.md). Supplier matching engine (Module M8, ARCH §4 M8, BP §54, §61.3, §68; D-005, D-010, D-020). Hard filters 73-79 & unpaid commission, 13 configurable scoring signals with Bayesian smoothing, algorithmic fairness (new provider boost & concentration caps), bilingual explanations ("Why am I seeing this?"), supply gap recovery options, zero auto-assignment guarantee (D-005), and OpenAPI 3.1.0 contract contracts/matching.yaml.
@@ -52,7 +55,7 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 | A08 | media | T3.2 Media upload sessions, limits from config, thumbnails, retention job | DONE | t3.2-media | — | T4.3 (with A12) | 2026-10-24 |
 | A09 | payments-ledger | — | IDLE | — | — | T6.1 | — |
 | A10 | comms-notify-reviews | — | IDLE | — | — | T7.1 | — |
-| A11 | customer-app | T3.10 Customer app: match results, comparison, reasons, offers comparison, booking review/confirmation, supply-gap screen (C35, C36, C13, C14, C15, C40 in en/ur) | DONE | t3.10-customer-matches | — | T3.11 | 2026-10-25 |
+| A11 | customer-app | T3.11 Voice assistant v1 (push-to-talk, intents only, confirmation dialogs, C38 in en/ur) | DONE | t3.11-voice-assistant | — | T3.12 | 2026-10-25 |
 | A12 | partner-app | T1.2 Screen specs P01–P26 — review fixes QA F-01/F-02/F-05 + SEC #2/#6/#7/#10/#11/#13/#21/#23 done (UX-SCREEN-002/003) | DONE | t2.1-monorepo | — | T4.1 | 2026-10-23 |
 | A13 | admin-portal | T1.3 Admin screen specs A01–A26 + sub-role access matrix (OPS-ADMIN-001…026, ADMIN-ROLE-001…008, ROLE-003, UX-SCREEN-003, SEC-AUTH-005) | DONE | t2.1-monorepo (docs only) | — | T5.1 (T1.3 QA PASS; SEC fixes #1,4,5,6,8,15-18,22,24,25 + QA F-04 done, A15 re-review pending) | 2026-10-23 |
 | A14 | i18n-a11y | T1.4 i18n + RTL + Urdu typography kit; string-lint rule (I18N-001..008, A11Y-001..008) | DONE | work/parallel-t1.4-t3.2 | — | T3.8 / T3.9 | 2026-10-24 |
