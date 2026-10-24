@@ -1,0 +1,587 @@
+openapi: 3.1.0
+info:
+  title: Booking & Job State Machine Service
+  description: >
+    Lifecycle state transitions, Job Events, cancellation and no-show policies,
+    and server-driven action permissions (ARCH §4 M9, §6.1; BP §15, §16, §21, §25;
+    BOOK-STATUS-001..017, BOOK-CANCEL-001..006, DATA-002, DATA-004).
+  version: 0.1.0
+
+paths:
+  /v1/bookings:
+    post:
+      summary: Create booking or submit booking draft
+      description: >
+        Creates a new booking record. Client-sent status is strictly ignored or rejected;
+        initial state is determined server-side (DRAFT, REQUESTED, or QUOTE_PENDING) (BOOK-STATUS-001..003, SEC-BASE-007).
+      operationId: createBooking
+      x-requirement-ids:
+        - BOOK-STATUS-001
+        - BOOK-STATUS-002
+        - BOOK-STATUS-003
+        - SEC-BASE-007
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+      responses:
+        '201':
+          description: Booking created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: State transition conflict or service inactive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/bookings/{id}:
+    get:
+      summary: Retrieve booking details with server-driven actions
+      description: >
+        Returns current booking record and allowedNextActions list (BOOK-STATUS-016).
+      operationId: getBooking
+      x-requirement-ids:
+        - BOOK-STATUS-016
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Booking details and allowed actions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/bookings/{id}/transitions:
+    post:
+      summary: Request booking status transition
+      description: >
+        Requests a state change through the ARCH §6.1 transition table.
+        Writes an immutable Job Event on success (DATA-002, DATA-004).
+      operationId: requestBookingTransition
+      x-requirement-ids:
+        - BOOK-STATUS-001
+        - BOOK-STATUS-002
+        - BOOK-STATUS-003
+        - BOOK-STATUS-004
+        - BOOK-STATUS-005
+        - BOOK-STATUS-006
+        - BOOK-STATUS-007
+        - BOOK-STATUS-008
+        - BOOK-STATUS-009
+        - BOOK-STATUS-010
+        - BOOK-STATUS-011
+        - BOOK-STATUS-012
+        - BOOK-STATUS-013
+        - BOOK-STATUS-014
+        - BOOK-STATUS-015
+        - BOOK-STATUS-016
+        - BOOK-STATUS-017
+        - DATA-002
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingTransitionRequest'
+      responses:
+        '200':
+          description: Transition accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '400':
+          description: Invalid transition payload or missing required parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Transition not allowed or unpaid commission block
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/bookings/{id}/cancel:
+    post:
+      summary: Cancel booking
+      description: >
+        Cancels a booking according to cancellation policy rules (BP §16).
+      operationId: cancelBooking
+      x-requirement-ids:
+        - BOOK-CANCEL-001
+        - BOOK-CANCEL-002
+        - BOOK-CANCEL-003
+        - BOOK-STATUS-013
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelBookingRequest'
+      responses:
+        '200':
+          description: Booking cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '409':
+          description: Cancellation not allowed in current status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/bookings/{id}/no-show:
+    post:
+      summary: Record booking no-show
+      description: >
+        Records a customer or provider no-show with mandatory party attribute (BOOK-STATUS-017).
+      operationId: recordNoShow
+      x-requirement-ids:
+        - BOOK-CANCEL-004
+        - BOOK-CANCEL-005
+        - BOOK-STATUS-017
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordNoShowRequest'
+      responses:
+        '200':
+          description: No-show recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '400':
+          description: Missing party or premature report before wait period
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: No-show not permitted in current status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/bookings/{id}/safety-stop:
+    post:
+      summary: Trigger emergency safety stop
+      description: >
+        Stops job execution for safety reasons; transitions Arrived -> Cancelled or In Progress -> Disputed,
+        and creates safety case escalation (BOOK-CANCEL-006).
+      operationId: safetyStop
+      x-requirement-ids:
+        - BOOK-CANCEL-006
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SafetyStopRequest'
+      responses:
+        '200':
+          description: Safety stop triggered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '409':
+          description: Safety stop not permitted from current status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/bookings/{id}/events:
+    get:
+      summary: List immutable job events for a booking
+      description: >
+        Returns append-only audit trail of state changes and events (DATA-002, DATA-004).
+      operationId: getBookingEvents
+      x-requirement-ids:
+        - DATA-002
+        - DATA-004
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of job events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JobEventResponse'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+components:
+  schemas:
+    BookingStatus:
+      type: string
+      enum:
+        - DRAFT
+        - REQUESTED
+        - QUOTE_PENDING
+        - QUOTED
+        - ACCEPTED
+        - SCHEDULED
+        - PROVIDER_EN_ROUTE
+        - ARRIVED
+        - IN_PROGRESS
+        - AWAITING_APPROVAL
+        - COMPLETED
+        - DISPUTED
+        - CANCELLED
+        - EXPIRED
+        - CLOSED
+        - REJECTED
+        - NO_SHOW
+
+    ActorRole:
+      type: string
+      enum:
+        - CUSTOMER
+        - PROVIDER
+        - ADMIN
+        - SYSTEM
+
+    NoShowParty:
+      type: string
+      enum:
+        - CUSTOMER
+        - PROVIDER
+
+    SellingMode:
+      type: string
+      enum:
+        - INSTANT
+        - CHOOSE_SUPPLIER
+        - REQUEST_QUOTES
+
+    AllowedNextAction:
+      type: object
+      required:
+        - action
+        - targetStatus
+        - labelEn
+        - labelUr
+      properties:
+        action:
+          type: string
+          description: Internal action code (e.g. ACCEPT, START_TRIP, CANCEL)
+        targetStatus:
+          $ref: '#/components/schemas/BookingStatus'
+        labelEn:
+          type: string
+          description: English button label
+        labelUr:
+          type: string
+          description: Urdu button label
+        requiresConfirmation:
+          type: boolean
+          default: false
+        destructive:
+          type: boolean
+          default: false
+
+    CreateBookingRequest:
+      type: object
+      required:
+        - customerProfileId
+        - serviceId
+        - sellingMode
+      properties:
+        customerProfileId:
+          type: string
+          format: uuid
+        serviceId:
+          type: string
+          format: uuid
+        providerProfileId:
+          type: string
+          format: uuid
+        requestId:
+          type: string
+          format: uuid
+        sellingMode:
+          $ref: '#/components/schemas/SellingMode'
+        locationSnapshotId:
+          type: string
+          format: uuid
+        scheduledAt:
+          type: string
+          format: date-time
+        inspectionVisitAt:
+          type: string
+          format: date-time
+        crewSize:
+          type: integer
+          minimum: 1
+        isEmergency:
+          type: boolean
+          default: false
+        submitImmediately:
+          type: boolean
+          default: false
+          description: If true, transitions directly from DRAFT to REQUESTED / QUOTE_PENDING
+
+    BookingTransitionRequest:
+      type: object
+      required:
+        - action
+        - toStatus
+      properties:
+        action:
+          type: string
+          description: Action identifier (e.g. ACCEPT, START_TRIP, ARRIVE, START_WORK, COMPLETE)
+        toStatus:
+          $ref: '#/components/schemas/BookingStatus'
+        reason:
+          type: string
+          description: Optional reason or notes
+        crewSize:
+          type: integer
+          minimum: 1
+          description: Required when provider accepts if not already set (D-004)
+        noShowParty:
+          $ref: '#/components/schemas/NoShowParty'
+        sourceMetadata:
+          type: object
+          additionalProperties: true
+
+    CancelBookingRequest:
+      type: object
+      required:
+        - reasonCode
+      properties:
+        reasonCode:
+          type: string
+        notes:
+          type: string
+
+    RecordNoShowRequest:
+      type: object
+      required:
+        - party
+      properties:
+        party:
+          $ref: '#/components/schemas/NoShowParty'
+        reason:
+          type: string
+
+    SafetyStopRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+        notes:
+          type: string
+
+    BookingResponse:
+      type: object
+      required:
+        - id
+        - bookingNumber
+        - customerProfileId
+        - serviceId
+        - sellingMode
+        - status
+        - statusChangedAt
+        - isEmergency
+        - version
+        - allowedNextActions
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        bookingNumber:
+          type: string
+          example: 4F2A81B3C0
+        customerProfileId:
+          type: string
+          format: uuid
+        serviceId:
+          type: string
+          format: uuid
+        providerProfileId:
+          type: string
+          format: uuid
+        requestId:
+          type: string
+          format: uuid
+        sellingMode:
+          $ref: '#/components/schemas/SellingMode'
+        status:
+          $ref: '#/components/schemas/BookingStatus'
+        statusChangedAt:
+          type: string
+          format: date-time
+        locationSnapshotId:
+          type: string
+          format: uuid
+        scheduledAt:
+          type: string
+          format: date-time
+        inspectionVisitAt:
+          type: string
+          format: date-time
+        crewSize:
+          type: integer
+        acceptedQuoteId:
+          type: string
+          format: uuid
+        isEmergency:
+          type: boolean
+        cancelledByRole:
+          $ref: '#/components/schemas/ActorRole'
+        cancelReasonCode:
+          type: string
+        cancellationFee:
+          type: number
+          default: 0
+        noShowParty:
+          $ref: '#/components/schemas/NoShowParty'
+        reviewSubmittedAt:
+          type: string
+          format: date-time
+        version:
+          type: integer
+        allowedNextActions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AllowedNextAction'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    JobEventResponse:
+      type: object
+      required:
+        - id
+        - bookingId
+        - actorRole
+        - action
+        - occurredAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        bookingId:
+          type: string
+          format: uuid
+        actorUserId:
+          type: string
+          format: uuid
+        actorRole:
+          $ref: '#/components/schemas/ActorRole'
+        action:
+          type: string
+        fromStatus:
+          $ref: '#/components/schemas/BookingStatus'
+        toStatus:
+          $ref: '#/components/schemas/BookingStatus'
+        reason:
+          type: string
+        sourceMetadata:
+          type: object
+          additionalProperties: true
+        occurredAt:
+          type: string
+          format: date-time
+
+    ErrorEnvelope:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+            requestId:
+              type: string

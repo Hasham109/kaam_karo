@@ -1,5 +1,19 @@
 # CHANGELOG — Kaam Karo
 
+## 2026-10-24 — T3.4 Booking State Machine, Job Events & Cancellation Rules (A04) — DONE
+- BOOK-STATUS-001..017, ARCH §6.1, BP §15, §16: Canonical transition table (`transition-table.ts`) defining 17 statuses and 38 valid transitions with actor authorization (`CUSTOMER`, `PROVIDER`, `ADMIN`, `SYSTEM`), bilingual labels (English and Urdu), and business rule guards.
+- BOOK-STATUS-016, SEC-BASE-007: Client status refusal rule (`CLIENT_STATUS_FORBIDDEN`) rejecting any client payload attempting to specify or manipulate `status`. Server-driven allowed actions computed dynamically via `getAllowedNextActions(status, role)`.
+- D-004, BOOK-STATUS-004: Crew size guard (`crewSizeGuard`) enforcing `crew_size >= 1` upon provider acceptance, reinforced by PostgreSQL check constraint `booking_crew_size_positive`.
+- LEDGER-NEG-005, D-021: Unpaid commission guard (`unpaidCommissionGuard`) blocking provider from accepting bookings if unpaid commission exceeds negative balance limit.
+- BOOK-STATUS-017: Mandatory no-show attribution guard (`noShowGuard`) enforcing `noShowParty` (`CUSTOMER` | `PROVIDER`), reinforced by PostgreSQL check constraint `booking_no_show_has_party`.
+- DATA-002, DATA-004, BP §26: Immutable `JobEvent` audit logging recording actor, role, from/to status, reason, and PII-sanitized metadata on every transition.
+- BOOK-CANCEL-001..006, D-023: Cancellation service logic (`cancelBooking`) supporting both customer and provider cancellations. Launch policy enforces zero cancellation fee (`cancellationFee = 0`, D-023) with refund flow triggered when payments exist.
+- Safety stops (`safetyStop`): `ARRIVED -> CANCELLED` and `IN_PROGRESS -> DISPUTED` with mandatory audit reason logging.
+- Optimistic concurrency control: State transitions execute atomically via Prisma interactive transactions with version checking (`version = currentVersion + 1`), throwing 409 Conflict upon race condition.
+- CI Hook: `tools/check-transition-table.ts` verifying all 289 Cartesian pairs (17 × 17) against ARCH §6.1, wired into CI guards (`pnpm run guard:transition-table`).
+- Contracts: `contracts/booking.yaml` OpenAPI 3.1.0 v0.1.0 registered and validated.
+- Tests: 268 unit tests pass in `@kaamkaro/api` (including 21 transition table unit tests and 15 booking service unit tests); 126/126 DB integration tests pass (+ 12 seed DB tests = 138 total); 5/5 guards pass; 36/36 turbo tasks pass.
+
 ## 2026-10-24 — T3.6 Availability, Service Areas, Verification Levels (A05) — DONE
 - AVAIL-001, AVAIL-002, AVAIL-004: Weekly recurring schedule and daily break periods (`AvailabilityService.setWeeklySchedule`). Enforces interval validation (`startTime < endTime`), breaks within working hours, and atomic replacement via Prisma transactions.
 - AVAIL-003: Calendar date overrides (`setDateOverride`) supporting `OFF` (leave/holiday) and `CUSTOM_HOURS`, taking precedence over weekly schedules.

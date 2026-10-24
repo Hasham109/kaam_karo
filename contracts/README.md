@@ -29,5 +29,6 @@ Published contracts:
 | `location.yaml`     | 0.1.0   | A06   | LOC-GEO-001..006, LOC-GEO-008, SCOPE-GEO-001..002 (T3.1)                                                               |
 | `media.yaml`        | 0.1.0   | A08   | MEDIA-004..007, MEDIA-009, INFRA-003 (T3.2)                                                                            |
 | `availability.yaml` | 0.1.0   | A05   | AVAIL-001..007, TRUST-VER-001..004 (T3.6)                                                                              |
+| `booking.yaml`      | 0.1.0   | A04   | BOOK-STATUS-001..017, BOOK-CANCEL-001..006, DATA-002, DATA-004 (T3.4)                                                  |
 
 TODO(A01, T2.2+): generate TypeScript types from the contracts for apps and the API.
