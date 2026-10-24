@@ -11,6 +11,8 @@ const SAFE: DbRoleFacts = {
   login: 'kaamkaro_api',
   is_superuser: false,
   bypasses_rls: false,
+  can_create_role: false,
+  can_create_db: false,
   table_owner: 'kaamkaro',
   is_owner_member: false,
   is_app_member: true,
@@ -24,6 +26,8 @@ describe('[DATA-004] API database login guard (BP §26, §29; SEC-REVIEW-T2.3 #1
   it.each([
     ['superuser', { is_superuser: true }, /superuser/],
     ['BYPASSRLS', { bypasses_rls: true }, /BYPASSRLS/],
+    ['CREATEROLE (BUG-0005)', { can_create_role: true }, /CREATEROLE/],
+    ['CREATEDB', { can_create_db: true }, /CREATEDB/],
     ['table owner', { is_owner_member: true }, /table owner/],
     ['not in kaamkaro_app', { is_app_member: false }, /not a member of kaamkaro_app/],
     ['schema not migrated', { table_owner: null }, /not migrated/],

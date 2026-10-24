@@ -28,17 +28,17 @@ Fix PR: —      Verified by: —
 
 ---
 
-## BUG-0005  [S4]  status: OPEN  owner: A01 (review A09)  found by: A15 (SEC-REVIEW-T2.3 re-review 1, R5)  phase: 2
+## BUG-0005  [S4]  status: FIXED  owner: A01 (review A09)  found by: A15 (SEC-REVIEW-T2.3 re-review 1, R5)  phase: 2
 Title: DB start-up role guard does not refuse a login with CREATEROLE
 Requirement violated: PERM/INFRA-001   Blueprint: §29
 Repro:
  1. Point DATABASE_URL at a login with CREATEROLE; start the API
 Expected: Start refused
-Actual: API starts
-Where: packages/platform/src/db-role-guard.ts:16-26. Fix deadline: Before T2.7 / first deployed env
-Failing test: TODO(A17) — add to services/api/prisma/tests-db/ before the fix
+Actual: Start refused with DbRoleError (checked in DB_ROLE_FACTS_SQL & dbRoleProblems)
+Where: packages/platform/src/db-role-guard.ts:16-57. Fix deadline: Before T2.7 / first deployed env
+Failing test: packages/platform/src/db-role-guard.spec.ts (CREATEROLE & CREATEDB cases)
 Root cause: test gap
-Fix PR: —      Verified by: —
+Fix PR: t2.7-backup-restore      Verified by: A01
 
 ## BUG-0004  [S4]  status: OPEN  owner: A01 (review A09)  found by: A15 (SEC-REVIEW-T2.3 re-review 1, R4)  phase: 2
 Title: CASH payment_method_record accepted after a SUCCEEDED DIGITAL payment on the same booking

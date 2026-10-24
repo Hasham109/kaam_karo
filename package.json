@@ -21,6 +21,9 @@
     "guard:transition-table": "node infra/ci/run-hook.ts transition-table",
     "guard:traceability": "node infra/ci/run-hook.ts traceability",
     "guards": "pnpm run guard:permissions && pnpm run guard:hardcoded && pnpm run guard:string-lint && pnpm run guard:transition-table && pnpm run guard:traceability",
+    "db:backup": "node --env-file=.env infra/scripts/db-backup.ts",
+    "db:restore": "node --env-file=.env infra/scripts/db-restore.ts",
+    "db:restore-drill": "node --env-file=.env infra/scripts/restore-drill.ts",
     "infra:up": "docker compose --env-file .env -f infra/docker-compose.yml up -d",
     "infra:down": "docker compose --env-file .env -f infra/docker-compose.yml down"
   },

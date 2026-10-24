@@ -23,7 +23,7 @@ Acceptance criteria and BP refs per task: docs/implementation.md §6 (same task 
 | T2.4 | Identity: phone OTP login (D-002) with fake `OtpSender`, OTP expiry + attempt limits + resend cooldown (values in config, `TODO(OWNER)`), sessions, roles, admin sub-roles, MFA for admin | A02 | T2.2 | DONE | handoffs/T-2.4.md |
 | T2.5 | Profiles + addresses + snapshot helper + favorites | A02 | T2.4 | DONE | handoffs/T-2.5.md |
 | T2.6 | Catalog seed from BP §63 (all inactive) + launch-family flags + `ConfigRule` store + cities: **Lahore** `is_listed = true, is_active = true` (D-007); other Pakistani cities `is_listed = true, is_active = false`; whole Lahore seeded as one active service zone (D-019); provider radius/areas still work inside it (BP §59) | A03 | T2.3 | DONE | handoffs/T-2.6.md |
-| T2.7 | Backup + **restore test** in staging | A01 | T2.3 | TODO | — |
+| T2.7 | Backup + **restore test** in staging | A01 | T2.3 | DONE | handoffs/T-2.7.md |
 | T2.8 | Security review of T2.1–T2.6 | A15 | T2.4–T2.6 | TODO | — |
 | T3.1 | `GeoService` + Pakistan boundary + Location Snapshot + fallback | A06 | T2.3 | TODO | — |
 | T3.2 | Media upload sessions, limits from config, thumbnails, retention job | A08 | T2.2 | TODO | — |

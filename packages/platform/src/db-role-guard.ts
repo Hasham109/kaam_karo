@@ -17,6 +17,8 @@ export const DB_ROLE_FACTS_SQL = `
 SELECT r.rolname AS login,
        r.rolsuper AS is_superuser,
        r.rolbypassrls AS bypasses_rls,
+       r.rolcreaterole AS can_create_role,
+       r.rolcreatedb AS can_create_db,
        t.tableowner AS table_owner,
        CASE WHEN t.tableowner IS NULL THEN false ELSE pg_has_role(current_user, t.tableowner, 'MEMBER') END AS is_owner_member,
        CASE WHEN EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '${APP_DB_ROLE}')
@@ -29,6 +31,8 @@ export interface DbRoleFacts {
   login: string;
   is_superuser: boolean;
   bypasses_rls: boolean;
+  can_create_role: boolean;
+  can_create_db: boolean;
   table_owner: string | null;
   is_owner_member: boolean;
   is_app_member: boolean;
@@ -47,6 +51,8 @@ export function dbRoleProblems(facts: DbRoleFacts | undefined): string[] {
   const problems: string[] = [];
   if (facts.is_superuser) problems.push(`login "${facts.login}" is a superuser`);
   if (facts.bypasses_rls) problems.push(`login "${facts.login}" has BYPASSRLS`);
+  if (facts.can_create_role) problems.push(`login "${facts.login}" has CREATEROLE`);
+  if (facts.can_create_db) problems.push(`login "${facts.login}" has CREATEDB`);
   if (facts.table_owner === null)
     problems.push('schema not migrated (provider_ledger_entry missing)');
   else if (facts.is_owner_member)
