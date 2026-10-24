@@ -60,8 +60,17 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U kaamkaro -d kaamkaro_ci"
           --health-interval 5s --health-timeout 5s --health-retries 20
+      # T2.2: the outbox relay/consumer DB tests publish through real Redis + BullMQ (D-001).
+      redis:
+        image: redis:8.8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 20
     env:
       APP_ENV: test
+      REDIS_URL: redis://localhost:6379
       # Owner (migrations) and API login are different roles (BP §26, §29; SEC-REVIEW-T2.3 #1).
       MIGRATION_DATABASE_URL: postgresql://kaamkaro:ci-only-not-a-secret@localhost:5432/kaamkaro_ci?schema=public
       DATABASE_URL: postgresql://kaamkaro_api:ci-only-app-login@localhost:5432/kaamkaro_ci?schema=public
@@ -85,7 +94,11 @@ jobs:
           -f infra/db/bootstrap.sql
       - name: Apply migrations (owner login)
         run: pnpm --filter @kaamkaro/api db:deploy
-      - name: DB tests through the real non-owner API login (comments, drift, privileges, triggers, CHECKs)
+      - name: Seed (owner login) — config_key_policy from the registry, then the T2.6 catalog/config seed
+        run: pnpm --filter @kaamkaro/api db:seed
+      - name: Build workspace packages the API imports (@kaamkaro/platform, contracts)
+        run: pnpm turbo run build --filter=@kaamkaro/api^...
+      - name: DB tests through the real non-owner API login (schema, T2.2 platform, T2.6 seed, config policy)
         run: pnpm --filter @kaamkaro/api test:db
 
   secret-scan:

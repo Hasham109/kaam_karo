@@ -2,6 +2,57 @@
 
 Newest first. Every behaviour change, with task ID and requirement IDs.
 
+## 2026-10-24 — T2.2 review fixes (A01) — SEC-REVIEW-T2.2 #1–#16, QA-T22-01…06, SEC-REVIEW-T2.6 #1 (A01 part), #2, #3, #8, RQ-008, RQ-011
+- DATA-003, DATA-004 (BP §26, §29): the PII masker catches phones in Urdu / Arabic-Indic / full-width digits with any separators, landlines, IPv6 `::`, CNIC in any digits, secrets in text and URLs (OTP/token query values, signed-URL signatures, Bearer, JWT, IBAN); a wider key deny-list runs before the ID exemption; masking happens before truncation and is idempotent; `sha256:` fingerprints are kept. A Prisma query extension masks every create on append-only tables, and ESLint allows writes to audit/marketplace/outbox rows only in the platform folder (config_rule only in the config module).
+- REL-008, REL-002 (BP §31.1, §31.2): heartbeat lease, bounded retry of the stored result, then an "outcome unknown" marker → 409 IDEMPOTENCY_OUTCOME_UNKNOWN, never a re-run (forced re-run tests on the real DB); a replay returns the original status; responses above 16 KiB are not stored (409 IDEMPOTENCY_REPLAY_UNAVAILABLE). New env HTTP_REQUEST_TIMEOUT_MS (server deadline) ≤ IDEMPOTENCY_IN_FLIGHT_TIMEOUT_MS. Contract common.yaml 1.1.0.
+- SEC-AUTH-004, CFG-RULE-001…012 (golden rule 2): `get()` throws for fail-closed keys (prefixes + registry predicate); `inspect()` for readiness; `positiveInteger` / `positiveIntegerUpTo`; start-up check refuses staging/production without security limits.
+- SEC-BASE-001/002: staging/production require TLS (`rediss://` with password, `sslmode`); Sentry exception values masked; security headers and a server-generated request ID also on body-parser 400/413 errors; BullMQ failure text masked without stacks; retention keys OUTBOX_RETENTION_DAYS / DEAD_LETTER_RETENTION_DAYS (empty = keep, TODO(OWNER) OQ-080).
+- New migration 20261024000000_config_policy_zone_code: owner-maintained `config_key_policy` + `kk_config_rule_guard` trigger (unknown key, scope, kind, decided, two-person, actor, null security limit; created_at := now(); no back-dating slack), `service_zone.code` unique per city. `db:seed` = policy tool + T2.6 seed; `test:db` also runs the seed tests; CI seeds before the DB tests.
+- AppModule now imports CatalogModule and ConfigRulesModule (RQ-008).
+
+## 2026-10-24 — T2.6 review fixes (A03) — SEC-REVIEW-T2.6 #1–#11, QA-T2.6-01/02, L-1–L-3 — IN_REVIEW
+- SEC-AUTH-004, SEC-BASE-006, ABUSE-003, MEDIA-004:
+  - Security and abuse limits fail closed in every environment. Rate-limit keys have closed schemas (exact fields, bounded positive integers); integer keys have technical unit ceilings (owner bounds: OQ-088).
+  - `setRule` refuses null on a limit. Readiness uses `inspect` with registry parsers; the environment switch is removed.
+  - `rate_limit.messaging` / `rate_limit.requests` / `chat.attachment_limits` are now fail-closed.
+  - Dev/test databases get explicit test values through `run.ts --dev-test-limits` (refused outside development/test).
+- ADMIN-ROLE-001…008, SEC-AUTH-005:
+  - Sub-roles come from a server-side `StaffRoleLookup`; it denies all until A02 binds it (RQ-012). Caller-supplied sub-roles are removed.
+  - Every key has an edit group (Finance + Super Admin for financial keys, Super Admin otherwise; OQ-052 cells denied); reads and history use the same filter.
+  - Contracts declare `staffSession` security and `x-admin-sub-roles`.
+- SEC-BASE-010: seed audit rows (SYSTEM_SEED) for config and activations; limit audit values survive the masker; the company account is audited as a digit-free fingerprint + last 4 digits.
+- CFG-RULE-001/003:
+  - The seed writes `config_key_policy` from the registry (A01 tool + trigger).
+  - Only `modules/config` may write `config_rule` (test).
+  - Scheduling is limited by `config.max_schedule_ahead_hours` (null → none); `listKeys` shows pending versions.
+  - Malformed IDs → 422, concurrent writes → 409.
+- SCOPE-GEO-002: the zone is seeded with the stable code `lahore-whole-city` and never re-created after a rename.
+- OQ-087 / QA-T2.6-01: activating a service inside an inactive family → 409 FAMILY_INACTIVE.
+- Contracts 0.2.0 `x-status: draft` with ErrorEnvelope refs and every error code. New OQ-088; RQ-011 (A01), RQ-012 (A02).
+
+## 2026-10-24 — T2.6 Catalog seed, launch families, ConfigRule store, cities (A03) — IN_REVIEW
+- SCOPE-CAT-001 (BP §1.4, §63, §65): the full BP §63 tree is seeded: 22 families and 351 services, one line per BP item with its family comment. An item that BP lists under two families is seeded per family. A test parses BLUEPRINT.md §63 and fails on any drift; excluded areas are asserted absent. No API can create a family or service.
+- SCOPE-CAT-002, CFG-RULE-001 (BP §6, §64; D-024): exactly the 10 BP §6 / D-024 families are active in Lahore (catalog_activation, 10 on / 12 off); there are no service-level rows. Activation per city, family or service is done by CatalogService without a release, needs an actor and a reason, and is audited in the same transaction.
+- SCOPE-GEO-001/002 (BP §57.2; D-007, D-019): Lahore is listed and active, with one active whole-city zone (area NULL; no invented polygon). BP names no other city, so none is seeded (OQ-084, boundary OQ-086).
+- CAT-SVC-001…003 (OQ-085): every service is seeded quote-only (INSPECTION_QUOTE, REQUEST_QUOTES, quote required, emergency off); the other listing fields are null + TODO(OWNER). No catalog price exists.
+- CFG-RULE-001…012 (ARCH §5.3, §19):
+  - Registry of 71 keys; `PrismaConfigRuleStore` behind A01's ConfigRuleSource; `ConfigAdminService` (owner-decided keys read-only, two-person key refused, typed values, scope check, no back-dating, audit + cache invalidation); global `ConfigRulesModule`.
+  - Seeds: commission.rate 0.3 (D-006), commission.base_line_types ["LABOR"] (D-015), fees.customer_platform_fee disabled (D-025), tax.line_shown true (D-029), ledger.max_negative_balance 0 (D-020), rating.block_threshold 2.0 / warnings_before_block 2 (D-014/D-017); the D-023 fees null; 58 undecided keys null + TODO(OWNER).
+  - OTP, login-limit and media-limit keys fail closed (`missingFailClosedKeys`).
+- Contracts `catalog.yaml` and `config.yaml` 0.1.0 DRAFT (RQ-009). Requests: RQ-008 (A01 wiring, typecheck, db:seed, CI), RQ-010 (A14 Urdu review).
+- Tests: 46 unit + 9 DB tests. Fresh DB `kaamkaro_t26_verify`: seed is idempotent; seed DB tests 9/9 and T2.2/T2.3 `test:db` 58/58 through the kaamkaro_api login.
+
+## 2026-10-24 — T2.2 Platform lib (A01)
+ — IN_REVIEW
+- REL-008, REL-002, REL-006 (BP §31.1, §31.2; ARCH §8 rule 3): `@Idempotent('<op>')` + global interceptor over the `idempotency_key` table. Same key twice → one row and the original response (`Idempotent-Replayed: true`); different body → 409 IDEMPOTENCY_KEY_REUSED; still running → 409 IDEMPOTENCY_REQUEST_IN_PROGRESS (retryable); missing key → 428; 5xx releases the key.
+- REL-001, SEC-BASE-005 (BP §29, §31.1): one error envelope `{error:{code,message,requestId,retryable,details?}}` (new contract `contracts/common.yaml` v1.0.0) via a global filter; unknown errors → 500 INTERNAL_ERROR with nothing internal; only unexpected 5xx go to Sentry. Config null + `require` → 503 CONFIG_NOT_SET (fail closed).
+- DATA-004, SEC-BASE-010, DATA-002, ROLE-003 (BP §26, §29, §66): `AuditWriter` / `MarketplaceEventWriter` (INSERT only, admin reason required). The DB test proves that audit UPDATE/DELETE/TRUNCATE are denied through the real `kaamkaro_api` login.
+- SEC-REVIEW-T2.3 #10 (BP §26, §29; DATA-003): mandatory PII masker (deny-list keys, phone/email/CNIC/IP in free text, IP /24 or /48) before every audit/event/outbox write and in all logs.
+- REL-009, REL-007, REL-010, REL-013, NOTIF-001 (BP §24, §31.2; D-001): transactional outbox writer (`outbox.append(tx, …)`) + worker process (`dist/worker.js`): relay with FOR UPDATE SKIP LOCKED, exponential backoff, FAILED = dead-letter; BullMQ fan-out per consumer, consumer retries + `outbox.dead-letter` queue. At-least-once delivery: consumers dedupe on the event ID.
+- CFG-RULE-001…012 (BP §42, §64): `ConfigService` interface + cached, effective-dated, scope-aware reader (SERVICE → CATEGORY → CITY → GLOBAL; null = not configured). The backing store is A03 (RQ-006).
+- INFRA-005: structured JSON logger with request IDs. SEC-REVIEW-T2.1 #10 closed: no X-Powered-By, security headers, HSTS in staging/production. `/health` queue probe is now real.
+- Deps: bullmq 6.4.0, ioredis 6.0.0 (catalog, D-001). CI `db-schema` job gets a Redis service and builds workspace deps before `test:db`. New technical env keys in `.env.example`.
+
 ## 2026-10-23 — T2.3 review fixes (A01) — SEC-REVIEW-T2.3 #1–#9, #11–#17, #19 + QA BUG-QA-T2.3-02/03/04
 - DATA-004, LEDGER-005, PAY-003 (BP §26, §29): the API login (DATABASE_URL) is separated from the migration owner (MIGRATION_DATABASE_URL). The start-up guard refuses superuser, BYPASSRLS, owner membership, or a login outside kaamkaro_app. infra/db/bootstrap.sql adds the roles and runs on docker first start. CI tests through the real non-owner login.
 - Privileges are default deny: UPDATE everywhere except append-only tables; DELETE only on an allow-list; default privileges grant SELECT/INSERT only. config_rule is now append-only and cannot be back-dated.

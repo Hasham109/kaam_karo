@@ -2,7 +2,7 @@
   "name": "@kaamkaro/platform",
   "version": "0.0.0",
   "private": true,
-  "description": "Server platform library (A01): env loader, Sentry options (deny-all data collection + scrubbers), health probes. T2.2 adds logger, error envelope, idempotency, outbox, audit.",
+  "description": "Server platform library (A01): env loader, Sentry options, health probes, config reader interface, structured logger + PII masker, error envelope, idempotency, transactional outbox + BullMQ relay, append-only audit writer.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -13,6 +13,10 @@
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
+  },
+  "dependencies": {
+    "bullmq": "catalog:",
+    "ioredis": "catalog:"
   },
   "devDependencies": {
     "@sentry/nestjs": "catalog:",

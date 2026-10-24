@@ -647,6 +647,7 @@ Severity:
 - [ ] Analytics event added where required (BP §45)
 - [ ] Notification behaviour defined if relevant (BP §45)
 - [ ] Tests for business-critical logic (BP §45)
+- [ ] Every idempotent operation (REL-008: create booking, submit request, initiate payment, accept quote, approve charge) has its own business unique constraint **and** a forced re-run test proving the side effect happens once (BP §31.2; SEC-REVIEW-T2.2 #2, RQ-013)
 - [ ] No secrets or debug shortcuts (BP §45)
 - [ ] Documentation updated (BP §45)
 - [ ] Rollback path understood (BP §45, §43 rule 71)

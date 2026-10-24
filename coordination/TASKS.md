@@ -18,11 +18,11 @@ Acceptance criteria and BP refs per task: docs/implementation.md §6 (same task 
 | T1.4 | i18n + RTL + Urdu typography kit; string-lint rule | A14 | G0 | TODO | — |
 | T1.5 | Flow maps: request → match → book/quote → job → pay → review; supply gap; dispute | A00 | T1.1–T1.3 | DONE | handoffs/T-1.5.md |
 | T2.1 | Monorepo, CI (build/lint/typecheck/test), envs, secrets, Sentry, health check | A01 | G0 | DONE | handoffs/T-2.1.md |
-| T2.2 | Platform lib: config loader, error envelope, idempotency middleware, outbox + worker, append-only audit | A01 | T2.1 | TODO | — |
+| T2.2 | Platform lib: config loader, error envelope, idempotency middleware, outbox + worker, append-only audit | A01 | T2.1 | DONE | handoffs/T-2.2.md |
 | T2.3 | DB schema v1 for all ARCH §5 entities (technical fields per ARCH §5) + migrations | A01 with each owner | T2.1 | DONE | handoffs/T-2.3.md |
-| T2.4 | Identity: phone OTP login (D-002) with fake `OtpSender`, OTP expiry + attempt limits + resend cooldown (values in config, `TODO(OWNER)`), sessions, roles, admin sub-roles, MFA for admin | A02 | T2.2 | TODO | — |
+| T2.4 | Identity: phone OTP login (D-002) with fake `OtpSender`, OTP expiry + attempt limits + resend cooldown (values in config, `TODO(OWNER)`), sessions, roles, admin sub-roles, MFA for admin | A02 | T2.2 | CLAIMED | — |
 | T2.5 | Profiles + addresses + snapshot helper + favorites | A02 | T2.4 | TODO | — |
-| T2.6 | Catalog seed from BP §63 (all inactive) + launch-family flags + `ConfigRule` store + cities: **Lahore** `is_listed = true, is_active = true` (D-007); other Pakistani cities `is_listed = true, is_active = false`; whole Lahore seeded as one active service zone (D-019); provider radius/areas still work inside it (BP §59) | A03 | T2.3 | TODO | — |
+| T2.6 | Catalog seed from BP §63 (all inactive) + launch-family flags + `ConfigRule` store + cities: **Lahore** `is_listed = true, is_active = true` (D-007); other Pakistani cities `is_listed = true, is_active = false`; whole Lahore seeded as one active service zone (D-019); provider radius/areas still work inside it (BP §59) | A03 | T2.3 | DONE | handoffs/T-2.6.md |
 | T2.7 | Backup + **restore test** in staging | A01 | T2.3 | TODO | — |
 | T2.8 | Security review of T2.1–T2.6 | A15 | T2.4–T2.6 | TODO | — |
 | T3.1 | `GeoService` + Pakistan boundary + Location Snapshot + fallback | A06 | T2.3 | TODO | — |

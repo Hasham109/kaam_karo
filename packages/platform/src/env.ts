@@ -33,7 +33,39 @@ export const TECHNICAL_DEFAULTS = {
   PORT: 3000,
   HEALTH_PROBE_TIMEOUT_MS: 2000,
   SENTRY_TRACES_SAMPLE_RATE: 0,
+  // T2.2 technical settings (not business values; golden rule 2 covers business values only).
+  /** Config reader cache (CFG-RULE-001 "without a deploy": changes are seen within this time). */
+  CONFIG_CACHE_TTL_MS: 30_000,
+  /** How long a stored idempotent result is replayed (REL-008; ARCH §5.3 IdempotencyKey). */
+  IDEMPOTENCY_KEY_TTL_HOURS: 24,
+  /**
+   * Idempotency lease: a running request refreshes its key; a key not refreshed for this long
+   * belongs to a dead process (SEC-REVIEW-T2.2 #2). Must be >= HTTP_REQUEST_TIMEOUT_MS.
+   */
+  IDEMPOTENCY_IN_FLIGHT_TIMEOUT_MS: 60_000,
+  /** Largest stored idempotent response (SEC-REVIEW-T2.2 #9); larger ones are not replayed. */
+  IDEMPOTENCY_MAX_RESPONSE_BYTES: 16_384,
+  /** Server handler deadline: Node `server.requestTimeout` (SEC-REVIEW-T2.2 #2). */
+  HTTP_REQUEST_TIMEOUT_MS: 30_000,
+  /** Outbox relay polling (REL-009; ARCH §7). */
+  OUTBOX_POLL_INTERVAL_MS: 1000,
+  OUTBOX_BATCH_SIZE: 100,
+  /** Delivery attempts before an event / job is dead-lettered (REL-007 safe retries). */
+  OUTBOX_MAX_ATTEMPTS: 10,
+  /** Exponential backoff: base * 2^(attempt-1), capped at max (REL-007). */
+  OUTBOX_BACKOFF_BASE_MS: 1000,
+  OUTBOX_BACKOFF_MAX_MS: 300_000,
+  LOG_LEVEL: 'info',
 } as const;
+
+/** Smallest accepted handler deadline (a 1 ms deadline would make every lease meaningless). */
+export const MIN_HTTP_REQUEST_TIMEOUT_MS = 1000;
+
+/** Postgres sslmode values that encrypt the connection (SEC-REVIEW-T2.2 #7; SEC-BASE-001). */
+export const TLS_SSLMODES = ['require', 'verify-ca', 'verify-full'] as const;
+
+export const LOG_LEVELS = ['debug', 'info', 'warn', 'error'] as const;
+export type LogLevel = (typeof LOG_LEVELS)[number];
 
 export interface ServerEnv {
   readonly appEnv: AppEnv;
@@ -43,6 +75,24 @@ export interface ServerEnv {
   readonly sentryDsn: string | null;
   readonly sentryTracesSampleRate: number;
   readonly healthProbeTimeoutMs: number;
+  readonly configCacheTtlMs: number;
+  readonly idempotencyKeyTtlHours: number;
+  readonly idempotencyInFlightTimeoutMs: number;
+  readonly idempotencyMaxResponseBytes: number;
+  readonly httpRequestTimeoutMs: number;
+  /**
+   * Retention in days of PUBLISHED outbox rows (outboxRetentionDays) and of FAILED/dead-lettered
+   * rows plus failed and dead-letter queue jobs (deadLetterRetentionDays).
+   * null = keep: the owner has not decided (TODO(OWNER), OQ-080).
+   */
+  readonly outboxRetentionDays: number | null;
+  readonly deadLetterRetentionDays: number | null;
+  readonly outboxPollIntervalMs: number;
+  readonly outboxBatchSize: number;
+  readonly outboxMaxAttempts: number;
+  readonly outboxBackoffBaseMs: number;
+  readonly outboxBackoffMaxMs: number;
+  readonly logLevel: LogLevel;
 }
 
 export type EnvSource = Readonly<Record<string, string | undefined>>;
@@ -130,6 +180,8 @@ export function loadServerEnv(source: EnvSource): ServerEnv {
       if (emptyToNull(source[key]) === null)
         problems.push(`${key} is required when APP_ENV=${appEnv}`);
     }
+    // SEC-REVIEW-T2.2 #7 (SEC-BASE-001; BP §29, §34): encrypted, authenticated connections.
+    problems.push(...deployedConnectionProblems(source));
     // SEC-BASE-008: example (fake) values must never reach staging or production.
     for (const [key, value] of Object.entries(source)) {
       if (!SECRET_KEY_PATTERN.test(key)) continue;
@@ -141,6 +193,52 @@ export function loadServerEnv(source: EnvSource): ServerEnv {
       }
     }
   }
+
+  // T2.2 technical settings (REL-007, REL-008, REL-009; CFG-RULE-001).
+  const positiveInt = (key: keyof typeof TECHNICAL_DEFAULTS, allowZero = false): number =>
+    parseNumber(
+      source,
+      key,
+      TECHNICAL_DEFAULTS[key] as number,
+      (n) => Number.isInteger(n) && (allowZero ? n >= 0 : n > 0),
+      allowZero ? 'a non-negative integer' : 'a positive integer',
+      problems,
+    );
+  const configCacheTtlMs = positiveInt('CONFIG_CACHE_TTL_MS', true);
+  const idempotencyKeyTtlHours = positiveInt('IDEMPOTENCY_KEY_TTL_HOURS');
+  const idempotencyInFlightTimeoutMs = positiveInt('IDEMPOTENCY_IN_FLIGHT_TIMEOUT_MS');
+  const idempotencyMaxResponseBytes = positiveInt('IDEMPOTENCY_MAX_RESPONSE_BYTES');
+  const httpRequestTimeoutMs = positiveInt('HTTP_REQUEST_TIMEOUT_MS');
+  if (httpRequestTimeoutMs < MIN_HTTP_REQUEST_TIMEOUT_MS) {
+    problems.push(`HTTP_REQUEST_TIMEOUT_MS must be at least ${MIN_HTTP_REQUEST_TIMEOUT_MS}`);
+  }
+  if (idempotencyInFlightTimeoutMs < httpRequestTimeoutMs) {
+    problems.push(
+      'IDEMPOTENCY_IN_FLIGHT_TIMEOUT_MS must be >= HTTP_REQUEST_TIMEOUT_MS (a running request must never look crashed)',
+    );
+  }
+  // TODO(OWNER) OQ-080: retention not decided -> null = keep, no purge.
+  const optionalDays = (key: string): number | null => {
+    const raw = emptyToNull(source[key]);
+    if (raw === null) return null;
+    const n = Number(raw);
+    if (!Number.isInteger(n) || n < 1) {
+      problems.push(`${key} must be a positive integer number of days or empty (got "${raw}")`);
+      return null;
+    }
+    return n;
+  };
+  const outboxRetentionDays = optionalDays('OUTBOX_RETENTION_DAYS');
+  const deadLetterRetentionDays = optionalDays('DEAD_LETTER_RETENTION_DAYS');
+  const outboxPollIntervalMs = positiveInt('OUTBOX_POLL_INTERVAL_MS');
+  const outboxBatchSize = positiveInt('OUTBOX_BATCH_SIZE');
+  const outboxMaxAttempts = positiveInt('OUTBOX_MAX_ATTEMPTS');
+  const outboxBackoffBaseMs = positiveInt('OUTBOX_BACKOFF_BASE_MS');
+  const outboxBackoffMaxMs = positiveInt('OUTBOX_BACKOFF_MAX_MS');
+  const rawLogLevel = emptyToNull(source['LOG_LEVEL']) ?? TECHNICAL_DEFAULTS.LOG_LEVEL;
+  let logLevel: LogLevel = TECHNICAL_DEFAULTS.LOG_LEVEL;
+  if ((LOG_LEVELS as readonly string[]).includes(rawLogLevel)) logLevel = rawLogLevel as LogLevel;
+  else problems.push(`LOG_LEVEL must be one of ${LOG_LEVELS.join(', ')} (got "${rawLogLevel}")`);
 
   // T2.3 (BP §26, §29; SEC-REVIEW-T2.3 #1): the API must not use the migration owner's login.
   // MIGRATION_DATABASE_URL is read only by Prisma; the API reads DATABASE_URL.
@@ -165,5 +263,53 @@ export function loadServerEnv(source: EnvSource): ServerEnv {
     sentryDsn: emptyToNull(source['SENTRY_DSN']),
     sentryTracesSampleRate,
     healthProbeTimeoutMs,
+    configCacheTtlMs,
+    idempotencyKeyTtlHours,
+    idempotencyInFlightTimeoutMs,
+    idempotencyMaxResponseBytes,
+    httpRequestTimeoutMs,
+    outboxRetentionDays,
+    deadLetterRetentionDays,
+    outboxPollIntervalMs,
+    outboxBatchSize,
+    outboxMaxAttempts,
+    outboxBackoffBaseMs,
+    outboxBackoffMaxMs,
+    logLevel,
   };
+}
+
+/** TLS + auth rules for deployed connection strings (SEC-REVIEW-T2.2 #7). Exported for tests. */
+export function deployedConnectionProblems(source: EnvSource): string[] {
+  const problems: string[] = [];
+  const redis = emptyToNull(source['REDIS_URL']);
+  if (redis !== null) {
+    let url: URL | null = null;
+    try {
+      url = new URL(redis);
+    } catch {
+      problems.push('REDIS_URL is not a valid URL');
+    }
+    if (url) {
+      if (url.protocol !== 'rediss:') {
+        problems.push('REDIS_URL must use TLS (rediss://) when deployed');
+      }
+      if (!url.password) problems.push('REDIS_URL must include a password when deployed');
+    }
+  }
+  for (const key of ['DATABASE_URL', 'MIGRATION_DATABASE_URL']) {
+    const value = emptyToNull(source[key]);
+    if (value === null) continue;
+    let mode: string | null;
+    try {
+      mode = new URL(value).searchParams.get('sslmode');
+    } catch {
+      problems.push(`${key} is not a valid URL`);
+      continue;
+    }
+    if (!mode || !(TLS_SSLMODES as readonly string[]).includes(mode)) {
+      problems.push(`${key} must set sslmode=${TLS_SSLMODES.join('|')} when deployed`);
+    }
+  }
+  return problems;
 }

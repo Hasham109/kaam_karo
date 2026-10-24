@@ -1,0 +1,357 @@
+# Contract: catalog (owner A03, M4 Catalog). Contract-first per ARCH §8 rule 7 / IMPL §3.4.
+# DRAFT 0.2.0 (T2.6 + review fixes): published so A11 (T3.8), A13 (T5.2), A04/A05/A07 can review
+# (RQ-009). The service layer exists (services/api/src/modules/catalog); controllers come after the
+# auth guards of T2.4. Errors use the envelope of common.yaml (ErrorEnvelope).
+openapi: 3.1.0
+info:
+  title: Kaam Karo — Catalog, cities and activation
+  version: 0.2.0
+  x-status: draft
+  description: |
+    BP §4.2, §6, §42, §57.2, §63, §64; D-007, D-019, D-024. The server decides what is offered
+    where (BP §29): a service is offered in a city only when the city is listed and active, the
+    city has an active zone, the service's family is active in that city, no service-level row
+    switches it off, and the service has at least one selling mode (CAT-SVC-002).
+    Names come in English and Urdu; the app picks by language (I18N-006).
+
+    **Admin operations** (SEC-REVIEW-T2.6 #4; ADMIN-ROLE-001…008, SEC-AUTH-005):
+    - staff session only (customer/provider tokens → 401/403), MFA completed;
+    - the actor and the actor's sub-roles come from the server session and the identity
+      module, never from the body;
+    - allowed sub-roles are in `x-admin-sub-roles` (OQ-052 cells stay denied until answered);
+    - every write needs a reason and is audited in the same transaction; an `Idempotency-Key`
+      is required (`x-idempotent`).
+
+    Module error codes (HTTP status): INVALID_ID 422, NOT_FOUND 404, FORBIDDEN_FOR_SUB_ROLE 403,
+    CITY_NOT_LISTED 422, FAMILY_INACTIVE 409 (service activation while its family is inactive,
+    OQ-087), NO_SELLING_MODE 422, CONCURRENT_WRITE 409 (retryable), REASON_REQUIRED 422,
+    ACTOR_REQUIRED 401. Availability reasons: UNKNOWN_CITY, UNKNOWN_SERVICE, CITY_NOT_ACTIVE,
+    NO_ACTIVE_ZONE, FAMILY_INACTIVE, SERVICE_INACTIVE, NO_SELLING_MODE.
+paths:
+  /catalog/cities:
+    get:
+      operationId: listCities
+      summary: Listed Pakistani cities with their active flag (city selection)
+      x-requirement-ids: [SCOPE-GEO-001, SCOPE-GEO-002]
+      security: []
+      responses:
+        '200':
+          description: Listed cities, active or not (BP §57.2).
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [cities]
+                properties:
+                  cities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/City'
+  /catalog/cities/{cityId}/families:
+    get:
+      operationId: getActiveCatalog
+      summary: Active families of a city with their offered services
+      x-requirement-ids: [SCOPE-CAT-002, CAT-SVC-001, CAT-SVC-002, CAT-SVC-003, CAT-SVC-011]
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/CityId'
+      responses:
+        '200':
+          description: Empty list when the city is listed but not active yet (SCOPE-GEO-001).
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [families]
+                properties:
+                  families:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ActiveFamily'
+        '404':
+          $ref: '#/components/responses/Error'
+        '422':
+          $ref: '#/components/responses/Error'
+  /catalog/cities/{cityId}/services/{serviceId}/availability:
+    get:
+      operationId: getServiceAvailability
+      summary: Can this service be requested in this city now?
+      x-requirement-ids: [SCOPE-GEO-001, SCOPE-CAT-002, CAT-SVC-002]
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/CityId'
+        - $ref: '#/components/parameters/ServiceId'
+      responses:
+        '200':
+          description: Availability with the reason when not available (unknown or malformed IDs → UNKNOWN_*).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Availability'
+  /admin/catalog/cities/{cityId}/active:
+    put:
+      operationId: setCityActive
+      summary: A23 activate / deactivate a city (only listed cities can be active)
+      x-requirement-ids: [OPS-ADMIN-023, CFG-RULE-001, SCOPE-GEO-001]
+      security:
+        - staffSession: []
+      x-admin-sub-roles: [SUPER_ADMIN]
+      x-idempotent: true
+      parameters:
+        - $ref: '#/components/parameters/CityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivationChange'
+      responses:
+        '200':
+          description: Saved and audited (SEC-BASE-010); the new city state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/City'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '422':
+          $ref: '#/components/responses/Error'
+  /admin/catalog/cities/{cityId}/families/{categoryId}/active:
+    put:
+      operationId: setFamilyActive
+      summary: A23 activate / deactivate a family in a city (no app release)
+      x-requirement-ids: [SCOPE-CAT-002, CFG-RULE-001, OPS-ADMIN-023]
+      security:
+        - staffSession: []
+      x-admin-sub-roles: [SUPER_ADMIN]
+      x-idempotent: true
+      parameters:
+        - $ref: '#/components/parameters/CityId'
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivationChange'
+      responses:
+        '200':
+          description: New activation state, audited.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activation'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '422':
+          $ref: '#/components/responses/Error'
+  /admin/catalog/cities/{cityId}/services/{serviceId}/active:
+    put:
+      operationId: setServiceActive
+      summary: A23 activate / deactivate one service in a city
+      description: Activation is refused with 409 FAMILY_INACTIVE while the service's family is inactive in that city (QA-T2.6-01, OQ-087); deactivation is always allowed.
+      x-requirement-ids: [OPS-ADMIN-023, CAT-SVC-002, CFG-RULE-001]
+      security:
+        - staffSession: []
+      x-admin-sub-roles: [SUPER_ADMIN]
+      x-idempotent: true
+      parameters:
+        - $ref: '#/components/parameters/CityId'
+        - $ref: '#/components/parameters/ServiceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivationChange'
+      responses:
+        '200':
+          description: New activation state, audited.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activation'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          description: FAMILY_INACTIVE or CONCURRENT_WRITE (error envelope, common.yaml).
+          content:
+            application/json:
+              schema:
+                $ref: './common.yaml#/components/schemas/ErrorEnvelope'
+        '422':
+          $ref: '#/components/responses/Error'
+components:
+  securitySchemes:
+    staffSession:
+      type: http
+      scheme: bearer
+      description: Staff (admin) session with completed MFA, issued by the identity module (A02, T2.4; mechanism per OQ-051). Customer and provider sessions are refused.
+  responses:
+    Error:
+      description: Error envelope (common.yaml); the code is one of the module error codes above.
+      content:
+        application/json:
+          schema:
+            $ref: './common.yaml#/components/schemas/ErrorEnvelope'
+  parameters:
+    CityId:
+      name: cityId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ServiceId:
+      name: serviceId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    LocalizedName:
+      type: object
+      additionalProperties: false
+      required: [en, ur]
+      properties:
+        en:
+          type: string
+        ur:
+          type: string
+    City:
+      type: object
+      additionalProperties: false
+      required: [id, code, name, isActive]
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          $ref: '#/components/schemas/LocalizedName'
+        isActive:
+          type: boolean
+    Service:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          id,
+          code,
+          name,
+          priceModel,
+          sellingModes,
+          inspectionExpected,
+          quoteRequired,
+          emergencyAllowed,
+        ]
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          $ref: '#/components/schemas/LocalizedName'
+        priceModel:
+          type: string
+          enum: [FIXED, FROM, INSPECTION_QUOTE]
+        sellingModes:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            enum: [INSTANT, CHOOSE_SUPPLIER, REQUEST_QUOTES]
+        inspectionExpected:
+          type: boolean
+        quoteRequired:
+          type: boolean
+        emergencyAllowed:
+          type: boolean
+    ActiveFamily:
+      type: object
+      additionalProperties: false
+      required: [id, code, name, services]
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          $ref: '#/components/schemas/LocalizedName'
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/Service'
+    Availability:
+      type: object
+      additionalProperties: false
+      required: [available]
+      properties:
+        available:
+          type: boolean
+        reason:
+          type: string
+          enum:
+            [
+              UNKNOWN_CITY,
+              UNKNOWN_SERVICE,
+              CITY_NOT_ACTIVE,
+              NO_ACTIVE_ZONE,
+              FAMILY_INACTIVE,
+              SERVICE_INACTIVE,
+              NO_SELLING_MODE,
+            ]
+    ActivationChange:
+      description: No actor field; the actor comes from the staff session.
+      type: object
+      additionalProperties: false
+      required: [isActive, reason]
+      properties:
+        isActive:
+          type: boolean
+        reason:
+          type: string
+          minLength: 1
+    Activation:
+      type: object
+      additionalProperties: false
+      required: [cityId, isActive]
+      properties:
+        cityId:
+          type: string
+          format: uuid
+        categoryId:
+          type: [string, 'null']
+          format: uuid
+        serviceId:
+          type: [string, 'null']
+          format: uuid
+        isActive:
+          type: boolean

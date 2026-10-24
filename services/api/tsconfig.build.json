@@ -1,4 +1,9 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["src/**/*.spec.ts", "src/**/*.e2e-spec.ts", "src/**/__regression__/**"]
+  "exclude": [
+    "src/**/*.spec.ts",
+    "src/**/*.e2e-spec.ts",
+    "src/**/*.db-spec.ts",
+    "src/**/__regression__/**"
+  ]
 }

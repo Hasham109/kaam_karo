@@ -1,0 +1,4 @@
+{
+  "//": "T2.6 seeds run with Node 24 type stripping as ES modules (same convention as prisma/tools).",
+  "type": "module"
+}

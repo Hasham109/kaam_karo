@@ -2,6 +2,8 @@
 
 Kaam Karo is a smart, hyperlocal, two-sided marketplace for household services in Pakistan (launch city: Lahore). It has three surfaces: a **Customer App**, a **Partner (provider) App** and a web **Admin Portal**, all on one modular backend. The project starts from scratch. Nothing exists until it is in this repo.
 
+> **Resuming after a break or a session limit?** Read `coordination/RESUME.md` first: it says what is done, what is in flight and what to do next.
+
 ## Sources of truth (read in this order when they disagree)
 
 1. `coordination/DECISIONS.md` — owner decisions (D-xxx). Highest authority.

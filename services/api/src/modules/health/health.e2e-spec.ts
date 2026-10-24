@@ -12,6 +12,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { loadOpenApi, responseJsonSchema } from '@kaamkaro/contracts';
 import { type DependencyStatus, type ServerEnv, loadServerEnv } from '@kaamkaro/platform';
 import { AppModule } from '../../app.module';
+import { FailClosedStartupCheck } from '../../config/fail-closed-startup';
 import { HEALTH_PROBES, type HealthProbes } from './index';
 
 const contract = loadOpenApi('health');
@@ -29,7 +30,10 @@ function stubProbes(statuses: Record<keyof HealthProbes, DependencyStatus>): Hea
 }
 
 async function startApp(env: ServerEnv, probes?: HealthProbes): Promise<INestApplication> {
-  let builder = Test.createTestingModule({ imports: [AppModule.forRoot(env)] });
+  // The start-up security-limit check (RQ-008 item 5) has its own test; health is tested alone here.
+  let builder = Test.createTestingModule({ imports: [AppModule.forRoot(env)] })
+    .overrideProvider(FailClosedStartupCheck)
+    .useValue({ onApplicationBootstrap: () => undefined });
   if (probes) builder = builder.overrideProvider(HEALTH_PROBES).useValue(probes);
   const moduleRef = await builder.compile();
   const app = moduleRef.createNestApplication({ logger: false });

@@ -11,6 +11,7 @@ import {
   DELETE_ALLOWED_TABLES,
   FROZEN_TABLES,
   NON_APP_TABLES,
+  OWNER_MAINTAINED_TABLES,
 } from '../append-only.ts';
 import { checkCitation, loadIdRegistry } from '../citations.ts';
 import { buildCommentStatements, parseCommentStatements, renderCommentSql } from '../comments.ts';
@@ -252,6 +253,7 @@ describe('privileges and integrity SQL (BP §26, §29)', () => {
       ...APPEND_ONLY_TABLES,
       ...DELETE_ALLOWED_TABLES,
       ...FROZEN_TABLES.map((f) => f[0]),
+      ...OWNER_MAINTAINED_TABLES,
     ]) {
       expect(tables.has(table), table).toBe(true);
     }
@@ -338,6 +340,28 @@ describe('privileges and integrity SQL (BP §26, §29)', () => {
       expect(columns, table).not.toContain('updated_at');
       expect(columns, table).not.toContain('version');
       expect(columns, table).not.toContain('deleted_at');
+    }
+  });
+
+  it('[CFG-RULE-003] the config-policy migration embeds sql/40_config_policy.sql unchanged (SEC-REVIEW-T2.6 #2, #3)', () => {
+    const fragment = readFileSync(join(SQL_DIR, '40_config_policy.sql'), 'utf8').replace(
+      /\r\n/g,
+      '\n',
+    );
+    const migration = readFileSync(
+      join(MIGRATIONS_DIR, '20261024000000_config_policy_zone_code', 'migration.sql'),
+      'utf8',
+    ).replace(/\r\n/g, '\n');
+    expect(migration).toContain(fragment);
+    const functions = fragment.match(/CREATE OR REPLACE FUNCTION/g) ?? [];
+    const pinned = fragment.match(/SET search_path = pg_catalog, public AS/g) ?? [];
+    expect(pinned.length).toBe(functions.length);
+    expect(fragment).toContain(
+      'CREATE TRIGGER kk_config_rule_guard BEFORE INSERT ON "config_rule" FOR EACH ROW',
+    );
+    for (const table of OWNER_MAINTAINED_TABLES) {
+      expect(fragment).toContain(`REVOKE ALL ON TABLE "${table}" FROM kaamkaro_app;`);
+      expect(fragment).toContain(`GRANT SELECT ON TABLE "${table}" TO kaamkaro_app;`);
     }
   });
 

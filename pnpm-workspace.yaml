@@ -15,6 +15,9 @@ allowBuilds:
   # the schema engine, which the CLI also fetches on first use (checksum-verified by Prisma).
   prisma: false
   '@prisma/engines': false
+  # T2.2: msgpackr-extract (via bullmq → msgpackr) only runs node-gyp-build to find its prebuilt
+  # binary, which ships as an optional platform package; msgpackr falls back to pure JS without it.
+  msgpackr-extract: false
 
 # Tracked dependency-vulnerability exceptions ONLY (SEC-BASE-008). Each GHSA here needs a row in
 # docs/security/dependency-exceptions.md (owner A15); no class-wide waivers in CI.
@@ -53,6 +56,9 @@ catalog:
   '@prisma/client': 7.10.1
   '@prisma/adapter-pg': 7.10.1
   '@swc/core': 1.16.20
+  # queue (D-001: Redis + BullMQ with a transactional outbox; T2.2)
+  bullmq: 6.4.0
+  ioredis: 6.0.0
   # contracts
   yaml: 2.9.1
   ajv: 8.20.0

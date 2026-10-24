@@ -100,3 +100,29 @@ describe('[SEC-BASE-002] Sentry never collects personal or secret data (permissi
     expect(scrubSentryEvent(event).user).toBeUndefined();
   });
 });
+
+// SEC-REVIEW-T2.2 #6 (BP §29; SEC-BASE-002; INFRA-005).
+describe('[SEC-BASE-002] Sentry exception values are masked', () => {
+  it('[SEC-BASE-002] phone, OTP URL and driver key values never leave in exception/message/breadcrumbs', () => {
+    const event = scrubSentryEvent({
+      message: 'OTP send failed for +923001234567',
+      exception: {
+        values: [
+          { type: 'Error', value: 'Key (phone_e164)=(+923001234567) already exists' },
+          { type: 'Error', value: 'GET /v1/auth/verify?otp=123456&token=abcdef failed' },
+        ],
+      },
+      breadcrumbs: [
+        { message: 'called 03001234567', data: { phone: '03001234567', url: '/x?otp=1' } },
+      ],
+      extra: { body: { otp: '123456' } },
+      contexts: { runtime: { name: 'node' }, user_data: { phone: '03001234567' } },
+    });
+    const text = JSON.stringify(event);
+    for (const leak of ['923001234567', '03001234567', '123456', 'abcdef']) {
+      expect(text, leak).not.toContain(leak);
+    }
+    expect(event.extra).toBeUndefined();
+    expect(event.contexts).toEqual({ runtime: { name: 'node' } });
+  });
+});

@@ -18,6 +18,7 @@ import {
   APPEND_ONLY_TABLES,
   DELETE_ALLOWED_TABLES,
   NON_APP_TABLES,
+  OWNER_MAINTAINED_TABLES,
 } from '../tools/append-only.ts';
 import { buildCommentStatements } from '../tools/comments.ts';
 import { API_ROOT, SCHEMA_DIR } from '../tools/db-schema.ts';
@@ -146,7 +147,8 @@ const APPEND_ONLY_FIXTURES: Record<(typeof APPEND_ONLY_TABLES)[number], string[]
     `INSERT INTO refund (refund_ref, payment_id, booking_id, amount_minor, status, reason) VALUES (gen_random_uuid(), '${PAY_DIG}', '${B}', 1000, 'ISSUED', 'test')`,
   ],
   config_rule: [
-    `INSERT INTO config_rule (key, scope, value, effective_from) VALUES ('test.key', 'GLOBAL', NULL, now())`,
+    // A real registry key (config_key_policy guard, SEC-REVIEW-T2.6 #2): editable, valid value, actor set.
+    `INSERT INTO config_rule (key, scope, value, effective_from, changed_by_user_id) VALUES ('price.max_total_minor', 'GLOBAL', '100000', now(), gen_random_uuid())`,
   ],
 };
 
@@ -211,6 +213,7 @@ describe('privilege matrix of kaamkaro_app (BP §26, §29; SEC-REVIEW-T2.3 #4, #
   it('[DATA-003] every table: SELECT/INSERT yes; UPDATE unless append-only; DELETE only on the allow-list; never TRUNCATE', async () => {
     const appendOnly = new Set<string>(APPEND_ONLY_TABLES);
     const deletable = new Set<string>(DELETE_ALLOWED_TABLES);
+    const ownerMaintained = new Set<string>(OWNER_MAINTAINED_TABLES);
     for (const model of schema.models) {
       const t = `public.${model.table}`;
       const [row] = await owner.$queryRawUnsafe<Record<string, boolean>[]>(
@@ -220,10 +223,12 @@ describe('privilege matrix of kaamkaro_app (BP §26, §29; SEC-REVIEW-T2.3 #4, #
         APP_ROLE,
         t,
       );
+      // SEC-REVIEW-T2.6 #2: owner-maintained tables are read-only for the API login.
+      const owned = ownerMaintained.has(model.table);
       expect(row, model.table).toEqual({
         s: true,
-        i: true,
-        u: !appendOnly.has(model.table),
+        i: !owned,
+        u: !appendOnly.has(model.table) && !owned,
         d: deletable.has(model.table),
         t: false,
       });
@@ -616,7 +621,7 @@ describe('config, location, media, payout, booking number (SEC-REVIEW-T2.3 #8, #
         [],
         `INSERT INTO config_rule (key, scope, value, effective_from) VALUES ('commission.rate', 'GLOBAL', '0.1', now() - interval '1 day')`,
       ),
-    ).toMatch(/config_rule_not_backdated/);
+    ).toMatch(/config_rule_not_backdated|kk_config_backdated/);
   });
 
   it('[PROF-ADDR-002] a confirmed or booking-referenced location snapshot cannot change', async () => {

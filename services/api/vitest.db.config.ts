@@ -12,7 +12,7 @@ if (existsSync(rootEnv)) process.loadEnvFile(rootEnv);
 export default defineConfig({
   plugins: [swc.vite({ module: { type: 'es6' } })],
   test: {
-    include: ['prisma/tests-db/**/*.db-spec.ts'],
+    include: ['prisma/tests-db/**/*.db-spec.ts', 'src/**/*.db-spec.ts'],
     allowOnly: false,
     passWithNoTests: false,
     fileParallelism: false,

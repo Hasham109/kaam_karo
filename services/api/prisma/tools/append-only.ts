@@ -35,6 +35,12 @@ export const DELETE_ALLOWED_TABLES = [
   'admin_recovery_code',
 ] as const;
 
+/**
+ * Owner-maintained tables (SEC-REVIEW-T2.6 #2): the API login may only SELECT; rows are written by
+ * the table owner (seed / migration). Created in migration 20261024000000_config_policy_zone_code.
+ */
+export const OWNER_MAINTAINED_TABLES = ['config_key_policy'] as const;
+
 /** Tables that are not application data: no app privileges except SELECT on spatial_ref_sys. */
 export const NON_APP_TABLES = ['_prisma_migrations', 'spatial_ref_sys'] as const;
 

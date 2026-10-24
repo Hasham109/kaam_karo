@@ -19,6 +19,7 @@
  */
 import type { Event, NodeOptions } from '@sentry/nestjs';
 import type { AppEnv, ServerEnv } from './env';
+import { maskFreeText, maskPii } from './pii/mask';
 
 type DataCollection = NonNullable<NodeOptions['dataCollection']>;
 type TransactionEvent = Parameters<NonNullable<NodeOptions['beforeSendTransaction']>>[0];
@@ -71,9 +72,29 @@ export function scrubSentryEvent<T extends Event>(event: T): T {
   for (const crumb of event.breadcrumbs ?? []) {
     const url = crumb.data?.['url'];
     if (crumb.data && typeof url === 'string') crumb.data['url'] = stripQuery(url);
+    if (typeof crumb.message === 'string') crumb.message = maskFreeText(crumb.message);
+    if (crumb.data) crumb.data = maskPii(crumb.data) as Record<string, unknown>;
+  }
+  // SEC-REVIEW-T2.2 #6 (BP §29; SEC-BASE-002): exception text and messages can carry phones,
+  // OTP URLs or driver errors with key values — mask them like the logs.
+  if (typeof event.message === 'string') event.message = maskFreeText(event.message);
+  for (const ex of event.exception?.values ?? []) {
+    if (typeof ex.value === 'string') ex.value = maskFreeText(ex.value);
+  }
+  delete event.extra;
+  if (event.contexts) {
+    const kept: NonNullable<Event['contexts']> = {};
+    for (const name of SENTRY_ALLOWED_CONTEXTS) {
+      const ctx = event.contexts[name];
+      if (ctx) kept[name] = ctx;
+    }
+    event.contexts = kept;
   }
   return event;
 }
+
+/** Only runtime facts may reach Sentry; every other context is dropped (SEC-REVIEW-T2.2 #6). */
+export const SENTRY_ALLOWED_CONTEXTS: readonly string[] = ['runtime', 'os', 'trace'];
 
 export type SentryOptions = NodeOptions & {
   readonly dsn: string;

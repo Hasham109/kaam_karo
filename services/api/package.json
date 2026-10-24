@@ -9,14 +9,16 @@
     "start": "node --env-file-if-exists=../../.env dist/main.js",
     "dev": "tsc -p tsconfig.build.json && node --env-file-if-exists=../../.env dist/main.js",
     "lint": "eslint .",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tools.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tools.json && tsc -p tsconfig.seed.json",
     "test": "vitest run",
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
     "db:deploy": "prisma migrate deploy",
     "db:migrate": "prisma migrate dev",
     "db:comments": "node prisma/tools/db-schema.ts comments",
-    "test:db": "prisma generate && vitest run --config vitest.db.config.ts"
+    "test:db": "prisma generate && vitest run --config vitest.db.config.ts && vitest run --config prisma/seed/vitest.db.config.ts",
+    "worker": "node --env-file-if-exists=../../.env dist/worker.js",
+    "db:seed": "node prisma/tools/config-policy.ts && node prisma/seed/run.ts"
   },
   "dependencies": {
     "@kaamkaro/platform": "workspace:*",
@@ -36,6 +38,7 @@
     "@types/node": "catalog:",
     "@types/supertest": "catalog:",
     "ajv": "catalog:",
+    "bullmq": "catalog:",
     "eslint": "catalog:",
     "prisma": "catalog:",
     "supertest": "catalog:",

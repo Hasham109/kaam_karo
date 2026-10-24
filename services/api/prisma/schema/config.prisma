@@ -1,7 +1,8 @@
 // ============================================================================
 // Module M17 config — Configurable rules store. Owner: A03 (catalog-config).
 // ARCH §4 M17, §5.3 (ConfigRule), §19; BP §42, §64; CFG-RULE-001…012.
-// Table: config_rule. Values are seeded by T2.6 (decided values cite their D-number;
+// Tables: config_rule; config_key_policy (owner-maintained policy per key, SEC-REVIEW-T2.6 #2,
+// created by A01 in T2.2 review fixes; rows generated from A03's registry). Values are seeded by T2.6 (decided values cite their D-number;
 // undecided values are null + TODO(OWNER)). This migration seeds nothing.
 // ============================================================================
 
@@ -37,4 +38,28 @@ model ConfigRule {
   @@unique([key, scope, effectiveFrom], where: raw("scope_ref_id IS NULL"), map: "config_rule_global_key")
   @@unique([key, scope, scopeRefId, effectiveFrom], where: raw("scope_ref_id IS NOT NULL"), map: "config_rule_scoped_key")
   @@map("config_rule")
+}
+
+/// Owner-maintained policy for every config key: kind, allowed scopes, decided/read-only, two-person and fail-closed flags. A BEFORE INSERT trigger on config_rule enforces it, so the API login cannot write an unknown key, a wrong scope or type, a decided key or a null security limit (BP §26, §29, §42; CFG-RULE-003; SEC-BASE-010). The API login may only read it; rows are generated from the config registry by the seed, run as the table owner.
+model ConfigKeyPolicy {
+  /// Rule key, same as config_rule.key (BP §42; CFG-RULE-001).
+  key           String        @id
+  /// Value kind from the config registry, e.g. ratio, positive_integer, limit_object (BP §42; CFG-RULE-003).
+  kind          String
+  /// Scopes allowed for this key (BP §64; CFG-RULE-001).
+  allowedScopes ConfigScope[] @map("allowed_scopes")
+  /// Upper bound for integer kinds (unit ceiling); null = none (BP §42; SEC-AUTH-004).
+  maxValue      Decimal?      @map("max_value") @db.Decimal(20, 6)
+  /// Field → upper bound for limit_object kinds; every field is a positive integer (BP §29, §30; SEC-BASE-006).
+  limitFields   Json?         @map("limit_fields")
+  /// Owner-decided value: the API login may not write new versions (BP §42; CFG-RULE-003).
+  readOnly      Boolean       @default(false) @map("read_only")
+  /// Change needs two-person approval, which the API login cannot record yet (BP §29; SEC-BASE-010).
+  twoPerson     Boolean       @default(false) @map("two_person")
+  /// Security limit: the API login may never store null (BP §27, §29; SEC-AUTH-004).
+  failClosed    Boolean       @default(false) @map("fail_closed")
+  /// When the policy row was last generated (technical field, ARCH §5; BP §25).
+  updatedAt     DateTime      @default(now()) @map("updated_at") @db.Timestamptz(3)
+
+  @@map("config_key_policy")
 }

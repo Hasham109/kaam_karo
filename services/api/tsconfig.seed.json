@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.tools.json",
+  "//": "RQ-008 item 2 (A01): prisma/seed and the config-policy tool import the config registry, whose type-only imports reach Nest modules (decorators, parameter properties). Same options as the tools, plus decorators.",
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "erasableSyntaxOnly": false
+  },
+  "include": [
+    "prisma/seed",
+    "prisma/tools/config-policy.ts",
+    "prisma/tests-db/config-policy.db-spec.ts"
+  ]
+}

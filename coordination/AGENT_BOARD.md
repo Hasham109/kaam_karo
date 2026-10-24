@@ -2,6 +2,11 @@
 
 Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate verdicts above the table.
 
+## Sync 2026-10-24
+- T2.2 DONE: QA PASS (docs/qa/T2.2-qa.md re-check 1, 12/12 probes), SEC PASS (docs/security/SEC-REVIEW-T2.2.md re-review 1, all #1–#16 resolved). Gate 36/36, format, guards, DB 92/92 pass.
+- T2.6 DONE: QA PASS (docs/qa/T2.6-qa.md re-check 1, 10/10 probes), SEC PASS (docs/security/SEC-REVIEW-T2.6.md re-review 1, all #1–#11 resolved). Contracts draft v0.2.0 approved.
+- Next: T2.4 Identity (A02: phone OTP login, fake OtpSender, sessions, roles, admin MFA).
+
 ## Sync 2026-10-23
 - T2.1 DONE: QA PASS (docs/qa/T2.1-qa.md), SEC PASS after re-review 1 (docs/security/SEC-REVIEW-T2.1.md). Follow-ups due at Phase 2 gate: SEC #3, #6, #7, #9–#12, #14; QA F-04–F-06; first GitHub run of android-manifest job; Docker smoke test.
 - T1.1, T1.2, T1.3, T1.5 DONE: QA PASS (docs/qa/T1.1-1.3-qa.md re-check 2), SEC PASS (docs/security/SEC-REVIEW-T1.1-1.3.md re-review 1). Owner decision D-030 recorded. Open for owner: OQ-039…OQ-078. Leftovers for A14 (T1.4): F-03 shared copy catalogues, G9 No-show Urdu verb. A15 follow-up: permission policy v1.1 (no Partner location until OQ-025), KK-T5 threat.
@@ -14,10 +19,10 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 
 | Agent | Subagent file | Now doing (task) | Status | Branch | Blocked by | Next planned | Last update (UTC) |
 |---|---|---|---|---|---|---|---|
-| A00 | main session | Phase 0 T0.1–T0.3 | DONE | — | — | Owner answers (OQ-014…033), then T1.x / T2.1 | 2026-10-22 |
-| A01 | platform-devops | T2.3 DB schema v1 — review fixes done (SEC-REVIEW-T2.3 #1–#9, #11–#17, #19; QA 02–04); test:db 49/49 on real Postgres via non-owner login; A15/A16 re-review requested | DONE | t2.1-monorepo | — | T2.2, T2.7 | 2026-10-23 |
-| A02 | identity-profiles | — | IDLE | — | — | T2.4 | — |
-| A03 | catalog-config | — | IDLE | — | — | T2.6 | — |
+| A00 | main session | Orchestration | DONE | — | — | T2.4 delegation | 2026-10-24 |
+| A01 | platform-devops | T2.2 Platform lib | DONE | t2.2-platform-lib | — | T2.7 | 2026-10-24 |
+| A02 | identity-profiles | T2.4 Identity | CLAIMED | t2.4-identity | — | T2.5 | 2026-10-24 |
+| A03 | catalog-config | T2.6 Catalog + Config | DONE | t2.6-catalog-config | — | T6.2 (with A09); controllers after T2.4 | 2026-10-24 |
 | A04 | booking-quotes | — | IDLE | — | — | T3.4 | — |
 | A05 | matching-trust | — | IDLE | — | — | T3.6 | — |
 | A06 | location-maps | — | IDLE | — | — | T3.1 | — |

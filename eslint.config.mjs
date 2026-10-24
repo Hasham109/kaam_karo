@@ -8,6 +8,19 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 import kaamkaro from './infra/eslint/kaamkaro-plugin.mjs';
 
+const WRITE_METHODS =
+  '/^(create|createMany|createManyAndReturn|upsert|update|updateMany|delete|deleteMany)$/';
+const PLATFORM_TABLE_WRITE = {
+  selector: `CallExpression[callee.object.property.name=/^(auditLog|marketplaceEvent|outboxEvent)$/][callee.property.name=${WRITE_METHODS}]`,
+  message:
+    'Write audit/marketplace/outbox rows only through AuditWriter, MarketplaceEventWriter or OutboxWriter (services/api/src/platform; SEC-REVIEW-T2.2 #5).',
+};
+const CONFIG_RULE_WRITE = {
+  selector: `CallExpression[callee.object.property.name='configRule'][callee.property.name=${WRITE_METHODS}]`,
+  message:
+    'config_rule is written only by the config module (ConfigAdminService) or its seed (SEC-REVIEW-T2.6 #2).',
+};
+
 export default defineConfig(
   globalIgnores([
     '**/node_modules/',
@@ -52,6 +65,37 @@ export default defineConfig(
     files: ['services/api/src/**/*.ts'],
     plugins: { kaamkaro },
     rules: { 'kaamkaro/no-cross-module-import': 'error' },
+  },
+
+  // T2.2: NestJS constructor injection needs VALUE imports of injected classes (decorator metadata);
+  // tell consistent-type-imports so it never turns them into `import type` (D-001 NestJS).
+  {
+    files: ['services/api/**/*.ts'],
+    languageOptions: {
+      parserOptions: { emitDecoratorMetadata: true, experimentalDecorators: true },
+    },
+  },
+
+  // SEC-REVIEW-T2.2 #5(c), QA-T22-06 (BP §26, §29; DATA-004): only the platform writers create or
+  // change audit_log / marketplace_event / outbox_event rows (masker cannot be skipped).
+  // SEC-REVIEW-T2.6 #2 (BP §42, §26; CFG-RULE-001…012): only the config module (and its seed)
+  // writes config_rule. Three non-overlapping blocks, because flat config overrides a rule.
+  {
+    files: ['services/api/**/*.ts'],
+    ignores: [
+      'services/api/src/platform/**',
+      'services/api/src/modules/config/**',
+      'services/api/prisma/seed/**',
+    ],
+    rules: { 'no-restricted-syntax': ['error', PLATFORM_TABLE_WRITE, CONFIG_RULE_WRITE] },
+  },
+  {
+    files: ['services/api/src/platform/**/*.ts'],
+    rules: { 'no-restricted-syntax': ['error', CONFIG_RULE_WRITE] },
+  },
+  {
+    files: ['services/api/src/modules/config/**/*.ts', 'services/api/prisma/seed/**/*.ts'],
+    rules: { 'no-restricted-syntax': ['error', PLATFORM_TABLE_WRITE] },
   },
 
   // RQ-002 item 2 (docs/qa/test-strategy.md §3, P4): no focused or skipped tests.

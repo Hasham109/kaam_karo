@@ -66,6 +66,8 @@ model ServiceZone {
   id        String                                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   /// City the zone belongs to (ARCH §5.3; BP §57.2).
   cityId    String                                       @map("city_id") @db.Uuid
+  /// Stable zone code, unique per city; seeds and imports key on it, so a renamed or deactivated zone is never re-created (BP §57.2, §64; SCOPE-GEO-002). Default = random code for rows created without one.
+  code      String                                       @default(dbgenerated("('zone-'::text || substr(md5((gen_random_uuid())::text), 1, 12))"))
   /// Zone name in English (BP §57.2, §78; I18N-006).
   nameEn    String                                       @map("name_en")
   /// Zone name in Urdu (BP §57.2, §78; I18N-006).
@@ -83,6 +85,7 @@ model ServiceZone {
   /// Relation to the city (ARCH §5.3; BP §57.2).
   city      City                                         @relation(fields: [cityId], references: [id], onDelete: Restrict)
 
+  @@unique([cityId, code], map: "service_zone_city_code_key")
   @@index([cityId])
   @@index([area], type: Gist)
   @@map("service_zone")

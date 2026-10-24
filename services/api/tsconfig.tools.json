@@ -12,5 +12,6 @@
     "erasableSyntaxOnly": true,
     "verbatimModuleSyntax": true
   },
-  "include": ["prisma.config.ts", "prisma/tools", "prisma/tests-db", "vitest.db.config.ts"]
+  "include": ["prisma.config.ts", "prisma/tools", "prisma/tests-db", "vitest.db.config.ts"],
+  "exclude": ["prisma/tools/config-policy.ts", "prisma/tests-db/config-policy.db-spec.ts"]
 }

@@ -1,0 +1,309 @@
+# Contract: config (owner A03, M17 Admin Ops & Config). Contract-first per ARCH §8 rule 7 / IMPL §3.4.
+# DRAFT 0.2.0 (T2.6 + review fixes): admin config editors A13/A20–A24 (A13 agent, T5.x) — review in
+# RQ-009. Service layer exists (services/api/src/modules/config: ConfigAdminService); controllers
+# come after the staff auth + MFA guards of T2.4/T5.1. Modules READ config in-process via
+# CONFIG_SERVICE (@kaamkaro/platform), never over HTTP. Errors use the envelope of common.yaml.
+openapi: 3.1.0
+info:
+  title: Kaam Karo — Configurable rules (ConfigRule)
+  version: 0.2.0
+  x-status: draft
+  description: |
+    CFG-RULE-001…012 (BP §42, §64; ARCH §5.3, §19). A rule = key + scope (GLOBAL / CITY /
+    CATEGORY / SERVICE) + value + effective_from. Every change is a new append-only version
+    (BP §26). `effective_from` is never in the past and never later than
+    `config.max_schedule_ahead_hours` (null → no scheduling, OQ-088). Actor and reason are
+    required and audited (SEC-BASE-010). `null` = not decided by the owner (TODO(OWNER)); the
+    key's `whileNull` text is the safe behaviour shown in the editor. Owner-decided keys are
+    read-only (OQ-078 default).
+
+    **Security limits fail closed** (SEC-REVIEW-T2.6 #1, #5): keys with `failClosed = true` can
+    never be set to null, take only their closed schema (`limit_object`: exactly the listed
+    fields, each a positive integer ≤ its ceiling) or a bounded positive integer, and an unset
+    limit refuses the action (LIMIT_NOT_CONFIGURED) in every environment.
+
+    **Access** (SEC-REVIEW-T2.6 #4; ADMIN-ROLE-001…008, SEC-AUTH-005):
+    - staff session only (customer/provider tokens → 401/403), MFA completed;
+    - actor and sub-roles come from the server session and identity module, never the body;
+    - writes AND reads are limited per key by `editGroup`, using `x-admin-sub-roles-by-group`.
+      FINANCIAL: Finance, Super Admin (admin.md A13). Every other group: Super Admin only until
+      OQ-052 is answered. Analyst never writes; Support never sees financial keys.
+
+    Values of `auditFormat = FINGERPRINT` keys (payments.company_account) are never returned or
+    audited in clear: `{ fingerprint: "sha256x:…", last4 }` (SEC-REVIEW-T2.6 #6).
+
+    Module error codes (HTTP status): UNKNOWN_CONFIG_KEY 404, FORBIDDEN_FOR_SUB_ROLE 403,
+    OWNER_DECIDED_READ_ONLY 403, APPROVAL_FLOW_REQUIRED 409 (OQ-076), CONCURRENT_WRITE 409
+    (retryable), SCOPE_NOT_ALLOWED 422, SCOPE_REF_INVALID 422 (also a malformed UUID),
+    VALUE_REQUIRED 422 (null on a fail-closed key), INVALID_VALUE 422, BACKDATED_EFFECTIVE_FROM 422,
+    SCHEDULE_NOT_ALLOWED 422, REASON_REQUIRED 422, ACTOR_REQUIRED 401.
+  x-admin-sub-roles-by-group:
+    FINANCIAL: [SUPER_ADMIN, FINANCE]
+    SECURITY: [SUPER_ADMIN]
+    BOOKING_RULES: [SUPER_ADMIN]
+    SUPPORT: [SUPER_ADMIN]
+    MEDIA: [SUPER_ADMIN]
+    RATING: [SUPER_ADMIN]
+    AI_MATCHING: [SUPER_ADMIN]
+    TRUST: [SUPER_ADMIN]
+    CONTENT: [SUPER_ADMIN]
+    PROMOTIONS: [SUPER_ADMIN]
+paths:
+  /admin/config/keys:
+    get:
+      operationId: listConfigKeys
+      summary: Keys visible to this staff user, with rules, current GLOBAL value and pending versions
+      x-requirement-ids: [CFG-RULE-001, OPS-ADMIN-013, OPS-ADMIN-020]
+      security:
+        - staffSession: []
+      x-admin-sub-roles: per key, see x-admin-sub-roles-by-group
+      responses:
+        '200':
+          description: Visible keys only (services/api/src/modules/config/config-keys.ts).
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [keys]
+                properties:
+                  keys:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ConfigKey'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+  /admin/config/keys/{key}/history:
+    get:
+      operationId: getConfigKeyHistory
+      summary: All versions of a key in every scope, newest first
+      x-requirement-ids: [CFG-RULE-003, SEC-BASE-010]
+      security:
+        - staffSession: []
+      x-admin-sub-roles: per key, see x-admin-sub-roles-by-group
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$'
+      responses:
+        '200':
+          description: Versions (append-only).
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [versions]
+                properties:
+                  versions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ConfigRuleVersion'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+  /admin/config/rules:
+    post:
+      operationId: setConfigRule
+      summary: Add a new version of a rule (A13/A20 "Save")
+      x-requirement-ids:
+        [
+          CFG-RULE-001,
+          CFG-RULE-002,
+          CFG-RULE-003,
+          CFG-RULE-004,
+          CFG-RULE-005,
+          CFG-RULE-006,
+          CFG-RULE-007,
+          CFG-RULE-008,
+          CFG-RULE-009,
+          CFG-RULE-012,
+        ]
+      security:
+        - staffSession: []
+      x-admin-sub-roles: per key, see x-admin-sub-roles-by-group
+      x-idempotent: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetConfigRule'
+      responses:
+        '201':
+          description: Stored version (audited; readers see it from effective_from).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigRuleVersion'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '422':
+          $ref: '#/components/responses/Error'
+components:
+  securitySchemes:
+    staffSession:
+      type: http
+      scheme: bearer
+      description: Staff (admin) session with completed MFA, issued by the identity module (A02, T2.4; mechanism per OQ-051). Customer and provider sessions are refused.
+  responses:
+    Error:
+      description: Error envelope (common.yaml); the code is one of the module error codes above.
+      content:
+        application/json:
+          schema:
+            $ref: './common.yaml#/components/schemas/ErrorEnvelope'
+  schemas:
+    Scope:
+      type: string
+      enum: [GLOBAL, CITY, CATEGORY, SERVICE]
+    ConfigKey:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          key,
+          kind,
+          scopes,
+          editGroup,
+          requirementIds,
+          sources,
+          readOnly,
+          failClosed,
+          whileNull,
+          value,
+          pendingVersions,
+        ]
+      properties:
+        key:
+          type: string
+        kind:
+          type: string
+          enum:
+            [
+              ratio,
+              non_negative_number,
+              non_negative_integer,
+              positive_integer,
+              limit_object,
+              boolean,
+              string,
+              url,
+              string_array,
+              object,
+              json,
+            ]
+        unit:
+          type: string
+          enum: [count, seconds, minutes, hours, days, bytes, meters, paisa]
+        maxValue:
+          type: integer
+          description: Technical ceiling of integer kinds (OQ-088 for owner bounds).
+        fields:
+          type: object
+          description: limit_object only — field name → maximum.
+          additionalProperties:
+            type: integer
+        scopes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Scope'
+        editGroup:
+          type: string
+          enum:
+            [
+              FINANCIAL,
+              SECURITY,
+              BOOKING_RULES,
+              SUPPORT,
+              MEDIA,
+              RATING,
+              AI_MATCHING,
+              TRUST,
+              CONTENT,
+              PROMOTIONS,
+            ]
+        requirementIds:
+          type: array
+          items:
+            type: string
+        sources:
+          type: array
+          items:
+            type: string
+        decidedBy:
+          type: string
+          description: Owner decision (D-xxx) that fixed the value; the key is read-only.
+        readOnly:
+          type: boolean
+        failClosed:
+          type: boolean
+          description: Security/abuse limit; can never be null; unset → LIMIT_NOT_CONFIGURED in every environment.
+        approval:
+          type: string
+          enum: [TWO_PERSON]
+        whileNull:
+          type: string
+        value:
+          description: Current GLOBAL value; null = TODO(OWNER). FINGERPRINT keys show {fingerprint, last4}.
+        pendingVersions:
+          type: array
+          description: Versions with effective_from in the future (SEC-REVIEW-T2.6 #9).
+          items:
+            $ref: '#/components/schemas/ConfigRuleVersion'
+    ConfigRuleVersion:
+      type: object
+      additionalProperties: false
+      required: [id, key, scope, scopeRefId, value, effectiveFrom]
+      properties:
+        id:
+          type: string
+          format: uuid
+        key:
+          type: string
+        scope:
+          $ref: '#/components/schemas/Scope'
+        scopeRefId:
+          type: [string, 'null']
+          format: uuid
+        value:
+          description: JSON value or null (TODO(OWNER)); FINGERPRINT keys show {fingerprint, last4}.
+        effectiveFrom:
+          type: string
+          format: date-time
+    SetConfigRule:
+      description: No actor field; the actor comes from the staff session.
+      type: object
+      additionalProperties: false
+      required: [key, scope, scopeRefId, value, reason]
+      properties:
+        key:
+          type: string
+        scope:
+          $ref: '#/components/schemas/Scope'
+        scopeRefId:
+          type: [string, 'null']
+          format: uuid
+        value:
+          description: New value; null = unset (refused for fail-closed keys). Checked against the key's kind, unit ceiling and closed schema by the server.
+        effectiveFrom:
+          type: string
+          format: date-time
+          description: Default now; never in the past; later only within config.max_schedule_ahead_hours.
+        reason:
+          type: string
+          minLength: 1

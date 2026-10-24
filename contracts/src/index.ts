@@ -76,3 +76,18 @@ export function responseJsonSchema(
     $defs: rewriteRefs(doc.components?.schemas ?? {}),
   };
 }
+
+/**
+ * Standalone JSON Schema for one named component, e.g. `componentJsonSchema(loadOpenApi('common'),
+ * 'ErrorEnvelope')` (T2.2: every module's error responses are validated against it).
+ */
+export function componentJsonSchema(doc: OpenApiDocument, name: string): JsonSchema {
+  const schemas = doc.components?.schemas ?? {};
+  const schema = schemas[name];
+  if (!schema) throw new Error(`No component schema ${name}`);
+  return {
+    $schema: 'https://json-schema.org/draft/2020-12/schema',
+    ...(rewriteRefs(schema) as JsonSchema),
+    $defs: rewriteRefs(schemas),
+  };
+}

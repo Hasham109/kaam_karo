@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   CONTRACTS_DIR,
+  componentJsonSchema,
   HTTP_METHODS,
   listOpenApiContracts,
   loadOpenApi,
@@ -50,6 +51,13 @@ describe('[PLAT-001] contract folder structure (ARCH §8 rules 7–8)', () => {
       }
     },
   );
+
+  it('[REL-001] the common contract publishes the error envelope', () => {
+    expect(modules).toContain('common');
+    const schema = componentJsonSchema(loadOpenApi('common'), 'ErrorEnvelope');
+    expect(JSON.stringify(schema)).not.toContain('#/components/');
+    expect(schema['required']).toEqual(['error']);
+  });
 
   it('[REL-011] response schemas resolve to standalone JSON Schema', () => {
     const schema = responseJsonSchema(loadOpenApi('health'), '/health', 'get', '200');
