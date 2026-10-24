@@ -2,6 +2,14 @@
 
 Newest first. Every behaviour change, with task ID and requirement IDs.
 
+## 2026-10-24 — T3.1 GeoService, Pakistan Boundary, Location Snapshot & Fallback (A06) — DONE
+- LOC-GEO-001, LOC-GEO-002, LOC-GEO-003, LOC-GEO-008: Server-side proxy for Google Maps Platform (`GoogleMapsClient` + `GeoService`). Places autocomplete biased to Pakistan and Lahore center. Geocoding and reverse geocoding with server-only API keys (zero exposure to client bundles).
+- SCOPE-GEO-001, SCOPE-GEO-002 (BP §57, §81; D-007, D-019): Pakistan geographic boundary bounding box enforced server-side ([23.5..37.2°N, 60.5..78.0°E]). Coordinates outside Pakistan throw `OUT_OF_SERVICE_AREA` (HTTP 400). Lahore active launch city, other Pakistan cities listed as inactive with `canChangeCity: true`.
+- LOC-GEO-005, LOC-GEO-006: Offline/Maps-disabled fallback tested. Straight-line distance via WGS84 spherical Haversine formula and urban transit duration estimator (25 km/h + 180s street navigation buffer) with `isFallback: true` flag. Autocomplete falls back to database catalog cities.
+- LOC-GEO-004: Location snapshot immutable binding with PostGIS distance calculation, verified against `kk_location_snapshot_freeze` trigger.
+- Contracts: `contracts/location.yaml` OpenAPI 3.1.0 v0.1.0 registered and validated.
+- Tests: 192 unit tests in `@kaamkaro/api` pass (including 17 geo tests, 5 boundary tests, 5 haversine tests); 120/120 DB integration tests pass (`location.db-spec.ts` 8/8 tests pass); 5/5 guards pass; 36/36 turbo tasks pass.
+
 ## 2026-10-24 — T2.2 review fixes (A01) — SEC-REVIEW-T2.2 #1–#16, QA-T22-01…06, SEC-REVIEW-T2.6 #1 (A01 part), #2, #3, #8, RQ-008, RQ-011
 - DATA-003, DATA-004 (BP §26, §29): the PII masker catches phones in Urdu / Arabic-Indic / full-width digits with any separators, landlines, IPv6 `::`, CNIC in any digits, secrets in text and URLs (OTP/token query values, signed-URL signatures, Bearer, JWT, IBAN); a wider key deny-list runs before the ID exemption; masking happens before truncation and is idempotent; `sha256:` fingerprints are kept. A Prisma query extension masks every create on append-only tables, and ESLint allows writes to audit/marketplace/outbox rows only in the platform folder (config_rule only in the config module).
 - REL-008, REL-002 (BP §31.1, §31.2): heartbeat lease, bounded retry of the stored result, then an "outcome unknown" marker → 409 IDEMPOTENCY_OUTCOME_UNKNOWN, never a re-run (forced re-run tests on the real DB); a replay returns the original status; responses above 16 KiB are not stored (409 IDEMPOTENCY_REPLAY_UNAVAILABLE). New env HTTP_REQUEST_TIMEOUT_MS (server deadline) ≤ IDEMPOTENCY_IN_FLIGHT_TIMEOUT_MS. Contract common.yaml 1.1.0.
