@@ -1,0 +1,554 @@
+openapi: 3.1.0
+info:
+  title: Request & AI Intake Service
+  description: >
+    Customer request creation, fake IntakeAI interpretation, catalog validation against closed schema,
+    confidence fallback, customer summary confirmation, and append-only AI interaction audit logging
+    (ARCH §4 M7, §6.2, §10; BP §56, §66, §67, §77, §79; REQ-AI-001..012).
+  version: 0.1.0
+
+paths:
+  /v1/intake/interpret:
+    post:
+      summary: Interpret customer intent text or voice transcript with AI
+      description: >
+        Parses customer intent into closed schema (service mapping, time hints, location hints,
+        supplier summary), performs catalog validation against active services, computes confidence,
+        checks moderation, and logs the decision into ai_interaction with scrubbed PII (REQ-AI-001..004, REQ-AI-006..008, REQ-AI-010).
+      operationId: interpretCustomerIntent
+      x-requirement-ids:
+        - REQ-AI-001
+        - REQ-AI-002
+        - REQ-AI-003
+        - REQ-AI-004
+        - REQ-AI-006
+        - REQ-AI-007
+        - REQ-AI-008
+        - REQ-AI-010
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterpretIntentRequest'
+      responses:
+        '200':
+          description: AI interpretation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterpretIntentResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/intake/requests:
+    post:
+      summary: Create customer request draft or direct request
+      description: >
+        Creates a new customer request record in COMPOSING or AWAITING_CONFIRMATION status.
+        Supports both AI-assisted flow and direct catalog non-AI fallback flow (REQ-AI-001, REQ-AI-005, REQ-AI-007, REQ-AI-012).
+      operationId: createCustomerRequest
+      x-requirement-ids:
+        - REQ-AI-001
+        - REQ-AI-005
+        - REQ-AI-007
+        - REQ-AI-012
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCustomerRequest'
+      responses:
+        '201':
+          description: Customer request created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerRequestResponse'
+        '400':
+          description: Validation error or invalid catalog service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/intake/requests/{id}:
+    get:
+      summary: Retrieve customer request details
+      description: >
+        Returns the customer request record, AI interpretation if present, and current status (REQ-AI-005, REQ-AI-012).
+      operationId: getCustomerRequest
+      x-requirement-ids:
+        - REQ-AI-005
+        - REQ-AI-012
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Customer request UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Customer request retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerRequestResponse'
+        '404':
+          description: Request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/intake/requests/{id}/confirm:
+    post:
+      summary: Customer confirms and submits the interpreted request
+      description: >
+        Explicit customer confirmation action. Only the customer can submit a request (BP §67, §77.3).
+        Transitions request to SUBMITTED status and records submitted_at (REQ-AI-005, REQ-AI-007, REQ-AI-010).
+      operationId: confirmCustomerRequest
+      x-requirement-ids:
+        - REQ-AI-005
+        - REQ-AI-007
+        - REQ-AI-010
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Customer request UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmCustomerRequest'
+      responses:
+        '200':
+          description: Request confirmed and submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerRequestResponse'
+        '400':
+          description: Invalid confirmation parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Request already submitted or in invalid state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/intake/requests/{id}/ai-interactions:
+    get:
+      summary: List AI interactions for customer request
+      description: >
+        Returns immutable AI decision log records associated with this request.
+        All raw prompt PII is scrubbed before storage (REQ-AI-008).
+      operationId: listAiInteractions
+      x-requirement-ids:
+        - REQ-AI-008
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Customer request UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: AI interactions retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiInteractionsListResponse'
+        '404':
+          description: Request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+components:
+  schemas:
+    RequestStatus:
+      type: string
+      enum:
+        - COMPOSING
+        - INTERPRETING
+        - NEEDS_CLARIFICATION
+        - AWAITING_CONFIRMATION
+        - SUBMITTED
+        - MATCHING
+        - MATCHES_SHOWN
+        - NO_SUPPLY
+
+    RequestedTimeHint:
+      type: string
+      enum:
+        - NOW
+        - TODAY
+        - LATER
+
+    AiInputClass:
+      type: string
+      enum:
+        - TEXT
+        - VOICE_TRANSCRIPT
+        - PHOTO
+
+    AiSafetyState:
+      type: string
+      enum:
+        - ALLOWED
+        - BLOCKED
+
+    AiApprovalState:
+      type: string
+      enum:
+        - PENDING
+        - CONFIRMED
+        - REJECTED
+
+    AppLanguage:
+      type: string
+      enum:
+        - en
+        - ur
+
+    InterpretIntentRequest:
+      type: object
+      required:
+        - intentText
+      properties:
+        intentText:
+          type: string
+          description: Customer voice transcript or typed text
+          minLength: 1
+        cityId:
+          type: string
+          format: uuid
+          description: Optional city UUID for localized catalog validation
+        customerProfileId:
+          type: string
+          format: uuid
+          description: Optional customer profile UUID
+        appLanguage:
+          $ref: '#/components/schemas/AppLanguage'
+        inputClass:
+          $ref: '#/components/schemas/AiInputClass'
+          default: TEXT
+
+    InterpretIntentResponse:
+      type: object
+      required:
+        - confidence
+        - needsClarification
+        - safetyState
+      properties:
+        serviceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Mapped catalog service UUID if validated
+        serviceName:
+          type: string
+          nullable: true
+          description: Human-readable service name from catalog
+        serviceFamily:
+          type: string
+          nullable: true
+          description: Top-level service family (e.g. Plumbing, Electrical, AC/Cooling)
+        intentSummary:
+          type: string
+          nullable: true
+          description: Short extracted intent summary
+        supplierSummary:
+          type: string
+          nullable: true
+          description: Supplier-ready problem summary in app language without customer PII
+        summaryLanguage:
+          $ref: '#/components/schemas/AppLanguage'
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Service mapping confidence between 0 and 1
+        needsClarification:
+          type: boolean
+          description: True when confidence is below threshold or key information is missing
+        clarifyingQuestions:
+          type: array
+          items:
+            type: string
+          description: At most 2 clarifying questions if clarification is needed
+        timeHint:
+          $ref: '#/components/schemas/RequestedTimeHint'
+        requestedWindowFrom:
+          type: string
+          format: date-time
+          nullable: true
+        requestedWindowTo:
+          type: string
+          format: date-time
+          nullable: true
+        locationHint:
+          type: string
+          nullable: true
+          description: Extracted area or neighborhood name
+        isEmergency:
+          type: boolean
+          default: false
+        safetyState:
+          $ref: '#/components/schemas/AiSafetyState'
+        modelVersion:
+          type: string
+        serviceVersion:
+          type: string
+
+    CreateCustomerRequest:
+      type: object
+      required:
+        - customerProfileId
+      properties:
+        customerProfileId:
+          type: string
+          format: uuid
+        intentText:
+          type: string
+          nullable: true
+        serviceId:
+          type: string
+          format: uuid
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        locationSnapshotId:
+          type: string
+          format: uuid
+          nullable: true
+        requestedTimeHint:
+          $ref: '#/components/schemas/RequestedTimeHint'
+        requestedWindowFrom:
+          type: string
+          format: date-time
+          nullable: true
+        requestedWindowTo:
+          type: string
+          format: date-time
+          nullable: true
+        isEmergency:
+          type: boolean
+          default: false
+        attachmentMediaIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        summaryLanguage:
+          $ref: '#/components/schemas/AppLanguage'
+
+    ConfirmCustomerRequest:
+      type: object
+      required:
+        - serviceId
+        - supplierSummary
+      properties:
+        serviceId:
+          type: string
+          format: uuid
+          description: Customer-approved service ID
+        supplierSummary:
+          type: string
+          description: Customer-approved problem summary
+          minLength: 1
+        requestedWindowFrom:
+          type: string
+          format: date-time
+          nullable: true
+        requestedWindowTo:
+          type: string
+          format: date-time
+          nullable: true
+        isEmergency:
+          type: boolean
+          default: false
+        locationSnapshotId:
+          type: string
+          format: uuid
+          nullable: true
+
+    CustomerRequestResponse:
+      type: object
+      required:
+        - id
+        - customerProfileId
+        - status
+        - isEmergency
+        - createdAt
+        - updatedAt
+        - version
+      properties:
+        id:
+          type: string
+          format: uuid
+        customerProfileId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/RequestStatus'
+        intentText:
+          type: string
+          nullable: true
+        serviceId:
+          type: string
+          format: uuid
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        aiInterpretation:
+          type: object
+          nullable: true
+          additionalProperties: true
+        aiConfidence:
+          type: number
+          nullable: true
+        supplierSummary:
+          type: string
+          nullable: true
+        summaryLanguage:
+          $ref: '#/components/schemas/AppLanguage'
+        attachmentMediaIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        locationSnapshotId:
+          type: string
+          format: uuid
+          nullable: true
+        requestedTimeHint:
+          $ref: '#/components/schemas/RequestedTimeHint'
+        requestedWindowFrom:
+          type: string
+          format: date-time
+          nullable: true
+        requestedWindowTo:
+          type: string
+          format: date-time
+          nullable: true
+        isEmergency:
+          type: boolean
+        submittedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        version:
+          type: integer
+
+    AiInteractionRecord:
+      type: object
+      required:
+        - id
+        - modelVersion
+        - inputClass
+        - safetyState
+        - approvalState
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        requestId:
+          type: string
+          format: uuid
+          nullable: true
+        sessionRef:
+          type: string
+          nullable: true
+        modelVersion:
+          type: string
+        serviceVersion:
+          type: string
+          nullable: true
+        inputClass:
+          $ref: '#/components/schemas/AiInputClass'
+        outputSummary:
+          type: string
+          nullable: true
+          description: Sanitized output summary with scrubbed PII
+        confidence:
+          type: number
+          nullable: true
+        safetyState:
+          $ref: '#/components/schemas/AiSafetyState'
+        approvalState:
+          $ref: '#/components/schemas/AiApprovalState'
+        latencyMs:
+          type: integer
+          nullable: true
+        errorCode:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    AiInteractionsListResponse:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiInteractionRecord'
+
+    ErrorEnvelope:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true

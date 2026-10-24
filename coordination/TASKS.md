@@ -27,7 +27,7 @@ Acceptance criteria and BP refs per task: docs/implementation.md §6 (same task 
 | T2.8 | Security review of T2.1–T2.6 | A15 | T2.4–T2.6 | DONE | handoffs/T-2.8.md |
 | T3.1 | `GeoService` + Pakistan boundary + Location Snapshot + fallback | A06 | T2.3 | DONE | handoffs/T-3.1.md |
 | T3.2 | Media upload sessions, limits from config, thumbnails, retention job | A08 | T2.2 | DONE | handoffs/T-3.2.md |
-| T3.3 | `IntakeAI` fake + closed schema + catalog validation + confidence fallback + AI logs | A07 | T2.6 | TODO | — |
+| T3.3 | `IntakeAI` fake + closed schema + catalog validation + confidence fallback + AI logs | A07 | T2.6 | DONE | handoffs/T-3.3.md |
 | T3.4 | Booking state machine + Job Events + cancellation rules (config) | A04 | T2.6 | DONE | handoffs/T-3.4.md |
 | T3.5 | Quotes + multi-supplier offers + fare lines (proposed/approved/rejected/final) + **crew size** (ARCH §5.6) | A04 | T3.4 | DONE | handoffs/T-3.5.md |
 | T3.6 | Availability, service areas, verification levels | A05 | T2.5 | DONE | handoffs/T-3.6.md |

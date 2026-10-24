@@ -1,5 +1,16 @@
 # CHANGELOG — Kaam Karo
 
+## 2026-10-24 — T3.3 AI Request Intake, Confidence Fallback, PII Scrubbing & AI Logs (A07) — DONE
+- REQ-AI-001..004, REQ-AI-006, ARCH §4 M7, ARCH §10, BP §56: Natural language text and voice transcript interpretation (`IntakeService.interpret`, `FakeIntakeAiClient`). Structured extraction into closed schema (`ClosedAiInterpretation`). Golden test evaluations for Blueprint examples (AC repair Urdu transcript, electrical short circuit English prompt, geyser leak with location and time window).
+- REQ-AI-003, REQ-AI-006, BP §79: Ambiguity and low-confidence fallback. Prompts with confidence < 0.60 or ambiguous intent degrade confidence (0.40) and generate at most 2 targeted clarifying questions in requested language (`AppLanguage.EN` / `AppLanguage.UR`).
+- REQ-AI-007, CAT-SVC-004, CAT-SVC-007: Catalog validation against active database services via `CatalogService`. Unknown or hallucinated service suggestions are rejected with `serviceId = null`, degraded confidence (0.35), and re-selection guidance.
+- REQ-AI-008, SEC-PRIV-001, BP §66: Privacy preservation and PII scrubbing (`scrubPii`). Automatically redacts Pakistani phone numbers (`03xx-xxxxxxx`, `+923xxxxxxxxx`), CNICs (`XXXXX-XXXXXXX-X`), and emails from prompts before inserting into `ai_interaction.promptScrubbed` audit logs.
+- REQ-AI-010, ARCH §6.2: Anti-hallucination guard. Strictly closed schema omitting pricing, provider assignment, arrival ETA, or phone contact fields. AI never directly books jobs.
+- REQ-AI-005, REQ-AI-011, REQ-AI-012: Request lifecycle state machine (`COMPOSING` -> `AWAITING_CONFIRMATION` -> `SUBMITTED`). Only authenticated customers may confirm. Immutable `request_snapshot` locked upon confirmation. Emergency requests validated against `service.emergencyAllowed = true`. Direct non-AI catalog selection fallback supported (`REQ-AI-009`).
+- BP §67: Content moderation filter (`checkContentModeration`) intercepting offensive or out-of-scope requests with `safetyState = BLOCKED` and zero confidence.
+- Contracts: `contracts/intake.yaml` OpenAPI 3.1.0 v0.1.0 registered and validated (39/39 tests).
+- Tests: 15/15 unit tests pass in `intake.service.spec.ts` (297 total unit tests in `@kaamkaro/api`); 5/5 live DB integration tests pass in `intake.db-spec.ts` (150 total DB tests in `@kaamkaro/api`); 5/5 CI guards pass; 36/36 turbo tasks pass.
+
 ## 2026-10-24 — T3.5 Quotes, Multi-Supplier Offers, Fare Lines & Crew Size (A04) — DONE
 - QUOTE-001..009, ARCH §4 M10, ARCH §5.6: Quotes lifecycle management (`QuotesService`). Direct request (`createDirectQuote`) and multi-supplier request dispatch (`dispatchMultiSupplierRequest`). Provider quote submission (`submitQuote`) enforcing positive validity window (`QUOTE-004`), optional note/description (`QUOTE-005`), and automatic competitor rejection (`QUOTE-009`) when a customer accepts an offer (`acceptQuote`).
 - D-004, PROV-CREW-001 (Acceptance Criterion 2): Mandatory crew size enforcement. Provider quote submission strictly rejects missing, zero, negative, or fractional `crew_size` (`CREW_SIZE_REQUIRED`), backed by DB check constraint `quote_crew_size_positive`. Quote acceptance copies `crew_size` to booking.
