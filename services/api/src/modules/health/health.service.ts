@@ -66,6 +66,9 @@ export function defaultHealthProbes(env: ServerEnv): ClosableHealthProbes {
 
 @Injectable()
 export class HealthService implements OnModuleDestroy {
+  private cachedReport: { report: HealthReport; expiresAt: number } | null = null;
+  private inFlightCheck: Promise<HealthReport> | null = null;
+
   constructor(
     @Inject(SERVER_ENV) private readonly env: ServerEnv,
     @Inject(HEALTH_PROBES) private readonly probes: ClosableHealthProbes,
@@ -76,12 +79,31 @@ export class HealthService implements OnModuleDestroy {
   }
 
   async check(): Promise<HealthReport> {
-    const [database, redis, queue, storage] = await Promise.all([
-      this.probes.database(),
-      this.probes.redis(),
-      this.probes.queue(),
-      this.probes.storage(),
-    ]);
-    return summarizeHealth(this.env.appEnv, { database, redis, queue, storage });
+    const now = Date.now();
+    if (this.cachedReport && now < this.cachedReport.expiresAt) {
+      return this.cachedReport.report;
+    }
+    if (this.inFlightCheck) {
+      return this.inFlightCheck;
+    }
+
+    this.inFlightCheck = (async () => {
+      try {
+        const [database, redis, queue, storage] = await Promise.all([
+          this.probes.database(),
+          this.probes.redis(),
+          this.probes.queue(),
+          this.probes.storage(),
+        ]);
+        const report = summarizeHealth(this.env.appEnv, { database, redis, queue, storage });
+        // Technical cache TTL: 2000ms (SEC-REVIEW-T2.1 #3; protects dependencies against connection exhaustion)
+        this.cachedReport = { report, expiresAt: Date.now() + 2000 };
+        return report;
+      } finally {
+        this.inFlightCheck = null;
+      }
+    })();
+
+    return this.inFlightCheck;
   }
 }

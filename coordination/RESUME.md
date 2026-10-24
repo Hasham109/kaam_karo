@@ -39,7 +39,8 @@ Parallel agents share one working tree, so give each agent explicit path limits.
 | `HEAD` | **T2.2** Platform lib + **T2.6** Catalog seed & ConfigRule store | QA PASS, SEC PASS |
 | `674cd31` | **T2.4** Identity: phone OTP login, sessions, roles, admin MFA, staff RBAC lookup, anonymization lifecycle (contracts/identity.yaml v0.1.0) | QA PASS, SEC PASS |
 | `f658d5a` | **T2.5** Profiles, addresses, immutable location snapshots, favorites (contracts/profiles.yaml v0.1.0) | QA PASS, SEC PASS |
-| `HEAD` | **T2.7** Backup + restore drill in staging, BUG-0005 fixed, ops runbook & audit log | QA PASS, SEC PASS |
+| `9cd7f17` | **T2.7** Backup + restore drill in staging, BUG-0005 fixed, ops runbook & audit log | QA PASS, SEC PASS |
+| `HEAD` | **T2.8** Security review of T2.1–T2.6, OQ-023..028 renamed in policy, health connection exhaustion fix (SEC-REVIEW-T2.1 #3), Phase 2 Gate G1 | QA PASS, SEC PASS |
 
 Earlier commits: Phase 0 (T0.1–T0.5) docs and decisions D-001…D-029.
 
@@ -55,9 +56,9 @@ Earlier commits: Phase 0 (T0.1–T0.5) docs and decisions D-001…D-029.
 
 ## 5. Next steps (agreed order with the owner)
 
-1. **T2.8** Security review of T2.1–T2.6 (A15).
-2. **T1.4** i18n kit (A14; includes RQ-010 Urdu names review, QA F-03 shared copy catalogues, G9 No-show verb).
-3. Phase 2 Gate G1 readiness.
+1. **T1.4** i18n kit (A14; includes RQ-010 Urdu names review, QA F-03 shared copy catalogues, G9 No-show verb).
+2. **T3.1** `GeoService` + Pakistan boundary + Location Snapshot + fallback (A06).
+3. Phase 3 feature development.
 
 ---
 
