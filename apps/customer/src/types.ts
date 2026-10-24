@@ -16,6 +16,12 @@ export type ScreenId =
   | 'C09' // Category
   | 'C10' // Service Detail
   | 'C11' // Provider Profile
+  | 'C12' // Request / Booking (Simple Form)
+  | 'C31' // "What do you need?" Conversational Composer
+  | 'C32' // Audio Note Recorder
+  | 'C33' // Problem Video Recorder
+  | 'C34' // Request Summary Confirmation
+  | 'C39' // Location Confirm
   | 'C41'; // Language Selection
 
 export type ScreenState = 'L' | 'E' | 'S' | 'X' | 'P';
@@ -34,6 +40,12 @@ export interface ScreenParams {
   C09?: { categoryId: string };
   C10?: { serviceId: string };
   C11?: { providerId: string };
+  C12?: { serviceId?: string; providerId?: string; returnTo?: ScreenId };
+  C31?: { initialText?: string; serviceHint?: string; returnTo?: ScreenId };
+  C32?: { returnTo?: ScreenId };
+  C33?: { returnTo?: ScreenId };
+  C34?: { returnTo?: ScreenId };
+  C39?: { returnTo?: ScreenId };
   C41?: { returnTo?: ScreenId; isOnboarding?: boolean };
 }
 
@@ -145,6 +157,59 @@ export interface ActiveBooking {
   readonly scheduledTime: string;
 }
 
+export type WhenTimeChoice = 'NOW' | 'TODAY' | 'LATER';
+
+export interface LocationSnapshot {
+  readonly address: string;
+  readonly city: string;
+  readonly area?: string;
+  readonly coordinates?: { readonly lat: number; readonly lng: number };
+  readonly isConfirmed: boolean;
+}
+
+export interface AttachedPhoto {
+  readonly id: string;
+  readonly uri: string;
+  readonly name?: string;
+  readonly sizeBytes?: number;
+}
+
+export interface AttachedAudioNote {
+  readonly id: string;
+  readonly uri: string;
+  readonly durationSeconds: number;
+  readonly sizeBytes?: number;
+}
+
+export interface AttachedVideo {
+  readonly id: string;
+  readonly uri: string;
+  readonly durationSeconds: number;
+  readonly thumbnailUri?: string;
+  readonly sizeBytes?: number;
+}
+
+export interface IntakeDraft {
+  readonly draftId: string;
+  readonly serviceId?: string | undefined;
+  readonly providerId?: string | undefined;
+  readonly description: string;
+  readonly when: WhenTimeChoice;
+  readonly scheduledDate?: string | undefined;
+  readonly scheduledTimeWindow?: string | undefined;
+  readonly location: LocationSnapshot | null;
+  readonly photos: readonly AttachedPhoto[];
+  readonly audioNote: AttachedAudioNote | null;
+  readonly video: AttachedVideo | null;
+  readonly preferences: readonly string[];
+  readonly aiInterpretedServiceId?: string | undefined;
+  readonly aiSummary?: string | undefined;
+  readonly aiQuestions?: readonly { readonly id: string; readonly question: string; readonly answer?: string }[] | undefined;
+}
+
+export type PermissionKind = 'location' | 'camera' | 'microphone';
+export type PermissionStateValue = 'prompt' | 'granted' | 'denied';
+
 export interface CustomerAppContextValue {
   readonly locale: Locale;
   readonly setLocale: (locale: Locale) => void;
@@ -165,4 +230,10 @@ export interface CustomerAppContextValue {
   readonly recentSearches: readonly string[];
   readonly addRecentSearch: (query: string) => void;
   readonly clearRecentSearches: () => void;
+  readonly draft: IntakeDraft;
+  readonly updateDraft: (updates: Partial<IntakeDraft>) => void;
+  readonly clearDraft: () => void;
+  readonly permissionStatus: Record<PermissionKind, PermissionStateValue>;
+  readonly setPermissionStatus: (kind: PermissionKind, state: PermissionStateValue) => void;
 }
+

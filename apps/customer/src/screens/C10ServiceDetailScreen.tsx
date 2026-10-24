@@ -15,7 +15,7 @@ import { useCustomerApp } from '../state/CustomerContext';
 import { getAppMirroring } from '../utils/rtl';
 
 export function C10ServiceDetailScreen(): React.JSX.Element {
-  const { locale, navigate, screenParams, isGuest } = useCustomerApp();
+  const { locale, navigate, screenParams } = useCustomerApp();
   const mirror = getAppMirroring(locale);
 
   const serviceId = (screenParams as { serviceId?: string })?.serviceId ?? 'ac-general-service';
@@ -62,13 +62,7 @@ export function C10ServiceDetailScreen(): React.JSX.Element {
   };
 
   const handleBook = () => {
-    if (isGuest) {
-      // Guest submit triggers C03 with login needed message per BP §2.13
-      navigate('C03');
-    } else {
-      // In core flow, simulate placing request -> go to Home or Search Results
-      navigate('C06');
-    }
+    navigate('C12', { serviceId: service.id });
   };
 
   return (

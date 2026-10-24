@@ -1,5 +1,29 @@
 # CHANGELOG — Kaam Karo
 
+## 2026-10-25 — T3.9 Customer App Intake Flow & Media/Location (A11) — DONE
+- Screens: Implemented Customer App Intake and Media/Location screens C12, C31, C32, C33, C34, C39 in English and Urdu (`apps/customer/src/screens/`):
+  - C12 Request / Simple Form: Direct non-AI structured booking entry, service picker, provider preset badge when entering from C11, address preview & change tap, when chip picker, problem description textarea, attachments preview, validation error banner, submission to C34 (`REQ-SIMPLE-001`, `REQ-AI-009`, `D-004`).
+  - C31 "What do you need?" Composer: Multimodal request intake with typing, audio note shortcut, photo picker, video note shortcut, AI interpretation preview card, clarifying question chips, when chips, location chip, explicit standard form fallback button, continue CTA (`REQ-COMPOSER-001`, `REQ-AI-001..004`, `REQ-AI-006`).
+  - C32 Audio Note Recorder: Voice recording, pre-prompt educational rationale dialog (`PERM-JUST-002`), record start, pause/resume, stop, replay preview, discard/delete, attach action, elapsed/countdown timer display, typing fallback when permission denied (`AUDIO-REC-001`, `AUDIO-REC-002`).
+  - C33 Problem Video Recorder: Video capture interface, pre-prompt educational rationale dialog (`PERM-JUST-003`), viewfinder simulation, recording indicator pill, elapsed timer up to 30s, thumbnail preview, attach action, estimated file size hint, gallery file fallback (`VIDEO-REC-001`, `VIDEO-REC-002`).
+  - C34 Request Summary Confirmation: Final pre-submission review, editable AI summary description, service picker with change action, location snapshot summary with edit action, schedule/when chip, attachment preview, privacy reminder banner (`SEC-PRIV-001`), "Find providers" submit CTA (`REQ-CONFIRM-001`, `REQ-AI-011`).
+  - C39 Location Confirm: Address selection & confirmation, educational GPS rationale dialog (`PERM-JUST-001`), "Use current location" button, simulated map pin preview with detected address, search input, saved addresses quick select, manual address entry fallback, confirm address CTA (`LOC-CONFIRM-001`, `LOC-GEO-003`).
+- Permission Policies & Fallbacks (IMPL §6 T3.9 Acceptance Criteria):
+  - Permissions requested strictly on tap with pre-prompt educational rationale modal (`PermissionModal`; `PERM-JUST-001..003`).
+  - Robust operational fallbacks on every input: AI down → C12 standard form; mic denied → typing; camera denied → gallery file picker; GPS denied → manual address text entry & saved addresses.
+- Design System, i18n & Accessibility:
+  - 100% localized in English and Urdu (`packages/i18n/src/messages/customer.ts`).
+  - 0 hardcoded user-facing strings; `guard:string-lint` verified across 32 UI files.
+  - RTL mirroring and Noto Nastaliq Urdu typography with 2.5× line-height ratio in Urdu (`getAppMirroring()`, `textTokens()`; BP §78; I18N-001..004).
+  - 48×48 dp minimum tap targets on all interactive touchables (`minTapTargetStyle()`; A11Y-002).
+  - Stable test IDs and accessibility labels on all interactive controls (`interactiveProps()`; A11Y-004).
+- Tests & Quality Verification:
+  - 17/17 tests pass in `apps/customer/src/intake-flow.spec.ts`.
+  - 42/42 total unit & flow tests pass in `@kaamkaro/customer`.
+  - 21/21 tests pass in `@kaamkaro/i18n`.
+  - 5/5 repository quality guards pass (`guard:arch`, `guard:contracts`, `guard:values`, `guard:string-lint`, `guard:transition-table`, `guard:traceability`).
+  - 0 TypeScript errors (`tsc -p tsconfig.json --noEmit`), 0 ESLint warnings (`eslint .`).
+
 ## 2026-10-24 — T3.8 Customer App Core UI (A11) — DONE
 - Screens: Implemented Customer App Core screens C01–C11 + C41 in English and Urdu (`apps/customer/src/screens/`):
   - C01 Splash: Brand identity, Urdu/English tagline, automatic session check & routing (`APP-START-001`, `BRAND-001`).

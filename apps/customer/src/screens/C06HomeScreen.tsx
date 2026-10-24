@@ -21,7 +21,7 @@ import { useCustomerApp } from '../state/CustomerContext';
 import { getAppMirroring } from '../utils/rtl';
 
 export function C06HomeScreen(): React.JSX.Element {
-  const { locale, navigate, user, isGuest, selectedCity, activeBooking } = useCustomerApp();
+  const { locale, navigate, isGuest, selectedCity, activeBooking } = useCustomerApp();
   const mirror = getAppMirroring(locale);
 
   const popularServices = MOCK_SERVICES.filter((s) => s.isPopular);
@@ -61,7 +61,7 @@ export function C06HomeScreen(): React.JSX.Element {
         <View style={[styles.locationRow, { flexDirection: mirror.row }]}>
           <TouchableOpacity
             testID="c06-location-chip"
-            onPress={() => navigate('C04', { phone: user?.phone ?? '' })}
+            onPress={() => navigate('C39', { returnTo: 'C06' })}
             style={[styles.locationChip, { flexDirection: mirror.row }]}
             accessibilityRole="button"
             accessibilityLabel={translate(locale, 'customer.c06.serviceLocation', {
@@ -80,7 +80,7 @@ export function C06HomeScreen(): React.JSX.Element {
         {/* "What do you need?" Big Intake Entry */}
         <TouchableOpacity
           testID="c06-intake-banner"
-          onPress={() => navigate('C07')}
+          onPress={() => navigate('C31')}
           style={[styles.intakeCard, { flexDirection: mirror.row }]}
           activeOpacity={0.85}
           accessibilityRole="button"

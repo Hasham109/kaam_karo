@@ -18,6 +18,12 @@ import { C08SearchResultsScreen } from './screens/C08SearchResultsScreen';
 import { C09CategoryScreen } from './screens/C09CategoryScreen';
 import { C10ServiceDetailScreen } from './screens/C10ServiceDetailScreen';
 import { C11ProviderProfileScreen } from './screens/C11ProviderProfileScreen';
+import { C12RequestScreen } from './screens/C12RequestScreen';
+import { C31ComposerScreen } from './screens/C31ComposerScreen';
+import { C32AudioRecorderScreen } from './screens/C32AudioRecorderScreen';
+import { C33VideoRecorderScreen } from './screens/C33VideoRecorderScreen';
+import { C34SummaryScreen } from './screens/C34SummaryScreen';
+import { C39LocationConfirmScreen } from './screens/C39LocationConfirmScreen';
 import { C41LanguageScreen } from './screens/C41LanguageScreen';
 
 // Type-only import for DevSmoke entry (erased at compile time)
@@ -56,6 +62,18 @@ function CustomerRouter(): React.JSX.Element {
       return <C10ServiceDetailScreen />;
     case 'C11':
       return <C11ProviderProfileScreen />;
+    case 'C12':
+      return <C12RequestScreen />;
+    case 'C31':
+      return <C31ComposerScreen />;
+    case 'C32':
+      return <C32AudioRecorderScreen />;
+    case 'C33':
+      return <C33VideoRecorderScreen />;
+    case 'C34':
+      return <C34SummaryScreen />;
+    case 'C39':
+      return <C39LocationConfirmScreen />;
     case 'C41':
       return <C41LanguageScreen />;
     default:

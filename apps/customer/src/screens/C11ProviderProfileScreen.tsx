@@ -51,11 +51,7 @@ export function C11ProviderProfileScreen(): React.JSX.Element {
   };
 
   const handleBook = () => {
-    if (isGuest) {
-      navigate('C03');
-    } else {
-      navigate('C06');
-    }
+    navigate('C12', { providerId: provider.id });
   };
 
   return (

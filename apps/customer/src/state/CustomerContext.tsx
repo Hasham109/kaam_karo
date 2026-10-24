@@ -8,6 +8,9 @@ import type {
   ActiveBooking,
   CustomerAppContextValue,
   CustomerUser,
+  IntakeDraft,
+  PermissionKind,
+  PermissionStateValue,
   ScreenId,
   ScreenParams,
 } from '../types';
@@ -15,12 +18,24 @@ import { MOCK_ACTIVE_BOOKING } from '../data/mock-data';
 
 const CustomerAppContext = createContext<CustomerAppContextValue | null>(null);
 
+export const DEFAULT_INTAKE_DRAFT: IntakeDraft = {
+  draftId: 'draft-initial',
+  description: '',
+  when: 'TODAY',
+  location: null,
+  photos: [],
+  audioNote: null,
+  video: null,
+  preferences: [],
+};
+
 export interface CustomerAppProviderProps {
   readonly initialScreen?: ScreenId;
   readonly initialLocale?: Locale;
   readonly initialUser?: CustomerUser | null;
   readonly initialIsGuest?: boolean;
   readonly initialActiveBooking?: ActiveBooking | null;
+  readonly initialDraft?: Partial<IntakeDraft>;
   readonly children: React.ReactNode;
 }
 
@@ -35,6 +50,7 @@ export function CustomerAppProvider({
   initialUser = null,
   initialIsGuest = false,
   initialActiveBooking = null,
+  initialDraft,
   children,
 }: CustomerAppProviderProps): React.JSX.Element {
   const [locale, setLocaleState] = useState<Locale>(initialLocale);
@@ -53,6 +69,17 @@ export function CustomerAppProvider({
     'Short Circuit',
     'Pipe Leakage',
   ]);
+  const [draft, setDraftState] = useState<IntakeDraft>({
+    ...DEFAULT_INTAKE_DRAFT,
+    ...initialDraft,
+  });
+  const [permissionStatus, setPermissionStatusState] = useState<
+    Record<PermissionKind, PermissionStateValue>
+  >({
+    location: 'prompt',
+    camera: 'prompt',
+    microphone: 'prompt',
+  });
 
   const setLocale = useCallback((newLocale: Locale) => {
     setLocaleState(newLocale);
@@ -126,6 +153,30 @@ export function CustomerAppProvider({
     setRecentSearches([]);
   }, []);
 
+  const updateDraft = useCallback((updates: Partial<IntakeDraft>) => {
+    setDraftState((prev) => ({
+      ...prev,
+      ...updates,
+    }));
+  }, []);
+
+  const clearDraft = useCallback(() => {
+    setDraftState({
+      ...DEFAULT_INTAKE_DRAFT,
+      draftId: `draft-${Date.now()}`,
+    });
+  }, []);
+
+  const setPermissionStatus = useCallback(
+    (kind: PermissionKind, state: PermissionStateValue) => {
+      setPermissionStatusState((prev) => ({
+        ...prev,
+        [kind]: state,
+      }));
+    },
+    [],
+  );
+
   const contextValue: CustomerAppContextValue = {
     locale,
     setLocale,
@@ -146,6 +197,11 @@ export function CustomerAppProvider({
     recentSearches,
     addRecentSearch,
     clearRecentSearches,
+    draft,
+    updateDraft,
+    clearDraft,
+    permissionStatus,
+    setPermissionStatus,
   };
 
   return <CustomerAppContext.Provider value={contextValue}>{children}</CustomerAppContext.Provider>;
