@@ -14,9 +14,14 @@ import {
   URDU_FONT_FAMILY,
   URDU_FONT_FILE,
   URDU_FONT_METRICS,
+  buildSampleScreen,
   contrastRatio,
+  getStatusVisual,
+  interactiveProps,
   lineHeightFor,
+  minTapTargetStyle,
   mirroring,
+  shouldMirrorIcon,
   textTokens,
 } from './index';
 
@@ -144,5 +149,116 @@ describe('[I18N-003] RTL mirroring', () => {
       alignStart: 'flex-end',
       iconScaleX: 1,
     });
+  });
+
+  it('[I18N-003] directional icons mirror in RTL, while media/time/utility icons do not', () => {
+    expect(shouldMirrorIcon('arrow-back')).toBe(true);
+    expect(shouldMirrorIcon('arrow-forward')).toBe(true);
+    expect(shouldMirrorIcon('chevron-right')).toBe(true);
+    expect(shouldMirrorIcon('undo')).toBe(true);
+
+    expect(shouldMirrorIcon('play')).toBe(false);
+    expect(shouldMirrorIcon('phone')).toBe(false);
+    expect(shouldMirrorIcon('clock')).toBe(false);
+    expect(shouldMirrorIcon('check')).toBe(false);
+    expect(shouldMirrorIcon('close')).toBe(false);
+  });
+});
+
+describe('[A11Y-003] status indicators never by colour alone', () => {
+  it('[A11Y-003] maps each status to color, border, and distinct icon/text badge', () => {
+    const completed = getStatusVisual('completed');
+    expect(completed.tone).toBe('success');
+    expect(completed.iconName).toBe('check-circle');
+
+    const inProgress = getStatusVisual('in_progress');
+    expect(inProgress.tone).toBe('info');
+    expect(inProgress.iconName).toBe('info');
+
+    const pending = getStatusVisual('pending_approval');
+    expect(pending.tone).toBe('warning');
+    expect(pending.iconName).toBe('alert-triangle');
+
+    const cancelled = getStatusVisual('cancelled');
+    expect(cancelled.tone).toBe('danger');
+    expect(cancelled.iconName).toBe('alert-circle');
+  });
+});
+
+describe('[A11Y-002][A11Y-004] interactive accessibility and tap target constraints', () => {
+  it('[A11Y-004] interactiveProps requires testID and accessibilityLabel (RQ-002 item 4)', () => {
+    const props = interactiveProps({
+      testID: 'btn-confirm-booking',
+      accessibilityLabel: 'Confirm booking',
+      accessibilityRole: 'button',
+      accessibilityHint: 'Submits the booking request',
+    });
+    expect(props).toEqual({
+      testID: 'btn-confirm-booking',
+      accessible: true,
+      accessibilityLabel: 'Confirm booking',
+      accessibilityRole: 'button',
+      accessibilityHint: 'Submits the booking request',
+      accessibilityState: undefined,
+    });
+
+    expect(() => interactiveProps({ testID: '', accessibilityLabel: 'Some label' })).toThrow(
+      /testID is mandatory/,
+    );
+    expect(() => interactiveProps({ testID: 'btn-id', accessibilityLabel: '' })).toThrow(
+      /accessibilityLabel is mandatory/,
+    );
+  });
+
+  it('[A11Y-002] minTapTargetStyle enforces ≥ 48×48 dp', () => {
+    expect(minTapTargetStyle()).toEqual({
+      minWidth: MIN_TAP_TARGET_DP,
+      minHeight: MIN_TAP_TARGET_DP,
+    });
+    expect(MIN_TAP_TARGET_DP).toBeGreaterThanOrEqual(48);
+  });
+});
+
+describe('[T1.4] sample screen verification in Urdu on small device', () => {
+  it('[T1.4] renders correctly in ur on a 360×640 dp small device', () => {
+    const sample = buildSampleScreen('ur', false, 360, 640);
+    expect(sample.locale).toBe('ur');
+    expect(sample.direction).toBe('rtl');
+
+    // Layout mirrored
+    expect(sample.layout.screenWidthDp).toBe(360);
+    expect(sample.layout.screenHeightDp).toBe(640);
+    expect(sample.layout.flexDirection).toBe('row-reverse');
+    expect(sample.layout.textAlign).toBe('right');
+    expect(sample.layout.backIconTransform).toBe('scaleX(-1)');
+
+    // Nastaliq typography with generous line-height
+    expect(sample.header.font.fontFamily).toBe(URDU_FONT_FAMILY);
+    expect(sample.header.font.lineHeight).toBeGreaterThan(sample.header.font.fontSize * 2);
+    expect(sample.header.title).toBe('کام کرو');
+
+    // Status chip combines color, icon, and text
+    expect(sample.statusChip.label).toBe('کام مکمل ہو گیا');
+    expect(sample.statusChip.visual.iconName).toBe('check-circle');
+    expect(sample.statusChip.accessibleProps.testID).toBe('sample-status-chip');
+
+    // Card formatted data
+    expect(sample.card.amountText).toContain('Rs 2,500');
+    expect(sample.card.dateText).toContain('اکتوبر');
+
+    // Action button meets tap target
+    expect(sample.primaryAction.minTargetDp).toBeGreaterThanOrEqual(48);
+    expect(sample.primaryAction.accessibleProps.testID).toBe('sample-primary-cta');
+  });
+
+  it('[T1.4] renders correctly in en with standard LTR layout', () => {
+    const sample = buildSampleScreen('en', false, 360, 640);
+    expect(sample.locale).toBe('en');
+    expect(sample.direction).toBe('ltr');
+    expect(sample.layout.flexDirection).toBe('row');
+    expect(sample.layout.textAlign).toBe('left');
+    expect(sample.layout.backIconTransform).toBe('scaleX(1)');
+    expect(sample.header.title).toBe('Kaam Karo');
+    expect(sample.statusChip.label).toBe('Completed');
   });
 });

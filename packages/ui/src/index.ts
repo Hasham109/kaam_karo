@@ -1,10 +1,9 @@
 /**
  * @kaamkaro/ui — owner A14 (IMPL §2.2). One UI kit shared by the Customer and Partner apps
- * (PLAT-001, BP §60). Design tokens and RTL helpers are plain TypeScript so they can be unit
- * tested without a device; React Native components come with T1.4 (RQ-002 item 4: every
- * interactive component gets a `testID` and an accessibility label).
+ * (PLAT-001, BP §60). Design tokens, accessibility helpers, RTL mirroring, and typography
+ * kit (T1.4).
  *
- * I18N-003, I18N-004 (BP §78.2); A11Y-001, A11Y-002 (BP §38).
+ * I18N-001..008 (BP §37, §78); A11Y-001..008 (BP §38).
  */
 export const UI_PACKAGE_NAME = '@kaamkaro/ui';
 
@@ -25,8 +24,12 @@ export {
   MIN_NON_TEXT_CONTRAST,
   MIN_TEXT_CONTRAST,
   TEXT_PAIRS,
+  STATUS_THEME,
+  type StatusTone,
+  type StatusVisual,
   contrastRatio,
   relativeLuminance,
+  getStatusVisual,
 } from './color.js';
 export { MIN_TAP_TARGET_DP, RADIUS, SPACING } from './layout.js';
 export {
@@ -34,5 +37,15 @@ export {
   type FlexRow,
   type Mirroring,
   type TextAlignSide,
+  DIRECTIONAL_ICONS,
   mirroring,
+  shouldMirrorIcon,
 } from './rtl.js';
+export {
+  type InteractiveAccessibilityOptions,
+  type InteractiveAccessibilityProps,
+  type TapTargetStyle,
+  interactiveProps,
+  minTapTargetStyle,
+} from './accessibility.js';
+export { type SampleScreenRenderResult, buildSampleScreen } from './sample-screen.js';

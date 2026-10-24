@@ -2,6 +2,15 @@
 
 Newest first. Every behaviour change, with task ID and requirement IDs.
 
+## 2026-10-24 — T1.4 i18n, RTL, Urdu Typography Kit & String-lint Rule (A14) — DONE
+- I18N-001, I18N-006 (BP §37, BP §78): Modularized message catalogs into typed namespaces (`app`, `common`, `customer`, `partner`, `status`) under `packages/i18n/src/messages/`. Complete key parity between English and Urdu with placeholder alignment. Quarantined dev-only smoke strings in `@kaamkaro/i18n/dev-smoke`.
+- I18N-003, I18N-004 (BP §38; ARCH §17): RTL layout and text direction helpers (`packages/ui/src/rtl.ts`). Directional icon mirroring rule (`DIRECTIONAL_ICONS`, `shouldMirrorIcon`) mirrors navigation icons while keeping media/clock/phone unmirrored. Typography metrics and minimum 1.5x line heights preventing Nastaliq clipping.
+- I18N-005, I18N-007 (BP §78): Unicode bidirectional isolation (`LRI`, `RLI`, `FSI`, `PDI`) protecting dynamic parameters and amounts against bidi reordering / Trojan Source issues. PKT (UTC+05:00) date, 12-hour clock time, and relative time formatting (`formatDateTime`, `formatRelativeTime`).
+- A11Y-001..008: WCAG 2.1 AA compliant contrast colors; status visual helper (`getStatusVisual`) ensuring status is never conveyed by color alone; minimum 48×48 dp interactive touch targets (`minTapTargetStyle`, `interactiveProps`); mandatory `testID` and `accessibilityLabel`.
+- Sample screen model (`packages/ui/src/sample-screen.ts`) verified in unit tests rendering in Urdu on a 360×640 dp small device.
+- CI Hook: `packages/i18n/tools/string-lint.ts` AST scanner enforcing 0 hard-coded UI strings and 100% catalog parity, wired into CI guards (`pnpm run guards`).
+- Tests: 21 unit tests in `@kaamkaro/i18n` and 17 unit tests in `@kaamkaro/ui` pass; all 5 CI guards pass; 36/36 turbo tasks pass.
+
 ## 2026-10-24 — T3.1 GeoService, Pakistan Boundary, Location Snapshot & Fallback (A06) — DONE
 - LOC-GEO-001, LOC-GEO-002, LOC-GEO-003, LOC-GEO-008: Server-side proxy for Google Maps Platform (`GoogleMapsClient` + `GeoService`). Places autocomplete biased to Pakistan and Lahore center. Geocoding and reverse geocoding with server-only API keys (zero exposure to client bundles).
 - SCOPE-GEO-001, SCOPE-GEO-002 (BP §57, §81; D-007, D-019): Pakistan geographic boundary bounding box enforced server-side ([23.5..37.2°N, 60.5..78.0°E]). Coordinates outside Pakistan throw `OUT_OF_SERVICE_AREA` (HTTP 400). Lahore active launch city, other Pakistan cities listed as inactive with `canChangeCity: true`.

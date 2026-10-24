@@ -10,6 +10,7 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 - Verdict: PASS. Phase 2 closed; Phase 3 unblocked.
 
 ## Sync 2026-10-24
+- T1.4 DONE: QA PASS (docs/qa/T1.4-qa.md, 21 i18n tests, 17 UI tests), SEC PASS (docs/security/SEC-REVIEW-T1.4.md). Modular message catalog (messages/ namespace split), bidi Unicode isolation (LRI/RLI/FSI/PDI), PKT date/time & relative time formatting, status visuals with contrast & icons (A11Y-003), min 48dp tap targets (A11Y-002), mandatory testID & accessibilityLabel (A11Y-004), directional icon mirroring (A11Y-007), small device sample screen (360x640 dp), string-lint CI guard passing 100% (I18N-006).
 - T3.1 DONE: QA PASS (docs/qa/T3.1-qa.md, 120/120 DB tests, 192 unit tests, Maps fallback tested), SEC PASS (docs/security/SEC-REVIEW-T3.1.md). GeoService, Pakistan boundary, Google Maps server client, straight-line Haversine + urban duration fallback, location contract contracts/location.yaml (OpenAPI 3.1.0).
 - Gate G1 (Phase 2) PASSED. Exit condition "secure login and data model working" met with 0 open S1/S2 bugs, 112 DB tests, 22 QA E2E probes, 36/36 turbo tasks. Phase 2 formally closed.
 - Bug Sweep Phase 2: PASS (docs/qa/bug-sweep-phase2.md), 0 S1/S2 bugs open.
@@ -47,7 +48,7 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 | A11 | customer-app | T1.1 Screen specs C01–C42 — SEC-REVIEW fixes #3 #6 #9–#14 #18–#20 done, A15 re-check requested | DONE | t2.1-monorepo | — | T3.8 | 2026-10-23 |
 | A12 | partner-app | T1.2 Screen specs P01–P26 — review fixes QA F-01/F-02/F-05 + SEC #2/#6/#7/#10/#11/#13/#21/#23 done (UX-SCREEN-002/003) | DONE | t2.1-monorepo | — | T4.1 | 2026-10-23 |
 | A13 | admin-portal | T1.3 Admin screen specs A01–A26 + sub-role access matrix (OPS-ADMIN-001…026, ADMIN-ROLE-001…008, ROLE-003, UX-SCREEN-003, SEC-AUTH-005) | DONE | t2.1-monorepo (docs only) | — | T5.1 (T1.3 QA PASS; SEC fixes #1,4,5,6,8,15-18,22,24,25 + QA F-04 done, A15 re-review pending) | 2026-10-23 |
-| A14 | i18n-a11y | T0.6 Urdu Nastaliq smoke test (I18N-001…004, 006, 007, 008, A11Y-001, 002, 004) — code done, device run PENDING | IN_REVIEW (BLOCKED-DEVICE) | t2.1-monorepo | Device run: Infinix Note 40 via USB or emulator + JDK 17 (docs/qa/urdu-smoke/README.md) | T1.4 | 2026-10-23 |
+| A14 | i18n-a11y | T1.4 i18n + RTL + Urdu typography kit; string-lint rule (I18N-001..008, A11Y-001..008) | DONE | work/parallel-t1.4-t3.2 | — | T3.8 / T3.9 | 2026-10-24 |
 | A15 | security-reviewer | T2.8 Security review of T2.1–T2.6 | DONE | t2.8-security-review | — | Phase 3 security review | 2026-10-24 |
 | A16 | qa-tester | T0.5 Test strategy + device matrix | DONE | — | — | T3.12 | 2026-10-22 |
 | A17 | bug-hunter | Phase 2 bug sweep (docs/qa/bug-sweep-phase2.md, 0 S1/S2) | DONE | — | — | Phase 3 bug sweep | 2026-10-24 |

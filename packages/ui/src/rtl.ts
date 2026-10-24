@@ -49,3 +49,31 @@ export function mirroring(direction: TextDirection, globalIsRtl: boolean): Mirro
     iconScaleX: direction === 'rtl' ? -1 : 1,
   };
 }
+
+/**
+ * Directional icon names that indicate navigation forward/backward or progress.
+ * In RTL layouts, these icons must be horizontally flipped (iconScaleX = -1).
+ */
+export const DIRECTIONAL_ICONS: ReadonlySet<string> = new Set([
+  'arrow-back',
+  'arrow-forward',
+  'arrow-left',
+  'arrow-right',
+  'chevron-left',
+  'chevron-right',
+  'navigate-next',
+  'navigate-before',
+  'undo',
+  'redo',
+  'forward',
+  'reply',
+  'send',
+]);
+
+/**
+ * Determines whether a given icon should be horizontally mirrored in RTL mode.
+ * Directional icons (arrows, chevrons) mirror; media playback, clocks, checks, phones do NOT.
+ */
+export function shouldMirrorIcon(iconName: string): boolean {
+  return DIRECTIONAL_ICONS.has(iconName.toLowerCase());
+}

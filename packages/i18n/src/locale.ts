@@ -1,6 +1,7 @@
 /**
  * Locales and writing direction.
- * I18N-001 (BP §78.1; D-026): the Customer and Partner apps support English and Urdu.
+ * I18N-001 (BP §78.1; D-026): the Customer and Partner apps support English and Urdu. The Admin
+ * Portal is English only (D-026) but still takes its text from this package.
  * I18N-002 (BP §78.1): the language can be changed at any time (see `otherLocale`).
  * I18N-003 (BP §78.2): Urdu is written right-to-left and the layout is mirrored.
  */
@@ -22,14 +23,25 @@ export function otherLocale(locale: Locale): Locale {
   return locale === 'ur' ? 'en' : 'ur';
 }
 
-/** Unicode bidi isolates (UAX #9): keep an LTR run (amount, code) intact inside RTL text. */
-const LRI = String.fromCodePoint(0x2066);
-const PDI = String.fromCodePoint(0x2069);
-
 /**
- * I18N-003 / I18N-005 (BP §78.2): wrap a left-to-right value (an amount, a number) so it keeps
- * its order when it is placed inside an Urdu sentence. English text needs no isolation.
+ * I18N-002 (BP §78.1 "inferred from the device language"; customer.md C41 pre-selected value,
+ * partner.md P01): the first-run language is the device language if it is Urdu, else English.
+ * `deviceTag` is the device's primary BCP 47 tag ("ur-PK", "en-US", …). The user can change
+ * the language at any time afterwards.
  */
-export function isolateLtr(locale: Locale, value: string): string {
-  return textDirection(locale) === 'rtl' ? `${LRI}${value}${PDI}` : value;
+export function localeFromDevice(deviceTag: string | null | undefined): Locale {
+  const language = (deviceTag ?? '').toLowerCase().split(/[-_]/)[0];
+  return language === 'ur' ? 'ur' : 'en';
 }
+
+export {
+  isolateLtr,
+  isolatePhone,
+  isolateAuto,
+  isIsolated,
+  hasRtlText,
+  LRI,
+  RLI,
+  FSI,
+  PDI,
+} from './bidi.js';

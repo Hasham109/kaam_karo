@@ -15,7 +15,7 @@ Acceptance criteria and BP refs per task: docs/implementation.md §6 (same task 
 | T1.1 | Screen specs for C01–C42 (fields, states: loading/empty/success/error/pending) | A11 + A00 | T0.2 | DONE | handoffs/T-1.1.md |
 | T1.2 | Screen specs for P01–P26 | A12 + A00 | T0.2 | DONE | handoffs/T-1.2.md |
 | T1.3 | Screen specs for A01–A26 with sub-role access per screen | A13 + A00 | T0.2 | DONE | handoffs/T-1.3.md |
-| T1.4 | i18n + RTL + Urdu typography kit; string-lint rule | A14 | G0 | TODO | — |
+| T1.4 | i18n + RTL + Urdu typography kit; string-lint rule | A14 | G0 | DONE | handoffs/T-1.4.md |
 | T1.5 | Flow maps: request → match → book/quote → job → pay → review; supply gap; dispute | A00 | T1.1–T1.3 | DONE | handoffs/T-1.5.md |
 | T2.1 | Monorepo, CI (build/lint/typecheck/test), envs, secrets, Sentry, health check | A01 | G0 | DONE | handoffs/T-2.1.md |
 | T2.2 | Platform lib: config loader, error envelope, idempotency middleware, outbox + worker, append-only audit | A01 | T2.1 | DONE | handoffs/T-2.2.md |

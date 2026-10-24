@@ -1,31 +1,77 @@
 /**
  * PKR amount formatting — I18N-007 (BP §37: local currency conventions).
  *
- * Format follows CLDR for en-PK and ur-PK (both: symbol "Rs", a space, Latin digits, groups of
- * three, no decimals for whole rupees), e.g. `Rs 2,500`. It is written by hand rather than with
- * `Intl.NumberFormat` so the output is identical in Node tests and in Hermes on any Android
- * device. Whether Urdu screens should say "روپے" or use South Asian (lakh) grouping is open:
- * OQ-079 (TODO(OWNER)); this function is the single place to change it.
+ * The server stores money as BigInt paisa (`*_minor` columns, T2.3; 100 paisa = 1 rupee) and
+ * computes every amount (BP §15.1, §29). The app only formats what the server returns:
+ * `formatPkrMinor` takes the paisa value (a bigint, or the decimal-integer string a JSON body
+ * carries) so no screen ever divides by 100 by hand or goes through a floating-point number.
  *
- * Amounts here are display-only. The server computes every price (BP §15.1, §29).
+ * Format (OQ-079 TODO(OWNER), switch in config.ts): default CLDR en-PK / ur-PK, "Rs 2,500".
+ * Whole rupees show no decimals; a paisa remainder shows two decimals ("Rs 2,500.50").
+ * In Urdu the result is wrapped in bidi isolates so it keeps its order inside an RTL sentence
+ * (I18N-003).
  */
-import { isolateLtr, type Locale } from './locale.js';
+import { NUMBER_DISPLAY, type NumberDisplayConfig } from './config.js';
+import { isolateLtr } from './bidi.js';
+import { type Locale } from './locale.js';
+import { messageTemplate } from './translate.js';
+import { formatInteger, localizeDigits } from './numbers.js';
 
-const PKR_SYMBOL = 'Rs';
+const PAISA_PER_RUPEE = 100n;
+const MINOR_UNITS = /^-?\d+$/;
 
-function groupThousands(digits: string): string {
-  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+/** Parses a paisa amount from a bigint or a decimal-integer string (JSON-safe form). */
+export function parseMinorUnits(paisa: bigint | string): bigint {
+  if (typeof paisa === 'bigint') return paisa;
+  if (!MINOR_UNITS.test(paisa)) {
+    throw new RangeError(`formatPkrMinor: expected whole paisa as digits, got "${paisa}"`);
+  }
+  return BigInt(paisa);
+}
+
+function assemble(
+  locale: Locale,
+  negative: boolean,
+  number: string,
+  config: NumberDisplayConfig,
+): string {
+  const sign = negative ? '-' : '';
+  if (locale === 'ur' && config.urduCurrency === 'word-after') {
+    const word = messageTemplate('ur', 'common.money.rupeesWord');
+    return `${isolateLtr(locale, `${sign}${number}`)} ${word}`;
+  }
+  return isolateLtr(locale, `${sign}${config.currencySymbol} ${number}`);
+}
+
+/** Formats an amount in paisa, e.g. 380000n → "Rs 3,800"; 250050n → "Rs 2,500.50". */
+export function formatPkrMinor(
+  locale: Locale,
+  paisa: bigint | string,
+  config: NumberDisplayConfig = NUMBER_DISPLAY,
+): string {
+  const value = parseMinorUnits(paisa);
+  const negative = value < 0n;
+  const abs = negative ? -value : value;
+  const rupees = formatInteger(locale, abs / PAISA_PER_RUPEE, config);
+  const rest = abs % PAISA_PER_RUPEE;
+  const number =
+    rest === 0n
+      ? rupees
+      : `${rupees}${localizeDigits(locale, `.${rest.toString().padStart(2, '0')}`, config)}`;
+  return assemble(locale, negative, number, config);
 }
 
 /**
- * Formats a whole-rupee amount. In Urdu the result is wrapped in bidi isolates so it keeps its
- * order inside an RTL sentence (I18N-003).
+ * Formats a whole-rupee amount (T0.6 API, kept for display samples). Prefer `formatPkrMinor`
+ * for anything that comes from the server.
  */
-export function formatPkr(locale: Locale, rupees: number): string {
+export function formatPkr(
+  locale: Locale,
+  rupees: number,
+  config: NumberDisplayConfig = NUMBER_DISPLAY,
+): string {
   if (!Number.isSafeInteger(rupees)) {
     throw new RangeError(`formatPkr: expected a whole number of rupees, got ${rupees}`);
   }
-  const sign = rupees < 0 ? '-' : '';
-  const text = `${sign}${PKR_SYMBOL} ${groupThousands(String(Math.abs(rupees)))}`;
-  return isolateLtr(locale, text);
+  return assemble(locale, rupees < 0, formatInteger(locale, Math.abs(rupees), config), config);
 }
