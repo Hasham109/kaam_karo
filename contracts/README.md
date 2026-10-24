@@ -18,19 +18,20 @@ Rules checked by `__tests__/structure.spec.ts`:
 
 Published contracts:
 
-| Contract            | Version | Owner | Requirement IDs                                                                                                        |
-| ------------------- | ------- | ----- | ---------------------------------------------------------------------------------------------------------------------- |
-| `health.yaml`       | 1.0.0   | A01   | REL-011                                                                                                                |
-| `common.yaml`       | 1.1.0   | A01   | REL-001, REL-002, REL-006, REL-008, SEC-BASE-005 (components only: `ErrorEnvelope`, `Idempotency-Key`, `X-Request-Id`) |
-| `catalog.yaml`      | 0.1.0   | A03   | SCOPE-CAT-001, SCOPE-CAT-002, SCOPE-GEO-002, CFG-RULE-001 (T2.6)                                                       |
-| `config.yaml`       | 0.1.0   | A03   | CFG-RULE-001…012, SEC-BASE-010 (T2.6)                                                                                  |
-| `identity.yaml`     | 0.1.0   | A02   | SEC-AUTH-001..008, ADMIN-ROLE-001..008 (T2.4)                                                                          |
-| `profiles.yaml`     | 0.1.0   | A02   | PROF-ADDR-001..004, PROF-FAV-001, LOC-GEO-003..004, ROLE-001, ROLE-002 (T2.5)                                          |
-| `location.yaml`     | 0.1.0   | A06   | LOC-GEO-001..006, LOC-GEO-008, SCOPE-GEO-001..002 (T3.1)                                                               |
-| `media.yaml`        | 0.1.0   | A08   | MEDIA-004..007, MEDIA-009, INFRA-003 (T3.2)                                                                            |
-| `availability.yaml` | 0.1.0   | A05   | AVAIL-001..007, TRUST-VER-001..004 (T3.6)                                                                              |
-| `booking.yaml`      | 0.1.0   | A04   | BOOK-STATUS-001..017, BOOK-CANCEL-001..006, DATA-002, DATA-004 (T3.4)                                                  |
-| `quotes.yaml`       | 0.1.0   | A04   | QUOTE-001..009, FARE-001..013, PRICE-001..007, BOOK-STATUS-010, COMM-003 (T3.5)                                        |
-| `intake.yaml`       | 0.1.0   | A07   | REQ-AI-001..012 (T3.3)                                                                                                 |
+| Contract            | Version | Owner | Requirement IDs                                                                                                                     |
+| ------------------- | ------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `health.yaml`       | 1.0.0   | A01   | REL-011                                                                                                                             |
+| `common.yaml`       | 1.1.0   | A01   | REL-001, REL-002, REL-006, REL-008, SEC-BASE-005 (components only: `ErrorEnvelope`, `Idempotency-Key`, `X-Request-Id`)              |
+| `catalog.yaml`      | 0.1.0   | A03   | SCOPE-CAT-001, SCOPE-CAT-002, SCOPE-GEO-002, CFG-RULE-001 (T2.6)                                                                    |
+| `config.yaml`       | 0.1.0   | A03   | CFG-RULE-001…012, SEC-BASE-010 (T2.6)                                                                                               |
+| `identity.yaml`     | 0.1.0   | A02   | SEC-AUTH-001..008, ADMIN-ROLE-001..008 (T2.4)                                                                                       |
+| `profiles.yaml`     | 0.1.0   | A02   | PROF-ADDR-001..004, PROF-FAV-001, LOC-GEO-003..004, ROLE-001, ROLE-002 (T2.5)                                                       |
+| `location.yaml`     | 0.1.0   | A06   | LOC-GEO-001..006, LOC-GEO-008, SCOPE-GEO-001..002 (T3.1)                                                                            |
+| `media.yaml`        | 0.1.0   | A08   | MEDIA-004..007, MEDIA-009, INFRA-003 (T3.2)                                                                                         |
+| `availability.yaml` | 0.1.0   | A05   | AVAIL-001..007, TRUST-VER-001..004 (T3.6)                                                                                           |
+| `booking.yaml`      | 0.1.0   | A04   | BOOK-STATUS-001..017, BOOK-CANCEL-001..006, DATA-002, DATA-004 (T3.4)                                                               |
+| `quotes.yaml`       | 0.1.0   | A04   | QUOTE-001..009, FARE-001..013, PRICE-001..007, BOOK-STATUS-010, COMM-003 (T3.5)                                                     |
+| `intake.yaml`       | 0.1.0   | A07   | REQ-AI-001..012 (T3.3)                                                                                                              |
+| `matching.yaml`     | 0.1.0   | A05   | MATCH-ELIG-073..079, MATCH-SCORE-001..013, MATCH-FAIR-001..004, MATCH-EXPL-001, MATCH-MODE-001, MATCH-GAP-001, OPS-ADMIN-021 (T3.7) |
 
 TODO(A01, T2.2+): generate TypeScript types from the contracts for apps and the API.

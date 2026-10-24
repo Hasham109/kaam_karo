@@ -18,6 +18,7 @@ import { MediaModule } from './modules/media';
 import { ProfilesModule } from './modules/profiles';
 import { QuotesModule } from './modules/quotes';
 import { IntakeModule } from './modules/intake';
+import { MatchingModule } from './modules/matching';
 import { PlatformModule } from './platform';
 
 @Module({})
@@ -45,6 +46,7 @@ export class AppModule {
         BookingModule,
         QuotesModule,
         IntakeModule,
+        MatchingModule,
       ],
       // RQ-008 item 5: refuse to start in staging/production without the security limits.
       providers: [FailClosedStartupCheck],

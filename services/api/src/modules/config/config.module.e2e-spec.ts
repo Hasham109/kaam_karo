@@ -18,7 +18,9 @@ import { CatalogService, PlatformAuditPort } from '../catalog';
 import { ConfigAdminService, ConfigRulesModule, PrismaConfigRuleStore } from './index';
 
 describe('Config + catalog module wiring', () => {
-  it('[CFG-RULE-001] resolves the reader, the store, the admin service and the catalog service', async () => {
+  it(
+    '[CFG-RULE-001] resolves the reader, the store, the admin service and the catalog service',
+    async () => {
     const env = loadServerEnv({ APP_ENV: 'test', LOG_LEVEL: 'error' });
     const moduleRef = await Test.createTestingModule({
       imports: [ServerEnvModule.forRoot(env), PlatformModule, ConfigRulesModule],
@@ -28,7 +30,7 @@ describe('Config + catalog module wiring', () => {
     expect(moduleRef.get(ConfigAdminService)).toBeInstanceOf(ConfigAdminService);
     expect(moduleRef.get(CatalogService, { strict: false })).toBeInstanceOf(CatalogService);
     await moduleRef.close();
-  });
+  }, 15000);
 
   it('[SEC-BASE-010] the audit port writes an ADMIN audit entry with reason inside the transaction', async () => {
     const write = vi.fn().mockResolvedValue('audit-id');

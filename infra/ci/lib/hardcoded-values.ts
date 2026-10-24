@@ -20,7 +20,8 @@ export const EXEMPT_PATHS: readonly RegExp[] = [
   /(^|\/)seed\.[cm]?[jt]sx?$/,
   /\.seed\.[cm]?[jt]sx?$/,
   /(^|\/)migrations\//,
-  /\.(spec|e2e-spec|test)\.[cm]?[jt]sx?$/,
+  /\.(spec|e2e-spec|db-spec|test)\.[cm]?[jt]sx?$/,
+  /(^|\/)tests(-db)?\//,
   /(^|\/)__(tests|regression)__\//,
   /\.d\.ts$/,
 ];

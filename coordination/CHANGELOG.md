@@ -1,5 +1,18 @@
 # CHANGELOG — Kaam Karo
 
+## 2026-10-24 — T3.7 Matching Engine, Hard Filters 73–79, Configurable Scoring & Fairness (A05) — DONE
+- MATCH-ELIG-073..079, BP §54.1: Evaluated suppliers against 7 hard eligibility filters (Account active and not suspended, requested service skill mapping, service area radius/zone coverage, live slot availability, minimum verification level, no active safety dispute, active job capacity limit) and unpaid commission block (`LEDGER-NEG-001`, `D-020`). Failure codes stamped in `match_candidate.ineligible_reasons`.
+- MATCH-SCORE-001..013, BP §54.2, D-010: 13 normalized scoring signals computed via `MatchingScorer.computeScore` (Distance/ETA, window availability, exact service match, preferences, verification level, rating volume & quality, completed jobs count, response speed, cancellation rate, repeat customer rate, price competitiveness, reliability standing, and new provider boost).
+- MATCH-SCORE-006: Bayesian smoothing for provider ratings ensuring higher volume (4.8 with 240 ratings) outranks low volume (5.0 with 1 rating).
+- MATCH-SCORE-010: Repeat customer rate evaluated with sample size guard (rate is 0.0 if total jobs < 10).
+- MATCH-FAIR-001..004, BP §52.3, BP §68: Algorithmic fairness preventing provider starvation (new provider boost within 30 days) and lead concentration caps (`providerShownCapPercentage`).
+- MATCH-EXPL-001, BP §54.3: Bilingual human-readable explanations ("Why am I seeing this?") generated in Urdu and English on discovery candidate cards.
+- MATCH-GAP-001, BP §61.3: Supply gap recovery. Request transitioned to `NO_SUPPLY` on 0 eligible matches, returning structured recovery actions (broaden radius, reschedule, priority callback, waitlist, related service) in Urdu and English.
+- MATCH-MODE-001, D-005 (Verbatim Criterion): Strictly discovery-only matching mode. Request transitioned to `MATCHES_SHOWN` (or `NO_SUPPLY`); zero auto-assignment code paths; customer chooses provider.
+- OPS-ADMIN-021: Audited dynamic configuration updates (`updateMatchingConfig`) enabling runtime weight changes without code deployment. Stamped semantic `ranking_version` on every evaluation run with append-only audit trail logging via `AuditWriter`.
+- Contracts: `contracts/matching.yaml` OpenAPI 3.1.0 v0.1.0 registered and validated (41/41 contract tests).
+- Tests: 20/20 unit tests pass in `matching.service.spec.ts` (317 total unit tests in `@kaamkaro/api`); 5/5 live DB integration tests pass in `matching.db-spec.ts` (155 total DB tests); 5/5 CI guards pass; 23/23 turbo build/lint/typecheck tasks pass.
+
 ## 2026-10-24 — T3.3 AI Request Intake, Confidence Fallback, PII Scrubbing & AI Logs (A07) — DONE
 - REQ-AI-001..004, REQ-AI-006, ARCH §4 M7, ARCH §10, BP §56: Natural language text and voice transcript interpretation (`IntakeService.interpret`, `FakeIntakeAiClient`). Structured extraction into closed schema (`ClosedAiInterpretation`). Golden test evaluations for Blueprint examples (AC repair Urdu transcript, electrical short circuit English prompt, geyser leak with location and time window).
 - REQ-AI-003, REQ-AI-006, BP §79: Ambiguity and low-confidence fallback. Prompts with confidence < 0.60 or ambiguous intent degrade confidence (0.40) and generate at most 2 targeted clarifying questions in requested language (`AppLanguage.EN` / `AppLanguage.UR`).

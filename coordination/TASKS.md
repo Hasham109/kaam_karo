@@ -31,7 +31,7 @@ Acceptance criteria and BP refs per task: docs/implementation.md §6 (same task 
 | T3.4 | Booking state machine + Job Events + cancellation rules (config) | A04 | T2.6 | DONE | handoffs/T-3.4.md |
 | T3.5 | Quotes + multi-supplier offers + fare lines (proposed/approved/rejected/final) + **crew size** (ARCH §5.6) | A04 | T3.4 | DONE | handoffs/T-3.5.md |
 | T3.6 | Availability, service areas, verification levels | A05 | T2.5 | DONE | handoffs/T-3.6.md |
-| T3.7 | Matching: hard filters 73–79, configurable scoring, fairness, reasons, ranking_version, supply gap | A05 | T3.1, T3.3, T3.6 | TODO | — |
+| T3.7 | Matching: hard filters 73–79, configurable scoring, fairness, reasons, ranking_version, supply gap | A05 | T3.1, T3.3, T3.6 | DONE | handoffs/T-3.7.md |
 | T3.8 | Customer app: onboarding, language choice, login, home, search, category, service detail, provider profile | A11 | T2.4, T2.6, T1.4 | TODO | — |
 | T3.9 | Customer app: "What do you need?" composer, audio/video recorders, photo picker, location confirm, summary confirm | A11 | T3.1–T3.3 | TODO | — |
 | T3.10 | Customer app: match results, comparison, reasons, offers comparison, booking review/confirmation, supply-gap screen | A11 | T3.5, T3.7 | TODO | — |

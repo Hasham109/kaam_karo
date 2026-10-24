@@ -1,0 +1,466 @@
+openapi: 3.1.0
+info:
+  title: Matching Engine Service
+  description: >
+    Supplier matching engine implementing hard filters 73-79, configurable multi-signal scoring,
+    fairness rules, customer-facing explanations, and supply-gap handling (ARCH §4 M8, §9;
+    BP §54, §61.3, §68; D-005, D-010, D-020; MATCH-ELIG-073..079, MATCH-SCORE-001..013,
+    MATCH-FAIR-001..004, MATCH-EXPL-001, MATCH-MODE-001, MATCH-GAP-001, OPS-ADMIN-021).
+  version: 0.1.0
+
+paths:
+  /v1/matching/requests/{requestId}/find-matches:
+    post:
+      summary: Find and rank matching suppliers for a confirmed customer request
+      description: >
+        Executes the matching pipeline: evaluates hard eligibility filters 73-79 and unpaid commission,
+        calculates distance and travel ETA via GeoService, scores eligible suppliers against configurable
+        signals, applies fairness boost and caps, stores MatchCandidate records, and either returns ranked
+        matches or structured supply-gap next actions.
+      operationId: findMatchesForRequest
+      x-requirement-ids:
+        - MATCH-ELIG-073
+        - MATCH-ELIG-074
+        - MATCH-ELIG-075
+        - MATCH-ELIG-076
+        - MATCH-ELIG-077
+        - MATCH-ELIG-078
+        - MATCH-ELIG-079
+        - MATCH-SCORE-001
+        - MATCH-SCORE-002
+        - MATCH-SCORE-003
+        - MATCH-SCORE-004
+        - MATCH-SCORE-005
+        - MATCH-SCORE-006
+        - MATCH-SCORE-007
+        - MATCH-SCORE-008
+        - MATCH-SCORE-009
+        - MATCH-SCORE-010
+        - MATCH-SCORE-011
+        - MATCH-SCORE-012
+        - MATCH-SCORE-013
+        - MATCH-FAIR-001
+        - MATCH-FAIR-002
+        - MATCH-FAIR-003
+        - MATCH-EXPL-001
+        - MATCH-MODE-001
+        - MATCH-GAP-001
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindMatchesRequest'
+      responses:
+        '200':
+          description: Matching results or structured supply gap options
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchRunResult'
+        '400':
+          description: Invalid request state or missing snapshot coordinates
+        '404':
+          description: Customer request not found
+
+  /v1/matching/requests/{requestId}/candidates:
+    get:
+      summary: Retrieve match candidates and rankings for a customer request
+      description: Returns stored match candidate evaluations, eligibility details, and audit history.
+      operationId: getMatchCandidates
+      x-requirement-ids:
+        - MATCH-EXPL-001
+        - MATCH-MODE-001
+        - MATCH-FAIR-004
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of evaluated match candidates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchCandidateListResponse'
+        '404':
+          description: Request not found
+
+  /v1/matching/config:
+    get:
+      summary: Get active matching configuration and signal weights
+      description: Retrieves matching signal weights, fairness parameters, and current ranking_version.
+      operationId: getMatchingConfig
+      x-requirement-ids:
+        - OPS-ADMIN-021
+        - MATCH-SCORE-001
+        - MATCH-FAIR-001
+      responses:
+        '200':
+          description: Active matching configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchingConfigResponse'
+    put:
+      summary: Update matching weights and fairness parameters
+      description: >
+        Admin updates matching signal weights and fairness thresholds with mandatory audit reason.
+        Increments ranking_version and applies immediately without code deployment.
+      operationId: updateMatchingConfig
+      x-requirement-ids:
+        - OPS-ADMIN-021
+        - MATCH-FAIR-004
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMatchingConfigRequest'
+      responses:
+        '200':
+          description: Updated matching configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchingConfigResponse'
+        '400':
+          description: Invalid weight values or missing audit reason
+
+components:
+  schemas:
+    FindMatchesRequest:
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+        preferredVerificationOnly:
+          type: boolean
+          default: false
+        maxPriceMinor:
+          type: integer
+          nullable: true
+
+    MatchReason:
+      type: object
+      required:
+        - key
+        - en
+        - ur
+      properties:
+        key:
+          type: string
+          example: 'DISTANCE'
+        en:
+          type: string
+          example: '2.1 km away'
+        ur:
+          type: string
+          example: '2.1 کلومیٹر دور'
+
+    MatchCandidateCard:
+      type: object
+      required:
+        - candidateId
+        - providerProfileId
+        - providerName
+        - verificationLevel
+        - distanceMeters
+        - etaSeconds
+        - score
+        - rank
+        - matchReasons
+      properties:
+        candidateId:
+          type: string
+          format: uuid
+        providerProfileId:
+          type: string
+          format: uuid
+        providerName:
+          type: string
+        businessName:
+          type: string
+          nullable: true
+        avatarMediaId:
+          type: string
+          nullable: true
+        verificationLevel:
+          type: string
+          enum: [BASIC, VERIFIED, BUSINESS_VERIFIED, SPECIALIZED_VERIFIED]
+        distanceMeters:
+          type: integer
+          nullable: true
+        etaSeconds:
+          type: integer
+          nullable: true
+        ratingAverage:
+          type: number
+          nullable: true
+        ratingCount:
+          type: integer
+          default: 0
+        completedJobsCount:
+          type: integer
+          default: 0
+        isExactServiceMatch:
+          type: boolean
+          default: true
+        score:
+          type: number
+        rank:
+          type: integer
+        badges:
+          type: array
+          items:
+            type: string
+        matchReasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchReason'
+
+    SupplyGapRecoveryOption:
+      type: object
+      required:
+        - action
+        - titleEn
+        - titleUr
+        - descriptionEn
+        - descriptionUr
+      properties:
+        action:
+          type: string
+          enum:
+            - BROADEN_RADIUS
+            - CHOOSE_ANOTHER_TIME
+            - REQUEST_CALLBACK
+            - JOIN_WAITLIST
+            - TRY_RELATED_SERVICE
+        titleEn:
+          type: string
+        titleUr:
+          type: string
+        descriptionEn:
+          type: string
+        descriptionUr:
+          type: string
+        suggestedServiceId:
+          type: string
+          format: uuid
+          nullable: true
+
+    MatchRunResult:
+      type: object
+      required:
+        - requestId
+        - rankingVersion
+        - totalEvaluated
+        - eligibleCount
+        - isSupplyGap
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        rankingVersion:
+          type: string
+        totalEvaluated:
+          type: integer
+        eligibleCount:
+          type: integer
+        isSupplyGap:
+          type: boolean
+        candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchCandidateCard'
+        supplyGapOptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupplyGapRecoveryOption'
+
+    MatchCandidateRecord:
+      type: object
+      required:
+        - id
+        - requestId
+        - providerProfileId
+        - eligibility
+        - ineligibleReasons
+        - availability
+        - rankingVersion
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        requestId:
+          type: string
+          format: uuid
+        providerProfileId:
+          type: string
+          format: uuid
+        eligibility:
+          type: string
+          enum: [ELIGIBLE, INELIGIBLE]
+        ineligibleReasons:
+          type: array
+          items:
+            type: string
+        distanceMeters:
+          type: integer
+          nullable: true
+        etaSeconds:
+          type: integer
+          nullable: true
+        availability:
+          type: string
+          enum: [AVAILABLE, LATER_CONFIRMATION, UNAVAILABLE]
+        matchReasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchReason'
+          nullable: true
+        score:
+          type: number
+          nullable: true
+        rank:
+          type: integer
+          nullable: true
+        rankingVersion:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    MatchCandidateListResponse:
+      type: object
+      required:
+        - requestId
+        - candidates
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchCandidateRecord'
+
+    MatchingWeights:
+      type: object
+      required:
+        - distanceWeight
+        - availabilityWeight
+        - serviceMatchWeight
+        - preferencesWeight
+        - verificationWeight
+        - ratingWeight
+        - completedJobsWeight
+        - responseSpeedWeight
+        - cancellationHistoryWeight
+        - repeatCustomerWeight
+        - priceCompetitivenessWeight
+        - reliabilityWeight
+        - newProviderBoostWeight
+      properties:
+        distanceWeight:
+          type: number
+          default: 0.20
+        availabilityWeight:
+          type: number
+          default: 0.15
+        serviceMatchWeight:
+          type: number
+          default: 0.15
+        preferencesWeight:
+          type: number
+          default: 0.05
+        verificationWeight:
+          type: number
+          default: 0.10
+        ratingWeight:
+          type: number
+          default: 0.10
+        completedJobsWeight:
+          type: number
+          default: 0.05
+        responseSpeedWeight:
+          type: number
+          default: 0.05
+        cancellationHistoryWeight:
+          type: number
+          default: 0.05
+        repeatCustomerWeight:
+          type: number
+          default: 0.03
+        priceCompetitivenessWeight:
+          type: number
+          default: 0.02
+        reliabilityWeight:
+          type: number
+          default: 0.03
+        newProviderBoostWeight:
+          type: number
+          default: 0.02
+
+    MatchingFairnessConfig:
+      type: object
+      required:
+        - newProviderBoostEnabled
+        - newProviderMaxAgeDays
+        - providerShownCapPercentage
+      properties:
+        newProviderBoostEnabled:
+          type: boolean
+          default: true
+        newProviderMaxAgeDays:
+          type: integer
+          default: 30
+        providerShownCapPercentage:
+          type: number
+          nullable: true
+          default: 0.35
+
+    MatchingConfigResponse:
+      type: object
+      required:
+        - rankingVersion
+        - weights
+        - fairness
+        - updatedAt
+      properties:
+        rankingVersion:
+          type: string
+        weights:
+          $ref: '#/components/schemas/MatchingWeights'
+        fairness:
+          $ref: '#/components/schemas/MatchingFairnessConfig'
+        updatedAt:
+          type: string
+          format: date-time
+
+    UpdateMatchingConfigRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          description: Audit explanation for weight or fairness configuration change
+        weights:
+          $ref: '#/components/schemas/MatchingWeights'
+        fairness:
+          $ref: '#/components/schemas/MatchingFairnessConfig'
