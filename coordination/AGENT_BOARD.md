@@ -22,7 +22,7 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 |---|---|---|---|---|---|---|---|
 | A00 | main session | Orchestration | DONE | — | — | T2.5 delegation | 2026-10-24 |
 | A01 | platform-devops | T2.2 Platform lib | DONE | t2.2-platform-lib | — | T2.7 | 2026-10-24 |
-| A02 | identity-profiles | T2.4 Identity: phone OTP login, sessions, roles, admin sub-roles, MFA (SEC-AUTH-001..008, ADMIN-ROLE-001..008, D-002) | DONE | t2.4-identity | — | T2.5 | 2026-10-24 |
+| A02 | identity-profiles | T2.5 Profiles, addresses, location snapshots, favorites (PROF-ADDR-001..004, PROF-FAV-001, LOC-GEO-003..004) | DONE | t2.5-profiles | — | T3.6 | 2026-10-24 |
 | A03 | catalog-config | T2.6 Catalog + Config | DONE | t2.6-catalog-config | — | T6.2 (with A09); controllers after T2.4 | 2026-10-24 |
 | A04 | booking-quotes | — | IDLE | — | — | T3.4 | — |
 | A05 | matching-trust | — | IDLE | — | — | T3.6 | — |

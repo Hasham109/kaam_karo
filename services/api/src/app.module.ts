@@ -11,6 +11,7 @@ import { CatalogModule } from './modules/catalog';
 import { ConfigRulesModule } from './modules/config';
 import { HealthModule } from './modules/health';
 import { IdentityModule } from './modules/identity';
+import { ProfilesModule } from './modules/profiles';
 import { PlatformModule } from './platform';
 
 @Module({})
@@ -28,6 +29,7 @@ export class AppModule {
         // RQ-008 item 1 (A03, T2.6): catalog + config store; ConfigRulesModule is global and
         // provides CONFIG_SERVICE / CONFIG_RULE_SOURCE (RQ-006).
         IdentityModule,
+        ProfilesModule,
         CatalogModule,
         ConfigRulesModule,
         HealthModule,

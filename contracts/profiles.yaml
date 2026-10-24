@@ -1,0 +1,685 @@
+openapi: 3.1.0
+info:
+  title: Kaam Karo — Profiles & Location Snapshots (Module M2 & M6)
+  version: 0.1.0
+  description: >
+    Customer profiles, saved addresses, favorite providers, provider profiles,
+    and immutable location snapshots.
+    Blueprint refs: §21, §23, §25, §55.2, §57, §66; ARCH §4 M2, M6;
+    Requirements: PROF-ADDR-001..004, PROF-FAV-001, LOC-GEO-003..004, ROLE-001, ROLE-002.
+servers:
+  - url: /v1
+paths:
+  /profiles/customer/me:
+    get:
+      operationId: getCustomerProfile
+      summary: Retrieve authenticated customer profile
+      x-requirement-ids:
+        - ROLE-001
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Customer profile details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerProfileResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+    patch:
+      operationId: updateCustomerProfile
+      summary: Update customer display name or preferred language
+      x-requirement-ids:
+        - ROLE-001
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCustomerProfileRequest'
+      responses:
+        '200':
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerProfileResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+  /profiles/customer/addresses:
+    get:
+      operationId: listSavedAddresses
+      summary: List customer saved addresses (not soft-deleted)
+      x-requirement-ids:
+        - PROF-ADDR-001
+        - ROLE-001
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of saved addresses
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - addresses
+                properties:
+                  addresses:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AddressItem'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+    post:
+      operationId: createSavedAddress
+      summary: Save a new address with label
+      x-requirement-ids:
+        - PROF-ADDR-001
+        - PROF-ADDR-003
+        - ROLE-001
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAddressRequest'
+      responses:
+        '201':
+          description: Address created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressItem'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+  /profiles/customer/addresses/{addressId}:
+    patch:
+      operationId: updateSavedAddress
+      summary: Update a saved address
+      x-requirement-ids:
+        - PROF-ADDR-001
+        - ROLE-001
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: addressId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAddressRequest'
+      responses:
+        '200':
+          description: Address updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressItem'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+    delete:
+      operationId: deleteSavedAddress
+      summary: Soft-delete a saved address (does not affect existing booking snapshots)
+      x-requirement-ids:
+        - PROF-ADDR-001
+        - PROF-ADDR-002
+        - ROLE-001
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: addressId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Address deleted
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /profiles/customer/favorites:
+    get:
+      operationId: listFavorites
+      summary: List customer favorite providers for quick rebooking
+      x-requirement-ids:
+        - PROF-FAV-001
+        - ROLE-001
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of favorites
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - favorites
+                properties:
+                  favorites:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FavoriteItem'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+    post:
+      operationId: addFavorite
+      summary: Save a provider as a favorite
+      x-requirement-ids:
+        - PROF-FAV-001
+        - ROLE-001
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddFavoriteRequest'
+      responses:
+        '201':
+          description: Provider saved to favorites
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FavoriteItem'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+  /profiles/customer/favorites/{providerProfileId}:
+    delete:
+      operationId: removeFavorite
+      summary: Remove a provider from favorites
+      x-requirement-ids:
+        - PROF-FAV-001
+        - ROLE-001
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: providerProfileId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Favorite removed
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /profiles/provider/me:
+    get:
+      operationId: getProviderProfile
+      summary: Retrieve authenticated provider profile
+      x-requirement-ids:
+        - ROLE-002
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Provider profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderProfileResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+    patch:
+      operationId: updateProviderProfile
+      summary: Update provider profile business presentation
+      x-requirement-ids:
+        - ROLE-002
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProviderProfileRequest'
+      responses:
+        '200':
+          description: Updated provider profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderProfileResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+  /profiles/providers/{providerProfileId}:
+    get:
+      operationId: getPublicProviderProfile
+      summary: Public provider business presentation (for customers)
+      x-requirement-ids:
+        - ROLE-001
+      responses:
+        '200':
+          description: Public provider presentation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicProviderProfileResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /location/snapshots:
+    post:
+      operationId: createLocationSnapshot
+      summary: Create an immutable LocationSnapshot from saved address or manual input
+      x-requirement-ids:
+        - PROF-ADDR-002
+        - LOC-GEO-003
+        - LOC-GEO-004
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLocationSnapshotRequest'
+      responses:
+        '201':
+          description: Location snapshot created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationSnapshotResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+  /location/snapshots/{snapshotId}:
+    get:
+      operationId: getLocationSnapshot
+      summary: Retrieve location snapshot (masks exact address for unaccepted providers)
+      x-requirement-ids:
+        - PROF-ADDR-002
+        - PROF-ADDR-004
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: snapshotId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Location snapshot details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationSnapshotResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: kk_sec_...
+  schemas:
+    CustomerProfileResponse:
+      type: object
+      required:
+        - id
+        - userId
+        - phoneE164
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        phoneE164:
+          type: string
+        displayName:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        preferredLanguage:
+          type: string
+          enum: [EN, UR]
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    UpdateCustomerProfileRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        displayName:
+          type: string
+          maxLength: 100
+        email:
+          type: string
+          format: email
+        preferredLanguage:
+          type: string
+          enum: [EN, UR]
+
+    AddressItem:
+      type: object
+      required:
+        - id
+        - customerProfileId
+        - labelKind
+        - cityId
+        - addressText
+      properties:
+        id:
+          type: string
+          format: uuid
+        customerProfileId:
+          type: string
+          format: uuid
+        labelKind:
+          type: string
+          enum: [HOME, WORK, CUSTOM]
+        customLabel:
+          type: string
+          nullable: true
+        cityId:
+          type: string
+          format: uuid
+        areaName:
+          type: string
+          nullable: true
+        addressText:
+          type: string
+        latitude:
+          type: number
+          nullable: true
+        longitude:
+          type: number
+          nullable: true
+        placeRef:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateAddressRequest:
+      type: object
+      required:
+        - labelKind
+        - cityId
+        - addressText
+      additionalProperties: false
+      properties:
+        labelKind:
+          type: string
+          enum: [HOME, WORK, CUSTOM]
+        customLabel:
+          type: string
+          maxLength: 50
+        cityId:
+          type: string
+          format: uuid
+        areaName:
+          type: string
+          maxLength: 100
+        addressText:
+          type: string
+          minLength: 5
+          maxLength: 300
+        latitude:
+          type: number
+        longitude:
+          type: number
+        placeRef:
+          type: string
+          maxLength: 255
+
+    UpdateAddressRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        labelKind:
+          type: string
+          enum: [HOME, WORK, CUSTOM]
+        customLabel:
+          type: string
+          maxLength: 50
+        areaName:
+          type: string
+          maxLength: 100
+        addressText:
+          type: string
+          minLength: 5
+          maxLength: 300
+        latitude:
+          type: number
+        longitude:
+          type: number
+        placeRef:
+          type: string
+          maxLength: 255
+
+    FavoriteItem:
+      type: object
+      required:
+        - id
+        - customerProfileId
+        - providerProfileId
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        customerProfileId:
+          type: string
+          format: uuid
+        providerProfileId:
+          type: string
+          format: uuid
+        businessName:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    AddFavoriteRequest:
+      type: object
+      required:
+        - providerProfileId
+      additionalProperties: false
+      properties:
+        providerProfileId:
+          type: string
+          format: uuid
+        notes:
+          type: string
+          maxLength: 500
+
+    ProviderProfileResponse:
+      type: object
+      required:
+        - id
+        - userId
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        businessName:
+          type: string
+          nullable: true
+        photoMediaId:
+          type: string
+          format: uuid
+          nullable: true
+        usualTeamSize:
+          type: integer
+          minimum: 1
+          maximum: 50
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    UpdateProviderProfileRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        businessName:
+          type: string
+          maxLength: 120
+        usualTeamSize:
+          type: integer
+          minimum: 1
+          maximum: 50
+        photoMediaId:
+          type: string
+          format: uuid
+
+    PublicProviderProfileResponse:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          format: uuid
+        businessName:
+          type: string
+          nullable: true
+        usualTeamSize:
+          type: integer
+          nullable: true
+        photoMediaId:
+          type: string
+          format: uuid
+          nullable: true
+
+    CreateLocationSnapshotRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        sourceAddressId:
+          type: string
+          format: uuid
+        addressLabel:
+          type: string
+          maxLength: 50
+        addressText:
+          type: string
+          minLength: 5
+          maxLength: 300
+        cityId:
+          type: string
+          format: uuid
+        areaName:
+          type: string
+          maxLength: 100
+        latitude:
+          type: number
+        longitude:
+          type: number
+        accuracyMeters:
+          type: integer
+          minimum: 0
+        placeRef:
+          type: string
+        source:
+          type: string
+          enum: [DEVICE_LOCATION, MAP_PIN, PLACE_SEARCH, SAVED_ADDRESS, MANUAL_ENTRY]
+        confirmationStatus:
+          type: string
+          enum: [SUGGESTED, CONFIRMED]
+
+    LocationSnapshotResponse:
+      type: object
+      required:
+        - id
+        - cityId
+        - source
+        - confirmationStatus
+      properties:
+        id:
+          type: string
+          format: uuid
+        addressLabel:
+          type: string
+          nullable: true
+        addressText:
+          type: string
+          nullable: true
+        cityId:
+          type: string
+          format: uuid
+        areaName:
+          type: string
+          nullable: true
+        latitude:
+          type: number
+          nullable: true
+        longitude:
+          type: number
+          nullable: true
+        accuracyMeters:
+          type: integer
+          nullable: true
+        placeRef:
+          type: string
+          nullable: true
+        source:
+          type: string
+          enum: [DEVICE_LOCATION, MAP_PIN, PLACE_SEARCH, SAVED_ADDRESS, MANUAL_ENTRY]
+        confirmationStatus:
+          type: string
+          enum: [SUGGESTED, CONFIRMED]
+        createdAt:
+          type: string
+          format: date-time

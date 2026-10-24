@@ -37,16 +37,14 @@ Parallel agents share one working tree, so give each agent explicit path limits.
 | `6726dc9` | **T1.1, T1.2, T1.3, T1.5** screen specs `docs/screens/{customer,partner,admin,flows}.md`; owner decision **D-030** | QA PASS, SEC PASS |
 | `00284f7` | **T2.3** Prisma schema v1 (53 tables, append-only at DB level, separate owner/API logins) + **T0.6 code** (Urdu Nastaliq smoke screen) | QA PASS, SEC PASS |
 | `HEAD` | **T2.2** Platform lib + **T2.6** Catalog seed & ConfigRule store | QA PASS, SEC PASS |
-| `t2.4-identity` | **T2.4** Identity: phone OTP login, sessions, roles, admin MFA, staff RBAC lookup, anonymization lifecycle (contracts/identity.yaml v0.1.0) | QA PASS, SEC PASS |
+| `674cd31` | **T2.4** Identity: phone OTP login, sessions, roles, admin MFA, staff RBAC lookup, anonymization lifecycle (contracts/identity.yaml v0.1.0) | QA PASS, SEC PASS |
+| `t2.5-profiles` | **T2.5** Profiles, addresses, immutable location snapshots, favorites (contracts/profiles.yaml v0.1.0) | QA PASS, SEC PASS |
 
 Earlier commits: Phase 0 (T0.1–T0.5) docs and decisions D-001…D-029.
 
 ---
 
 ## 4. In flight (uncommitted in the working tree) — **resume here**
-
-### T2.5 Profiles, Addresses & Favorites (owner A02) — READY TO START
-- Customer & Partner profiles, service areas, address book, location snapshot helper, provider favorites (ARCH §4 M1/M2; BP §25, §28).
 
 ### T0.6 Urdu smoke test (owner A14) — BLOCKED-DEVICE
 - Code is committed. The on-device run is pending: this PC has no JDK 17 and no phone/emulator connected.
@@ -56,8 +54,9 @@ Earlier commits: Phase 0 (T0.1–T0.5) docs and decisions D-001…D-029.
 
 ## 5. Next steps (agreed order with the owner)
 
-1. **T2.5** Profiles + addresses + snapshots + favorites (A02).
-2. Then T2.7 (backup + restore drill), T2.8 (security review of T2.1–T2.6), T1.4 (i18n kit; includes RQ-010 Urdu names review, QA F-03 shared copy catalogues, G9 No-show verb).
+1. **T2.7** Backup + restore drill in staging (A01).
+2. **T2.8** Security review of T2.1–T2.6 (A15).
+3. **T1.4** i18n kit (A14; includes RQ-010 Urdu names review, QA F-03 shared copy catalogues, G9 No-show verb).
 3. Before any T6.x payments work: BUG-0001…0005 (A01) must be fixed.
 
 ---

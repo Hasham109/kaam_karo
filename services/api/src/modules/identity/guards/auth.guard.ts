@@ -23,6 +23,11 @@ export interface RequestUser {
   readonly roles: readonly UserRoleType[];
   readonly subRoles: readonly AdminSubRole[];
   readonly mfaVerifiedAt: Date | null;
+  readonly [key: string]: unknown;
+}
+
+export interface AuthenticatedRequest extends HttpRequest {
+  user: RequestUser;
 }
 
 @Injectable()
