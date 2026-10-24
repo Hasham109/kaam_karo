@@ -10,7 +10,7 @@ export interface HttpRequest {
   readonly headers: IncomingHttpHeaders;
   readonly body?: unknown;
   /** Set by A02's auth guard (T2.4). */
-  readonly user?: { readonly id?: unknown };
+  user?: { readonly id?: unknown; readonly [key: string]: unknown };
   /** Server-generated request ID, set by applyRequestContext. */
   requestId?: string;
   /** Client-sent X-Request-Id (validated), a hint only (SEC-REVIEW-T2.2 #12). */

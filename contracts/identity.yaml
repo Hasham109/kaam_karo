@@ -1,0 +1,412 @@
+openapi: 3.1.0
+info:
+  title: Kaam Karo Identity & Access API
+  version: 0.1.0
+  x-status: draft
+  description: >
+    Phone OTP authentication, session management, roles, and admin MFA (D-002;
+    BP §8, §25, §27, §29; SEC-AUTH-001..008, ADMIN-ROLE-001..008).
+servers:
+  - url: /
+paths:
+  /v1/auth/otp/send:
+    post:
+      summary: Request an OTP sent to a Pakistani mobile number
+      description: >
+        Validates the mobile number and sends an OTP via the configured provider.
+        Returns identical success response regardless of whether the account already exists
+        or is blocked to prevent user enumeration (SEC-AUTH-001, SEC-AUTH-004; BP §27).
+      operationId: sendOtp
+      x-requirement-ids:
+        - SEC-AUTH-001
+        - SEC-AUTH-004
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendOtpRequest'
+      responses:
+        '200':
+          description: OTP request accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendOtpResponse'
+        '400':
+          $ref: '#/components/responses/Error'
+        '422':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+
+  /v1/auth/otp/verify:
+    post:
+      summary: Verify phone OTP and establish a device session
+      description: >
+        Verifies the OTP against the hashed challenge. On success, provisions or
+        loads the user account and issues a bearer session token (D-002, SEC-AUTH-002..006).
+      operationId: verifyOtp
+      x-requirement-ids:
+        - SEC-AUTH-001
+        - SEC-AUTH-002
+        - SEC-AUTH-004
+        - SEC-AUTH-006
+      security: []
+      parameters:
+        - $ref: './common.yaml#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyOtpRequest'
+      responses:
+        '200':
+          description: Successfully authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyOtpResponse'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+
+  /v1/auth/admin/login:
+    post:
+      summary: Initiate admin staff login (step 1 - challenge)
+      description: >
+        Validates admin staff phone/email and initiates second-factor challenge (D-002, SEC-AUTH-005).
+      operationId: adminLogin
+      x-requirement-ids:
+        - SEC-AUTH-005
+        - ADMIN-ROLE-001
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLoginRequest'
+      responses:
+        '200':
+          description: MFA challenge issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLoginResponse'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+
+  /v1/auth/admin/mfa/verify:
+    post:
+      summary: Verify second factor for admin staff login (step 2)
+      description: >
+        Verifies TOTP code or recovery code and issues staff session (D-002, SEC-AUTH-005).
+      operationId: adminMfaVerify
+      x-requirement-ids:
+        - SEC-AUTH-005
+        - ADMIN-ROLE-001
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminMfaVerifyRequest'
+      responses:
+        '200':
+          description: Staff session established
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSessionResponse'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+
+  /v1/auth/session/refresh:
+    post:
+      summary: Refresh or extend current session
+      operationId: refreshSession
+      x-requirement-ids:
+        - SEC-AUTH-002
+      security:
+        - userSession: []
+      responses:
+        '200':
+          description: Session refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '401':
+          $ref: '#/components/responses/Error'
+
+  /v1/auth/session/revoke:
+    post:
+      summary: Revoke current session (sign out)
+      operationId: revokeSession
+      x-requirement-ids:
+        - SEC-AUTH-002
+      security:
+        - userSession: []
+      responses:
+        '204':
+          description: Session revoked
+        '401':
+          $ref: '#/components/responses/Error'
+
+  /v1/auth/session/revoke-all:
+    post:
+      summary: Revoke all sessions for the authenticated user
+      operationId: revokeAllSessions
+      x-requirement-ids:
+        - SEC-AUTH-002
+      security:
+        - userSession: []
+      responses:
+        '204':
+          description: All sessions revoked
+        '401':
+          $ref: '#/components/responses/Error'
+
+  /v1/auth/account/delete-request:
+    post:
+      summary: Request account deletion (hold period starts)
+      operationId: requestAccountDeletion
+      x-requirement-ids:
+        - SEC-AUTH-008
+      security:
+        - userSession: []
+      responses:
+        '200':
+          description: Deletion requested and scheduled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteAccountResponse'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+
+components:
+  securitySchemes:
+    userSession:
+      type: http
+      scheme: bearer
+      description: Session token issued by /v1/auth/otp/verify or admin login.
+    staffSession:
+      type: http
+      scheme: bearer
+      description: Staff session token with verified MFA.
+
+  responses:
+    Error:
+      description: Standard platform error envelope
+      content:
+        application/json:
+          schema:
+            $ref: './common.yaml#/components/schemas/ErrorEnvelope'
+
+  schemas:
+    ClientSurface:
+      type: string
+      enum:
+        - CUSTOMER_APP
+        - PARTNER_APP
+        - ADMIN_PORTAL
+
+    SendOtpRequest:
+      type: object
+      required:
+        - phone
+        - surface
+      properties:
+        phone:
+          type: string
+          description: Mobile number in E.164 (+923xx) or domestic (03xx) Pakistani format
+          example: '+923001234567'
+        surface:
+          $ref: '#/components/schemas/ClientSurface'
+      additionalProperties: false
+
+    SendOtpResponse:
+      type: object
+      required:
+        - status
+        - resendCooldownSeconds
+      properties:
+        status:
+          type: string
+          enum: [PENDING]
+        resendCooldownSeconds:
+          type: integer
+          minimum: 0
+      additionalProperties: false
+
+    VerifyOtpRequest:
+      type: object
+      required:
+        - phone
+        - code
+        - surface
+      properties:
+        phone:
+          type: string
+          example: '+923001234567'
+        code:
+          type: string
+          pattern: '^[0-9]{4,8}$'
+          example: '123456'
+        surface:
+          $ref: '#/components/schemas/ClientSurface'
+        deviceLabel:
+          type: string
+          maxLength: 100
+        pushToken:
+          type: string
+          maxLength: 255
+      additionalProperties: false
+
+    AdminLoginRequest:
+      type: object
+      required:
+        - phone
+      properties:
+        phone:
+          type: string
+          example: '+923001234567'
+      additionalProperties: false
+
+    AdminLoginResponse:
+      type: object
+      required:
+        - challengeId
+        - status
+      properties:
+        challengeId:
+          type: string
+        status:
+          type: string
+          enum: [MFA_REQUIRED]
+      additionalProperties: false
+
+    AdminMfaVerifyRequest:
+      type: object
+      required:
+        - challengeId
+        - code
+      properties:
+        challengeId:
+          type: string
+        code:
+          type: string
+      additionalProperties: false
+
+    AdminSessionResponse:
+      type: object
+      required:
+        - token
+        - expiresAt
+        - subRoles
+      properties:
+        token:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        subRoles:
+          type: array
+          items:
+            type: string
+      additionalProperties: false
+
+    UserSummary:
+      type: object
+      required:
+        - id
+        - status
+        - roles
+      properties:
+        id:
+          type: string
+          format: uuid
+        phoneE164:
+          type: string
+        displayName:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, BLOCKED, DELETION_REQUESTED, ANONYMISED]
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [CUSTOMER, PROVIDER, ADMIN]
+      additionalProperties: false
+
+    VerifyOtpResponse:
+      type: object
+      required:
+        - token
+        - user
+        - isNewUser
+        - expiresAt
+      properties:
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/UserSummary'
+        isNewUser:
+          type: boolean
+        expiresAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+
+    SessionResponse:
+      type: object
+      required:
+        - token
+        - expiresAt
+      properties:
+        token:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+
+    DeleteAccountResponse:
+      type: object
+      required:
+        - status
+        - deletionRequestedAt
+        - holdDays
+      properties:
+        status:
+          type: string
+          enum: [DELETION_REQUESTED]
+        deletionRequestedAt:
+          type: string
+          format: date-time
+        holdDays:
+          type: integer
+      additionalProperties: false

@@ -54,7 +54,16 @@ export function Idempotent(operation: string): MethodDecorator {
 
 export const defaultScopeResolver: IdempotencyScopeResolver = (req) => {
   const user = req.user;
-  return typeof user?.id === 'string' && user.id.length > 0 ? `user:${user.id}` : null;
+  if (typeof user?.id === 'string' && user.id.length > 0) return `user:${user.id}`;
+  const url = req.originalUrl || '';
+  if (url.includes('/auth/otp/verify') && req.body && typeof req.body === 'object') {
+    const phone = (req.body as { phone?: unknown }).phone;
+    if (typeof phone === 'string' && phone.trim().length > 0) {
+      const cleaned = phone.trim().replace(/[\s\-()]/g, '');
+      return `phone:${cleaned}`;
+    }
+  }
+  return null;
 };
 
 const HOUR_MS = 3_600_000;

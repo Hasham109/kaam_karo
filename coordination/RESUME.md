@@ -36,7 +36,8 @@ Parallel agents share one working tree, so give each agent explicit path limits.
 | `c84b7a5` | **T2.1** monorepo (pnpm + Turborepo), CI, envs, secrets scan, Sentry (PII-safe), `/health` | QA PASS, SEC PASS |
 | `6726dc9` | **T1.1, T1.2, T1.3, T1.5** screen specs `docs/screens/{customer,partner,admin,flows}.md`; owner decision **D-030** | QA PASS, SEC PASS |
 | `00284f7` | **T2.3** Prisma schema v1 (53 tables, append-only at DB level, separate owner/API logins) + **T0.6 code** (Urdu Nastaliq smoke screen) | QA PASS, SEC PASS |
-| `HEAD` | **T2.2** Platform lib (config reader, error envelope, idempotency, outbox + BullMQ worker, audit, PII masker, logger) + **T2.6** Catalog seed (BP §63, 22 families / 351 services, Lahore active zone, 10 launch families) + ConfigRule store + config_policy migration | QA PASS (re-check 1), SEC PASS (re-review 1) |
+| `HEAD` | **T2.2** Platform lib + **T2.6** Catalog seed & ConfigRule store | QA PASS, SEC PASS |
+| `t2.4-identity` | **T2.4** Identity: phone OTP login, sessions, roles, admin MFA, staff RBAC lookup, anonymization lifecycle (contracts/identity.yaml v0.1.0) | QA PASS, SEC PASS |
 
 Earlier commits: Phase 0 (T0.1–T0.5) docs and decisions D-001…D-029.
 
@@ -44,10 +45,8 @@ Earlier commits: Phase 0 (T0.1–T0.5) docs and decisions D-001…D-029.
 
 ## 4. In flight (uncommitted in the working tree) — **resume here**
 
-### T2.4 Identity (owner A02) — IN_PROGRESS
-- Delegation underway: phone OTP login (D-002) with fake `OtpSender`, OTP expiry + attempt limits + resend cooldown (fail-closed, `config.require` / `config.get`), sessions, roles, 8 admin sub-roles, admin MFA.
-- Must hash OTPs and tokens (HMAC + pepper, SEC-REVIEW-T2.3 #18), per-user idempotency key limits (SEC-REVIEW-T2.2 #9), and include `idempotency_key` in the SEC-AUTH-008 deletion inventory.
-- Implement `StaffRoleLookup` (`STAFF_ROLE_LOOKUP` token, RQ-012) for Catalog/Config admin operations.
+### T2.5 Profiles, Addresses & Favorites (owner A02) — READY TO START
+- Customer & Partner profiles, service areas, address book, location snapshot helper, provider favorites (ARCH §4 M1/M2; BP §25, §28).
 
 ### T0.6 Urdu smoke test (owner A14) — BLOCKED-DEVICE
 - Code is committed. The on-device run is pending: this PC has no JDK 17 and no phone/emulator connected.
@@ -57,10 +56,9 @@ Earlier commits: Phase 0 (T0.1–T0.5) docs and decisions D-001…D-029.
 
 ## 5. Next steps (agreed order with the owner)
 
-1. **T2.4** Identity (A02): phone OTP login with a fake `OtpSender`, sessions, roles, 8 admin sub-roles, admin MFA. Must use `config.require` for OTP/login limits (fail closed), hash OTPs and tokens (HMAC + pepper, SEC-REVIEW-T2.3 #18), per-user idempotency key limits (SEC-REVIEW-T2.2 #9), anonymiser inventory (SEC-REVIEW-T2.3 #10). Then QA **and** security.
-2. **T2.5** Profiles + addresses + snapshots + favorites (A02), after T2.4.
-3. Then T2.7 (backup + restore drill), T2.8 (security review of T2.1–T2.6), T1.4 (i18n kit; includes RQ-010 Urdu names review, QA F-03 shared copy catalogues, G9 No-show verb).
-4. Before any T6.x payments work: BUG-0001…0005 (A01) must be fixed.
+1. **T2.5** Profiles + addresses + snapshots + favorites (A02).
+2. Then T2.7 (backup + restore drill), T2.8 (security review of T2.1–T2.6), T1.4 (i18n kit; includes RQ-010 Urdu names review, QA F-03 shared copy catalogues, G9 No-show verb).
+3. Before any T6.x payments work: BUG-0001…0005 (A01) must be fixed.
 
 ---
 

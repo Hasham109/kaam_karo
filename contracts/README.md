@@ -18,11 +18,12 @@ Rules checked by `__tests__/structure.spec.ts`:
 
 Published contracts:
 
-| Contract       | Version | Owner | Requirement IDs                                                                                                        |
-| -------------- | ------- | ----- | ---------------------------------------------------------------------------------------------------------------------- |
-| `health.yaml`  | 1.0.0   | A01   | REL-011                                                                                                                |
-| `common.yaml`  | 1.1.0   | A01   | REL-001, REL-002, REL-006, REL-008, SEC-BASE-005 (components only: `ErrorEnvelope`, `Idempotency-Key`, `X-Request-Id`) |
-| `catalog.yaml` | 0.1.0   | A03   | SCOPE-CAT-001, SCOPE-CAT-002, SCOPE-GEO-002, CFG-RULE-001 (T2.6)                                                       |
-| `config.yaml`  | 0.1.0   | A03   | CFG-RULE-001…012, SEC-BASE-010 (T2.6)                                                                                  |
+| Contract        | Version | Owner | Requirement IDs                                                                                                        |
+| --------------- | ------- | ----- | ---------------------------------------------------------------------------------------------------------------------- |
+| `health.yaml`   | 1.0.0   | A01   | REL-011                                                                                                                |
+| `common.yaml`   | 1.1.0   | A01   | REL-001, REL-002, REL-006, REL-008, SEC-BASE-005 (components only: `ErrorEnvelope`, `Idempotency-Key`, `X-Request-Id`) |
+| `catalog.yaml`  | 0.1.0   | A03   | SCOPE-CAT-001, SCOPE-CAT-002, SCOPE-GEO-002, CFG-RULE-001 (T2.6)                                                       |
+| `config.yaml`   | 0.1.0   | A03   | CFG-RULE-001…012, SEC-BASE-010 (T2.6)                                                                                  |
+| `identity.yaml` | 0.1.0   | A02   | SEC-AUTH-001..008, ADMIN-ROLE-001..008 (T2.4)                                                                          |
 
 TODO(A01, T2.2+): generate TypeScript types from the contracts for apps and the API.

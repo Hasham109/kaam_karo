@@ -11,8 +11,9 @@ import {
   PrismaCatalogRepository,
 } from './catalog.repository';
 import { CatalogService } from './catalog.service';
+import { DatabaseStaffRoleLookup } from '../identity';
 import { PlatformAuditPort } from './platform-audit.port';
-import { DenyAllStaffRoleLookup, STAFF_ROLE_LOOKUP, type StaffRoleLookup } from './staff-roles';
+import { STAFF_ROLE_LOOKUP, type StaffRoleLookup } from './staff-roles';
 
 export const CATALOG_SCOPE_REF_CHECK = Symbol.for('kaamkaro.catalog.ScopeRefCheck');
 
@@ -30,8 +31,9 @@ export const CATALOG_SCOPE_REF_CHECK = Symbol.for('kaamkaro.catalog.ScopeRefChec
         new CatalogService(repo, staff),
       inject: [CATALOG_REPOSITORY, STAFF_ROLE_LOOKUP],
     },
-    // Deny by default until A02 binds the identity lookup (T2.4, RQ-012; SEC-REVIEW-T2.6 #4).
-    { provide: STAFF_ROLE_LOOKUP, useClass: DenyAllStaffRoleLookup },
+    // Bound to real DatabaseStaffRoleLookup from IdentityModule (RQ-012; SEC-REVIEW-T2.6 #4).
+    DatabaseStaffRoleLookup,
+    { provide: STAFF_ROLE_LOOKUP, useExisting: DatabaseStaffRoleLookup },
     { provide: CATALOG_SCOPE_REF_CHECK, useExisting: CatalogService },
   ],
   exports: [CatalogService, CATALOG_SCOPE_REF_CHECK, STAFF_ROLE_LOOKUP],

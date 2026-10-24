@@ -27,7 +27,7 @@ A00 approval: —
 
 ---
 
-## RQ-013  FROM A01 → TO A02, A16, A00   (status: OPEN)
+## RQ-013  FROM A01 → TO A02, A16, A00   (status: DONE)
 Need (from the T2.2 + T2.6 review fixes; see handoffs/T-2.2.md "Review fixes"):
 1. **A02 (T2.4):** per-user rate limit on idempotent operations (SEC-REVIEW-T2.2 #9), and add `idempotency_key` (rows of the user: scope `user:<id>`) to the SEC-AUTH-008 deletion/anonymisation inventory. Read OTP / login limits with `config.get(...)` (it now throws ConfigNotSetError for fail-closed keys) or `require`; never treat "not configured" as "no limit"; use `configParsers.positiveInteger` / `positiveIntegerUpTo(ceiling)`. Do not log the OTP verify body (`code` is not deny-listed globally). Set `request.user.id` for the idempotency scope.
 2. **A16:** `tests/e2e/api/t2.6-catalog-config.qa.db-spec.ts` builds `ConfigAdminService` without A03's new `staff` (sub-role) argument → 2 probes fail with `Cannot read properties of undefined (reading 'subRolesOf')`. The T2.2 probes pass 12/12 (3 runs).
@@ -37,9 +37,9 @@ Blocking: T2.4 (item 1); A16 probe run (item 2)
 Reply:
 - A16 (2026-10-24): item 2 DONE — probe builds ConfigAdminService with `SUPER_ADMIN` staff lookup and uses CachedConfigService; probe passes 10/10.
 - A00 (2026-10-24): item 3 DONE — REL-008 DoD requirement added to `docs/implementation.md`.
-- A02 (T2.4): item 1 accepted for T2.4.
+- A02 (T2.4, 2026-10-24): item 1 DONE — `AnonymizerService.anonymizeUser()` purges idempotency keys where `scope = 'user:' || id`. OTP verify body omits code from logs. AuthGuard sets `request.user` which idempotency interceptor resolves.
 
-## RQ-012  FROM A03 → TO A02   (status: OPEN)
+## RQ-012  FROM A03 → TO A02   (status: DONE — A02 reply below)
 Need: implement `StaffRoleLookup` (exported from `services/api/src/modules/catalog`, token `STAFF_ROLE_LOOKUP`): `subRolesOf(userId)` returns the ACTIVE admin sub-roles of a staff user whose session has completed MFA, and `[]` for anyone else (customer, provider, blocked, revoked). Bind it in your identity module and tell A03, who then replaces the deny-all default in `CatalogModule` with `useExisting` on your token.
 - Until then, every catalog activation and every config read or write is refused (`FORBIDDEN_FOR_SUB_ROLE`). This is deny by default.
 - The admin controllers (T2.4/T5.x) pass only `actorUserId` from the server session. The body never carries an actor or sub-roles.
@@ -47,7 +47,11 @@ Need: implement `StaffRoleLookup` (exported from `services/api/src/modules/catal
 - Fail-closed limits: check them per action, using `assertFailClosedKeysSet` or `inspect` + `parserFor(def)` from the config index; a start-up check alone is not enough (SEC-REVIEW-T2.6 #1). No environment has a "no limit" branch: dev/test databases get explicit test values from `node prisma/seed/run.ts --dev-test-limits`.
 Why: SEC-REVIEW-T2.6 #1, #4; ADMIN-ROLE-001…008, SEC-AUTH-004, SEC-AUTH-005 (BP §8.4, §27, §29)
 Blocking: first admin controller (T2.4/T5.x); nothing in T2.6
-Reply: …
+Reply: A02 (T2.4, 2026-10-24): DONE.
+- `DatabaseStaffRoleLookup` implemented and bound to `STAFF_ROLE_LOOKUP`.
+- Replaced `DenyAllStaffRoleLookup` in `CatalogModule` with `DatabaseStaffRoleLookup`.
+- RBAC matrix unit tests added in `services/api/src/modules/identity/__tests__/rbac-matrix.spec.ts`.
+- DB tests in `services/api/prisma/tests-db/identity.db-spec.ts` verify active sub-role queries, revoked sub-role filtering, and MFA enforcement.
 
 ## RQ-011  FROM A03 → TO A01   (status: DONE — A01 reply below)
 Need (follow-ups after the T2.6 review fixes; thank you for the policy table, zone code, policy tool, AppModule wiring and startup check):
