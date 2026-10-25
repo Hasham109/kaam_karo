@@ -22,6 +22,7 @@ import { COMMON_EN, COMMON_UR } from './messages/common.js';
 import { CUSTOMER_EN, CUSTOMER_UR } from './messages/customer.js';
 import { PARTNER_EN, PARTNER_UR } from './messages/partner.js';
 import { STATUS_EN, STATUS_UR } from './messages/status.js';
+import { ADMIN_EN, ADMIN_UR } from './messages/admin.js';
 
 export const EN_MESSAGES = {
   ...APP_EN,
@@ -29,6 +30,7 @@ export const EN_MESSAGES = {
   ...CUSTOMER_EN,
   ...PARTNER_EN,
   ...STATUS_EN,
+  ...ADMIN_EN,
 } as const;
 
 export type MessageKey = keyof typeof EN_MESSAGES;
@@ -39,7 +41,8 @@ export const UR_MESSAGES: Readonly<Record<MessageKey, string>> = {
   ...CUSTOMER_UR,
   ...PARTNER_UR,
   ...STATUS_UR,
+  ...ADMIN_UR,
 };
 
-export const NAMESPACES = ['app', 'common', 'customer', 'partner', 'status'] as const;
+export const NAMESPACES = ['app', 'common', 'customer', 'partner', 'status', 'admin'] as const;
 export type Namespace = (typeof NAMESPACES)[number];

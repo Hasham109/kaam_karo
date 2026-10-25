@@ -44,7 +44,7 @@ Acceptance criteria and BP refs per task: docs/implementation.md §6 (same task 
 | T4.5 | Job execution: en route, arrived, in progress, extras (proposed), completion evidence, navigation hand-off | A12 + A06 | T3.4 | DONE | handoffs/T-4.5.md |
 | T4.6 | Customer side of execution: tracking, charge approval sheet, completion confirm | A11 | T4.5 | DONE | handoffs/T-4.6.md |
 | T4.7 | QA: provider journey E2E (BP §10) + joint customer/provider E2E | A16 | T4.1–T4.6 | DONE | handoffs/T-4.7.md |
-| T5.1 | Admin auth (separate path, MFA) + sub-role guards | A13 + A02 | T2.4 | TODO | — |
+| T5.1 | Admin auth (separate path, MFA) + sub-role guards | A13 + A02 | T2.4 | DONE | handoffs/T-5.1.md |
 | T5.2 | Users, provider verification queue, categories/services, city activation | A13 | T2.6, T3.6 | TODO | — |
 | T5.3 | Bookings, quotes exceptions, matching weights, badge rules, AI guidance editor | A13 | T3.5, T3.7 | TODO | — |
 | T5.4 | Audit log viewer, reports, marketplace health, AI interaction viewer, system health | A13 + A01 | T2.2 | TODO | — |
