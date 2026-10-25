@@ -16,7 +16,7 @@ import { usePartner } from '../state/PartnerContext';
 import { getAppMirroring } from '../utils/rtl';
 
 export function P04HomeScreen() {
-  const { locale, profile, resetToStart } = usePartner();
+  const { locale, profile, resetToStart, navigate } = usePartner();
   const mirroring = getAppMirroring(locale);
   const isUrdu = locale === 'ur';
   const fontStyle = isUrdu ? { fontFamily: URDU_FONT_FAMILY } : undefined;
@@ -45,9 +45,7 @@ export function P04HomeScreen() {
 
         <View style={styles.badgeRow}>
           <View style={styles.badge}>
-            <Text style={[styles.badgeText, fontStyle]}>
-              {providerTypeLabel}
-            </Text>
+            <Text style={[styles.badgeText, fontStyle]}>{providerTypeLabel}</Text>
           </View>
 
           <View style={styles.badgeSuccess}>
@@ -67,6 +65,79 @@ export function P04HomeScreen() {
             ? translate(locale, 'partner.p03.submitSuccess')
             : translate(locale, 'partner.banner.verificationNeeded')}
         </Text>
+
+        {/* Quick Menu to T4.2 Screens */}
+        <View style={styles.menuGrid}>
+          <TouchableOpacity
+            {...interactiveProps({
+              testID: 'p04-nav-p05-btn',
+              accessibilityRole: 'button',
+              accessibilityLabel: translate(locale, 'partner.p05.title'),
+            })}
+            style={[styles.menuBtn, minTapTargetStyle()]}
+            onPress={() => navigate('P05')}
+          >
+            <Text style={[styles.menuBtnText, fontStyle]}>
+              {translate(locale, 'partner.p05.title')}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            {...interactiveProps({
+              testID: 'p04-nav-p06-btn',
+              accessibilityRole: 'button',
+              accessibilityLabel: translate(locale, 'partner.p06.title'),
+            })}
+            style={[styles.menuBtn, minTapTargetStyle()]}
+            onPress={() => navigate('P06')}
+          >
+            <Text style={[styles.menuBtnText, fontStyle]}>
+              {translate(locale, 'partner.p06.title')}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            {...interactiveProps({
+              testID: 'p04-nav-p07-btn',
+              accessibilityRole: 'button',
+              accessibilityLabel: translate(locale, 'partner.p07.title'),
+            })}
+            style={[styles.menuBtn, minTapTargetStyle()]}
+            onPress={() => navigate('P07')}
+          >
+            <Text style={[styles.menuBtnText, fontStyle]}>
+              {translate(locale, 'partner.p07.title')}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            {...interactiveProps({
+              testID: 'p04-nav-p22-btn',
+              accessibilityRole: 'button',
+              accessibilityLabel: translate(locale, 'partner.p22.title'),
+            })}
+            style={[styles.menuBtn, minTapTargetStyle()]}
+            onPress={() => navigate('P22')}
+          >
+            <Text style={[styles.menuBtnText, fontStyle]}>
+              {translate(locale, 'partner.p22.title')}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            {...interactiveProps({
+              testID: 'p04-nav-p23-btn',
+              accessibilityRole: 'button',
+              accessibilityLabel: translate(locale, 'partner.p23.title'),
+            })}
+            style={[styles.menuBtn, minTapTargetStyle()]}
+            onPress={() => navigate('P23')}
+          >
+            <Text style={[styles.menuBtnText, fontStyle]}>
+              {translate(locale, 'partner.p23.title')}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity
           {...interactiveProps({
@@ -142,6 +213,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLOR.textMuted,
     lineHeight: 20,
+  },
+  menuGrid: {
+    width: '100%',
+    gap: SPACING.xs,
+    marginTop: SPACING.sm,
+  },
+  menuBtn: {
+    backgroundColor: STATUS_THEME.info.background,
+    borderWidth: 1,
+    borderColor: COLOR.primary,
+    borderRadius: RADIUS.sm,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuBtnText: {
+    color: COLOR.primary,
+    fontSize: 14,
+    fontWeight: '700',
   },
   resetBtn: {
     marginTop: SPACING.md,

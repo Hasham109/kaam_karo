@@ -1,5 +1,56 @@
 # CHANGELOG — Kaam Karo
 
+## 2026-10-25 — T4.2 Partner Services Setup, Availability, Overrides, Status Switch & Service Area (A12) — DONE
+- Partner Services, Availability, Date Overrides, Live Status Switch & Service Area across Screens P05–P07, P22, P23 (`BP §59`, `BP §13 P05–P07, P22, P23`; `ROLE-002`, `MATCH-ELIG-074..076`, `PRICE-001..005`, `FARE-001..002`, `AVAIL-001..007`, `LOC-GEO-003`, `LOC-GEO-006`, `G2`, `NOTIF-010`, `PERM-004`, `BP §57.4`, `D-018`, `PROV-CREW-005`):
+  - **P05 Service Setup Screen (`apps/partner/src/screens/P05ServiceSetupScreen.tsx`):**
+    - Active category picker (`Electrician`, `AC Repair`, `Plumbing`).
+    - Service listing and creation with pricing models (`FIXED`, `FROM`, `INSPECTION_QUOTE`).
+    - Price amount validation (> 0), visit fee, inspection fee, and deductible toggle.
+    - Publish / Stop offering status toggle.
+    - Verification level requirement badge (`BASIC`, `VERIFIED`, `BUSINESS_VERIFIED`).
+    - Crew size strictly prohibited from being a price input (`D-018`, `PROV-CREW-005`).
+    - Supports all 5 standard screen states (`loading`, `empty`, `success`, `error`, `pending`).
+  - **P06 Availability Screen (`apps/partner/src/screens/P06AvailabilityScreen.tsx`):**
+    - 7-day weekly schedule editor (Monday–Sunday) with working/off toggles.
+    - Working hours start and end inputs with validation (`endTime > startTime`).
+    - Break slots per day with non-overlapping validation.
+    - Emergency availability toggle per working day.
+    - Maximum concurrent active jobs capacity (integer ≥ 1 or empty for default).
+    - Quick navigation shortcuts to P23 (Change specific dates) and P22 (Live status).
+    - Supports all 5 canonical screen states.
+  - **P07 Service Area Screen (`apps/partner/src/screens/P07ServiceAreaScreen.tsx`):**
+    - Starting location center with place search in Lahore (Gulberg III default).
+    - Service radius selector pills (5, 10, 15, 20, 25 km).
+    - Active Lahore zones multi-select checkboxes (Gulberg, DHA, Model Town, Johar Town, Cantt, Faisal Town, Wapda Town, Bahria Town, Iqbal Town).
+    - Real-time coverage preview banner (`partner.p07.coveragePreview`).
+    - Offline fallback search capability (`LOC-GEO-006`).
+    - Zero GPS permissions requested (`G2`).
+    - Supports all 5 canonical screen states.
+  - **P22 Availability Status Switch (`apps/partner/src/screens/P22LiveStatusScreen.tsx`):**
+    - 5 live status choices: `ONLINE_AVAILABLE`, `BUSY`, `OFFLINE`, `SCHEDULED_ONLY`, `EMERGENCY_AVAILABLE`.
+    - Current status badge indicator.
+    - Blocked dispatch warning banner if partner is Online with basic verification only (`MATCH-ELIG-074`).
+    - In-context notification permission educational pre-prompt modal on first switch to Online (`OQ-026`, `NOTIF-010`, `PERM-004`).
+    - Zero background location tracking when provider is Online (`BP §57.4`).
+    - Supports all 5 canonical screen states.
+  - **P23 Date-specific Availability Overrides (`apps/partner/src/screens/P23DateOverridesScreen.tsx`):**
+    - Date selector input (`YYYY-MM-DD`).
+    - Override kind chips: `OPEN`, `CLOSED`, `LIMITED`, `FULLY_BOOKED`, `SPECIAL_HOURS`.
+    - Special working hours range inputs and validation.
+    - Max jobs input for limited capacity days (`OQ-071`).
+    - Upcoming date overrides list with remove override action.
+    - Supports all 5 canonical screen states.
+  - **i18n & Typography Compliance:**
+    - Complete localized message keys in `PARTNER_EN` and `PARTNER_UR` (`packages/i18n`).
+    - Noto Nastaliq Urdu (2.5× line-height ratio without clipping), RTL layout mirroring (`getAppMirroring`), and 48×48 dp minimum touch targets (`A11Y-002`, `minTapTargetStyle`).
+  - **Quality & Sign-off:**
+    - 26 unit and flow tests in `apps/partner/src/partner-services-availability.spec.ts` (46/46 partner app tests pass).
+    - TypeScript clean (`pnpm --filter @kaamkaro/partner typecheck`), ESLint clean (`pnpm --filter @kaamkaro/partner lint`).
+    - All 5 repository quality guards passed: `guard:permissions`, `guard:hardcoded`, `guard:string-lint` (49 UI files scanned, 0 hardcoded strings), `guard:transition-table`, `guard:traceability`.
+    - QA Sign-off: `docs/qa/T4.2-qa.md` (`QA PASS`).
+    - Security Review: `docs/security/SEC-REVIEW-T4.2.md` (`SEC PASS`).
+    - Task Handoff: `coordination/handoffs/T-4.2.md`.
+
 ## 2026-10-25 — T4.1 Partner Onboarding + Verification Upload / Document Picker (A12) — DONE
 - Partner Onboarding & Verification Flow across Screens P01, P02, P03, and P04 (BP §10 Steps 21–32, §22; `TRUST-VER-001..003`, `PROV-CREW-006`, `MEDIA-008`, `PERM-005`, `M-11`, `D-002`, `D-004`, `D-018`):
   - **P01 Provider Welcome Screen (`apps/partner/src/screens/P01WelcomeScreen.tsx`):**

@@ -1,7 +1,7 @@
 /**
- * Partner App Canonical Types (Task T4.1; BP §10, §13 P01–P03, §22; D-002, D-004, D-018).
+ * Partner App Canonical Types (Tasks T4.1, T4.2; BP §10, §13 P01–P07, P22, P23, §22, §59; D-002, D-004, D-018).
  */
-export type ScreenId = 'P01' | 'P02' | 'P03' | 'P04';
+export type ScreenId = 'P01' | 'P02' | 'P03' | 'P04' | 'P05' | 'P06' | 'P07' | 'P22' | 'P23';
 
 export type OnboardingMode = 'register' | 'login';
 
@@ -12,11 +12,7 @@ export type ProviderType = 'SOLO' | 'TEAM';
 export type VerificationLevel = 'BASIC' | 'VERIFIED' | 'BUSINESS_VERIFIED';
 
 export type DocumentStatus =
-  | 'NOT_UPLOADED'
-  | 'UPLOADED'
-  | 'UNDER_REVIEW'
-  | 'ACCEPTED'
-  | 'NEEDS_ACTION';
+  'NOT_UPLOADED' | 'UPLOADED' | 'UNDER_REVIEW' | 'ACCEPTED' | 'NEEDS_ACTION';
 
 export type DocumentType = 'CNIC_FRONT' | 'CNIC_BACK' | 'TRADE_CERT' | 'BUSINESS_REG';
 
@@ -51,3 +47,78 @@ export interface PartnerProfile {
 }
 
 export type ScreenStateMode = 'loading' | 'empty' | 'success' | 'error' | 'pending';
+
+// --- P05 Service Setup Types ---
+export type PriceModel = 'FIXED' | 'FROM' | 'INSPECTION_QUOTE';
+
+export type SellingMode = 'INSTANT' | 'CHOOSE_SUPPLIER' | 'REQUEST_QUOTES';
+
+export interface ProviderServiceItem {
+  id: string;
+  categoryId: string;
+  categoryName: string;
+  serviceId: string;
+  serviceName: string;
+  priceModel: PriceModel;
+  sellingModes: SellingMode[];
+  pricingUnit: string;
+  fixedPricePkr?: number | undefined;
+  startingPricePkr?: number | undefined;
+  visitFeePkr?: number | undefined;
+  inspectionFeePkr?: number | undefined;
+  inspectionDeductible?: boolean | undefined;
+  verificationNeeded: VerificationLevel;
+  published: boolean;
+}
+
+// --- P06 Availability Types ---
+export type DayOfWeek = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+export interface BreakTime {
+  start: string;
+  end: string;
+}
+
+export interface WeeklyDaySchedule {
+  dayOfWeek: DayOfWeek;
+  isWorking: boolean;
+  startTime: string;
+  endTime: string;
+  breaks: BreakTime[];
+  isEmergency: boolean;
+}
+
+export interface WeeklySchedule {
+  days: WeeklyDaySchedule[];
+  maxActiveJobs?: number | undefined;
+}
+
+// --- P07 Service Area Types ---
+export interface ServiceAreaCenter {
+  name: string;
+  latitude: number;
+  longitude: number;
+}
+
+export interface ServiceAreaConfig {
+  center: ServiceAreaCenter;
+  radiusKm: number;
+  selectedZones: string[];
+}
+
+// --- P22 Live Status Types ---
+export type LiveStatus =
+  'ONLINE_AVAILABLE' | 'BUSY' | 'OFFLINE' | 'SCHEDULED_ONLY' | 'EMERGENCY_AVAILABLE';
+
+// --- P23 Date-specific Overrides Types ---
+export type OverrideKind = 'OPEN' | 'CLOSED' | 'LIMITED' | 'FULLY_BOOKED' | 'SPECIAL_HOURS';
+
+export interface DateOverrideItem {
+  id: string;
+  date: string;
+  overrideKind: OverrideKind;
+  startTime?: string | undefined;
+  endTime?: string | undefined;
+  limitedMaxJobs?: number | undefined;
+  isEmergency?: boolean | undefined;
+}

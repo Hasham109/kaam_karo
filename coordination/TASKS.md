@@ -38,7 +38,7 @@ Acceptance criteria and BP refs per task: docs/implementation.md §6 (same task 
 | T3.11 | Voice assistant v1 (push-to-talk, intents only, confirmation dialogs) | A07 + A11 | T3.3, T3.9 | DONE | handoffs/T-3.11.md |
 | T3.12 | QA: customer journey E2E (BP §9 steps up to "Confirm request/booking") | A16 | T3.8–T3.11 | DONE | handoffs/T-3.12.md |
 | T4.1 | Partner onboarding + verification upload (document picker) | A12 | T2.4, T3.6 | DONE | handoffs/T-4.1.md |
-| T4.2 | Service setup, availability, overrides, status switch, service area | A12 | T3.6 | TODO | — |
+| T4.2 | Service setup, availability, overrides, status switch, service area | A12 | T3.6 | DONE | handoffs/T-4.2.md |
 | T4.3 | Incoming requests + job detail with media player; Accept/Quote/Ask/Decline ≤ 2 taps | A12 | T3.5, T3.7, T3.2 | TODO | — |
 | T4.4 | Quote builder with BP §58.1 line types + crew size; crew size also asked on Accept for instant bookings | A12 | T3.5 | TODO | — |
 | T4.5 | Job execution: en route, arrived, in progress, extras (proposed), completion evidence, navigation hand-off | A12 + A06 | T3.4 | TODO | — |
