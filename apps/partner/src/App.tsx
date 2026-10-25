@@ -13,6 +13,9 @@ import { P06AvailabilityScreen } from './screens/P06AvailabilityScreen';
 import { P07ServiceAreaScreen } from './screens/P07ServiceAreaScreen';
 import { P08JobRequestsScreen } from './screens/P08JobRequestsScreen';
 import { P09JobDetailScreen } from './screens/P09JobDetailScreen';
+import { P12JobExecutionScreen } from './screens/P12JobExecutionScreen';
+import { P13ExtrasMaterialsScreen } from './screens/P13ExtrasMaterialsScreen';
+import { P14CompletionEvidenceScreen } from './screens/P14CompletionEvidenceScreen';
 import { P22LiveStatusScreen } from './screens/P22LiveStatusScreen';
 import { P23DateOverridesScreen } from './screens/P23DateOverridesScreen';
 import { P24QuoteBuilderScreen } from './screens/P24QuoteBuilderScreen';
@@ -36,6 +39,9 @@ function PartnerAppContent() {
         {currentScreen === 'P07' && <P07ServiceAreaScreen />}
         {currentScreen === 'P08' && <P08JobRequestsScreen />}
         {currentScreen === 'P09' && <P09JobDetailScreen />}
+        {currentScreen === 'P12' && <P12JobExecutionScreen />}
+        {currentScreen === 'P13' && <P13ExtrasMaterialsScreen />}
+        {currentScreen === 'P14' && <P14CompletionEvidenceScreen />}
         {currentScreen === 'P22' && <P22LiveStatusScreen />}
         {currentScreen === 'P23' && <P23DateOverridesScreen />}
         {currentScreen === 'P24' && <P24QuoteBuilderScreen />}

@@ -4,13 +4,18 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 import type { Locale } from '@kaamkaro/i18n';
 import type {
+  CompletionEvidence,
   DateOverrideItem,
   DocumentItem,
   DocumentType,
+  ExecutionStatus,
+  FinalBillTotals,
   IncomingJobRequest,
   LiveStatus,
   OnboardingMode,
   PartnerProfile,
+  PaymentMethodChoice,
+  ProposedExtraLine,
   ProviderServiceItem,
   ProviderType,
   QuoteDraft,
@@ -108,6 +113,36 @@ interface PartnerContextValue {
   removeQuoteLine: (id: string) => void;
   updateQuoteMetadata: (updates: Partial<QuoteDraft>) => void;
   sendQuote: () => Promise<boolean>;
+
+  // --- T4.5 Job Execution, Extras & Completion Evidence ---
+  executionStatus: ExecutionStatus;
+  setExecutionStatus: (status: ExecutionStatus) => void;
+  isSharingLocation: boolean;
+  toggleLocationSharing: (sharing: boolean) => void;
+  startTrip: () => Promise<boolean>;
+  markArrived: () => Promise<boolean>;
+  startWork: () => Promise<boolean>;
+  finishJob: () => Promise<boolean>;
+  stopForSafety: () => Promise<boolean>;
+  reportCustomerNotHere: () => Promise<boolean>;
+  unpaidCommissionOwed: number;
+  setUnpaidCommissionOwed: (amount: number) => void;
+  hasPendingApproval: boolean;
+  proposedExtras: ProposedExtraLine[];
+  addProposedExtra: (
+    line: Omit<ProposedExtraLine, 'id' | 'status' | 'createdAt'>,
+  ) => Promise<boolean>;
+  approveExtraLine: (id: string) => void;
+  proposeCrewChange: (newCrewSize: number) => Promise<boolean>;
+  completionEvidence: CompletionEvidence;
+  updateCompletionNotes: (notes: string) => void;
+  addCompletionPhoto: (url: string) => void;
+  removeCompletionPhoto: (index: number) => void;
+  setCustomerSignature: (sig: string) => void;
+  setCompletionCode: (code: string) => void;
+  completeJobWithEvidence: () => Promise<boolean>;
+  recordPaymentMethod: (method: PaymentMethodChoice) => Promise<boolean>;
+  finalBillTotals: FinalBillTotals;
 }
 
 const INITIAL_DOCS: DocumentItem[] = [
@@ -361,6 +396,9 @@ export function PartnerProvider({ children }: { children: React.ReactNode }) {
     P08: 'empty',
     P09: 'empty',
     P10: 'empty',
+    P12: 'empty',
+    P13: 'empty',
+    P14: 'empty',
     P22: 'empty',
     P23: 'empty',
     P24: 'empty',
@@ -736,6 +774,236 @@ export function PartnerProvider({ children }: { children: React.ReactNode }) {
     return true;
   };
 
+  // --- T4.5 Job Execution, Extras & Completion State (BP §13 P12..P14, BP §57.4, §81, §58.1..2; FARE-003..012; D-003, D-006, D-016, D-030) ---
+  const [executionStatus, setExecutionStatus] = useState<ExecutionStatus>('SCHEDULED');
+  const [isSharingLocation, setIsSharingLocation] = useState<boolean>(false);
+  const [unpaidCommissionOwed, setUnpaidCommissionOwed] = useState<number>(0);
+  const [proposedExtras, setProposedExtras] = useState<ProposedExtraLine[]>([]);
+  const [completionEvidence, setCompletionEvidence] = useState<CompletionEvidence>({
+    workNotes: '',
+    photos: [],
+  });
+
+  const hasPendingApproval = useMemo(
+    () => proposedExtras.some((l) => l.status === 'PROPOSED'),
+    [proposedExtras],
+  );
+
+  const startTrip = async (): Promise<boolean> => {
+    if (unpaidCommissionOwed > 0) {
+      setScreenState('P12', 'error');
+      return false;
+    }
+    setScreenState('P12', 'loading');
+    await new Promise((r) => setTimeout(r, 50));
+    setExecutionStatus('EN_ROUTE');
+    setIsSharingLocation(true); // BP §57.4, §81: Location only shared during active job (En Route)
+    setScreenState('P12', 'success');
+    return true;
+  };
+
+  const markArrived = async (): Promise<boolean> => {
+    setScreenState('P12', 'loading');
+    await new Promise((r) => setTimeout(r, 50));
+    setExecutionStatus('ARRIVED');
+    setIsSharingLocation(false); // BP §57.4, LOC-GEO-007: location sharing terminates on Arrived
+    setScreenState('P12', 'success');
+    return true;
+  };
+
+  const startWork = async (): Promise<boolean> => {
+    if (unpaidCommissionOwed > 0) {
+      setScreenState('P12', 'error');
+      return false;
+    }
+    setScreenState('P12', 'loading');
+    await new Promise((r) => setTimeout(r, 50));
+    setExecutionStatus('IN_PROGRESS');
+    setIsSharingLocation(false);
+    setScreenState('P12', 'success');
+    return true;
+  };
+
+  const finishJob = async (): Promise<boolean> => {
+    navigate('P14');
+    return true;
+  };
+
+  const stopForSafety = async (): Promise<boolean> => {
+    setScreenState('P12', 'loading');
+    await new Promise((r) => setTimeout(r, 50));
+    // Safety stop: Arrived -> CANCELLED, In Progress -> DISPUTED (BOOK-CANCEL-006)
+    if (executionStatus === 'ARRIVED') {
+      setExecutionStatus('CANCELLED');
+    } else {
+      setExecutionStatus('DISPUTED');
+    }
+    setIsSharingLocation(false);
+    setScreenState('P12', 'success');
+    return true;
+  };
+
+  const reportCustomerNotHere = async (): Promise<boolean> => {
+    setScreenState('P12', 'loading');
+    await new Promise((r) => setTimeout(r, 50));
+    setExecutionStatus('CANCELLED');
+    setIsSharingLocation(false);
+    setScreenState('P12', 'success');
+    return true;
+  };
+
+  const toggleLocationSharing = (sharing: boolean) => {
+    // Only allowed while EN_ROUTE (BP §57.4, LOC-GEO-007)
+    if (executionStatus === 'EN_ROUTE') {
+      setIsSharingLocation(sharing);
+    } else {
+      setIsSharingLocation(false);
+    }
+  };
+
+  const addProposedExtra = async (
+    line: Omit<ProposedExtraLine, 'id' | 'status' | 'createdAt'>,
+  ): Promise<boolean> => {
+    setScreenState('P13', 'loading');
+    await new Promise((r) => setTimeout(r, 50));
+    const newLine: ProposedExtraLine = {
+      ...line,
+      id: `extra_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      status: 'PROPOSED', // FARE-012: Provider can only propose, never payable until customer approves
+      createdAt: new Date().toISOString(),
+    };
+    setProposedExtras((prev) => [...prev, newLine]);
+    setScreenState('P13', 'success');
+    return true;
+  };
+
+  const approveExtraLine = (id: string) => {
+    setProposedExtras((prev) => prev.map((l) => (l.id === id ? { ...l, status: 'APPROVED' } : l)));
+  };
+
+  const proposeCrewChange = async (newCrewSize: number): Promise<boolean> => {
+    setScreenState('P13', 'loading');
+    await new Promise((r) => setTimeout(r, 50));
+    const newLine: ProposedExtraLine = {
+      id: `crew_change_${Date.now()}`,
+      lineType: 'LABOUR_SERVICE',
+      description: `Crew size change to ${newCrewSize} workers`,
+      amountPkr: 0,
+      quantity: newCrewSize,
+      status: 'PROPOSED', // PROV-CREW-004
+      createdAt: new Date().toISOString(),
+    };
+    setProposedExtras((prev) => [...prev, newLine]);
+    setScreenState('P13', 'success');
+    return true;
+  };
+
+  const updateCompletionNotes = (notes: string) => {
+    setCompletionEvidence((prev) => ({ ...prev, workNotes: notes }));
+  };
+
+  const addCompletionPhoto = (url: string) => {
+    setCompletionEvidence((prev) => ({ ...prev, photos: [...prev.photos, url] }));
+  };
+
+  const removeCompletionPhoto = (index: number) => {
+    setCompletionEvidence((prev) => ({
+      ...prev,
+      photos: prev.photos.filter((_, i) => i !== index),
+    }));
+  };
+
+  const setCustomerSignature = (sig: string) => {
+    setCompletionEvidence((prev) => ({ ...prev, customerSignature: sig }));
+  };
+
+  const setCompletionCode = (code: string) => {
+    setCompletionEvidence((prev) => ({ ...prev, completionCode: code }));
+  };
+
+  const completeJobWithEvidence = async (): Promise<boolean> => {
+    setScreenState('P14', 'loading');
+    await new Promise((r) => setTimeout(r, 50));
+    setExecutionStatus('COMPLETED'); // D-003: job moves to Completed first
+    setIsSharingLocation(false);
+    setCompletionEvidence((prev) => ({
+      ...prev,
+      completedAt: new Date().toISOString(),
+    }));
+    setScreenState('P14', 'success');
+    return true;
+  };
+
+  const finalBillTotals = useMemo<FinalBillTotals>(() => {
+    const baseLabour = selectedJob?.pricePkr ?? 1500;
+    let extraLabour = 0;
+    let materials = 0;
+    let tools = 0;
+    let discount = 0;
+
+    // Only APPROVED or FINAL lines count towards bill (FARE-012, PRICE-007)
+    for (const line of proposedExtras) {
+      if (line.status !== 'APPROVED' && line.status !== 'FINAL') {
+        continue;
+      }
+      if (line.lineType === 'DISCOUNT') {
+        discount += Math.abs(line.amountPkr);
+      } else if (
+        line.lineType === 'LABOUR_SERVICE' ||
+        line.lineType === 'EMERGENCY_AFTER_HOURS' ||
+        line.lineType === 'TRAVEL_DISTANCE'
+      ) {
+        extraLabour += line.amountPkr;
+      } else if (line.lineType === 'PARTS_MATERIALS' || line.lineType === 'CONSUMABLES') {
+        materials += line.amountPkr;
+      } else if (line.lineType === 'TOOLS_EQUIPMENT') {
+        tools += line.amountPkr;
+      }
+    }
+
+    const labourPkr = Math.max(0, baseLabour + extraLabour);
+    const materialsPkr = materials;
+    const taxPkr = 0; // Tax Rs. 0 while rules not set (D-029)
+    const subtotal = labourPkr + materialsPkr + tools - discount;
+    const customerTotalPkr = Math.max(0, subtotal);
+    // Commission: 30% on labour lines only (D-006, D-015, COMM-004)
+    const commissionRatePct = 30;
+    const commissionPkr = Math.round(labourPkr * 0.3);
+    const providerSharePkr = Math.max(0, customerTotalPkr - commissionPkr);
+
+    return {
+      customerTotalPkr,
+      labourPkr,
+      materialsPkr,
+      taxPkr,
+      commissionPkr,
+      providerSharePkr,
+      commissionRatePct,
+    };
+  }, [selectedJob, proposedExtras]);
+
+  const recordPaymentMethod = async (method: PaymentMethodChoice): Promise<boolean> => {
+    setScreenState('P14', 'loading');
+    await new Promise((r) => setTimeout(r, 50));
+    if (method === 'CASH') {
+      // Cash confirmation debits commission from balance (D-006, COMM-001)
+      const commDebited = finalBillTotals.commissionPkr;
+      setCompletionEvidence((prev) => ({
+        ...prev,
+        paymentMethod: 'CASH',
+        cashCommissionDebited: commDebited,
+      }));
+    } else {
+      setCompletionEvidence((prev) => ({
+        ...prev,
+        paymentMethod: 'DIGITAL',
+        digitalStatus: 'WAITING',
+      }));
+    }
+    setScreenState('P14', 'success');
+    return true;
+  };
+
   const resetToStart = () => {
     setProfile(null);
     setPhone('');
@@ -747,6 +1015,10 @@ export function PartnerProvider({ children }: { children: React.ReactNode }) {
     setDocuments(INITIAL_DOCS);
     setRegStep('phone');
     setOnboardingMode('register');
+    setExecutionStatus('SCHEDULED');
+    setIsSharingLocation(false);
+    setProposedExtras([]);
+    setCompletionEvidence({ workNotes: '', photos: [] });
     setScreenHistory(['P01']);
     setCurrentScreen('P01');
   };
@@ -828,6 +1100,34 @@ export function PartnerProvider({ children }: { children: React.ReactNode }) {
       removeQuoteLine,
       updateQuoteMetadata,
       sendQuote,
+
+      // T4.5
+      executionStatus,
+      setExecutionStatus,
+      isSharingLocation,
+      toggleLocationSharing,
+      startTrip,
+      markArrived,
+      startWork,
+      finishJob,
+      stopForSafety,
+      reportCustomerNotHere,
+      unpaidCommissionOwed,
+      setUnpaidCommissionOwed,
+      hasPendingApproval,
+      proposedExtras,
+      addProposedExtra,
+      approveExtraLine,
+      proposeCrewChange,
+      completionEvidence,
+      updateCompletionNotes,
+      addCompletionPhoto,
+      removeCompletionPhoto,
+      setCustomerSignature,
+      setCompletionCode,
+      completeJobWithEvidence,
+      recordPaymentMethod,
+      finalBillTotals,
     }),
     [
       locale,
@@ -859,6 +1159,13 @@ export function PartnerProvider({ children }: { children: React.ReactNode }) {
       isPlayingMedia,
       quoteDraft,
       quoteTotals,
+      executionStatus,
+      isSharingLocation,
+      unpaidCommissionOwed,
+      hasPendingApproval,
+      proposedExtras,
+      completionEvidence,
+      finalBillTotals,
     ],
   );
 

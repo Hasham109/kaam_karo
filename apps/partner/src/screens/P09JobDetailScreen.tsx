@@ -286,7 +286,7 @@ export function P09JobDetailScreen() {
                   accessibilityLabel: translate(locale, 'partner.p09.goToJob'),
                 })}
                 style={[styles.primaryActionBtn, minTapTargetStyle()]}
-                onPress={() => navigate('P04')}
+                onPress={() => navigate('P12')}
               >
                 <Text style={[styles.primaryActionBtnText, fontStyle]}>
                   {translate(locale, 'partner.p09.goToJob')}

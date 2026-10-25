@@ -12,6 +12,9 @@ export type ScreenId =
   | 'P08'
   | 'P09'
   | 'P10'
+  | 'P12'
+  | 'P13'
+  | 'P14'
   | 'P22'
   | 'P23'
   | 'P24'
@@ -213,4 +216,64 @@ export interface QuoteTotals {
   totalCustomerPkr: number;
   commissionPkr: number;
   providerSharePkr: number;
+}
+
+// --- P12 / P13 / P14 Job Execution, Extras & Completion Types (Task T4.5; BP §13 P12..P14, BP §57.4, §81, §58.1..2; FARE-003..012; D-003, D-006, D-016, D-030) ---
+export type ExecutionStatus =
+  | 'SCHEDULED'
+  | 'EN_ROUTE'
+  | 'ARRIVED'
+  | 'IN_PROGRESS'
+  | 'COMPLETED'
+  | 'AWAITING_APPROVAL'
+  | 'CANCELLED'
+  | 'DISPUTED';
+
+export type ExtraLineType =
+  | 'LABOUR_SERVICE'
+  | 'TOOLS_EQUIPMENT'
+  | 'CONSUMABLES'
+  | 'PARTS_MATERIALS'
+  | 'EMERGENCY_AFTER_HOURS'
+  | 'TRAVEL_DISTANCE'
+  | 'DISCOUNT';
+
+export type ExtraLineStatus = 'PROPOSED' | 'APPROVED' | 'REJECTED' | 'FINAL';
+
+export interface ProposedExtraLine {
+  id: string;
+  lineType: ExtraLineType;
+  description: string;
+  quantity?: number | undefined;
+  unit?: string | undefined;
+  amountPkr: number;
+  toolsReason?: string | undefined;
+  materialsClass?: MaterialsClass | undefined;
+  status: ExtraLineStatus;
+  createdAt: string;
+}
+
+export type PaymentMethodChoice = 'CASH' | 'DIGITAL';
+
+export type DigitalPaymentStatus = 'WAITING' | 'PAID' | 'NOT_RECEIVED';
+
+export interface CompletionEvidence {
+  workNotes: string;
+  photos: string[];
+  customerSignature?: string | undefined;
+  completionCode?: string | undefined;
+  paymentMethod?: PaymentMethodChoice | undefined;
+  digitalStatus?: DigitalPaymentStatus | undefined;
+  cashCommissionDebited?: number | undefined;
+  completedAt?: string | undefined;
+}
+
+export interface FinalBillTotals {
+  customerTotalPkr: number;
+  labourPkr: number;
+  materialsPkr: number;
+  taxPkr: number;
+  commissionPkr: number;
+  providerSharePkr: number;
+  commissionRatePct: number;
 }
