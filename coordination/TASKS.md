@@ -46,7 +46,7 @@ Acceptance criteria and BP refs per task: docs/implementation.md §6 (same task 
 | T4.7 | QA: provider journey E2E (BP §10) + joint customer/provider E2E | A16 | T4.1–T4.6 | DONE | handoffs/T-4.7.md |
 | T5.1 | Admin auth (separate path, MFA) + sub-role guards | A13 + A02 | T2.4 | DONE | handoffs/T-5.1.md |
 | T5.2 | Users, provider verification queue, categories/services, city activation | A13 | T2.6, T3.6 | DONE | handoffs/T-5.2.md |
-| T5.3 | Bookings, quotes exceptions, matching weights, badge rules, AI guidance editor | A13 | T3.5, T3.7 | TODO | — |
+| T5.3 | Bookings, quotes exceptions, matching weights, badge rules, AI guidance editor | A13 | T3.5, T3.7 | DONE | handoffs/T-5.3.md |
 | T5.4 | Audit log viewer, reports, marketplace health, AI interaction viewer, system health | A13 + A01 | T2.2 | TODO | — |
 | T6.1 | Payment state model: cash + digital (fake gateway), idempotent initiation, **payment allowed only after `Completed`** (D-003) | A09 | T3.4 | TODO | — |
 | T6.2 | Commission split from config `commission.rate = 0.30` (D-006) on labour lines only (D-015), per-party fee display data | A09 + A03 | T6.1 | TODO | — |
