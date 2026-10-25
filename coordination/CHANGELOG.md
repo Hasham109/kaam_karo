@@ -1,5 +1,20 @@
 # CHANGELOG — Kaam Karo
 
+## 2026-10-25 — Bug Sweep Phase 3 (A17) — PASS
+- Phase 3 Comprehensive Bug Sweep (`docs/qa/bug-sweep-phase3.md`):
+  - Completed IMPL §7.3 audit checklist covering all Phase 3 modules: Location (`T3.1`), Media (`T3.2`), IntakeAI (`T3.3`), Booking State Machine (`T3.4`), Quotes & Fare Lines (`T3.5`), Availability (`T3.6`), Matching Engine (`T3.7`), Customer App Core UI (`T3.8`), Intake & Media UI (`T3.9`), Quotes & Booking UI (`T3.10`), Voice Assistant v1 (`T3.11`), and Customer Journey E2E (`T3.12`).
+  - Section A (Rule Integrity): 0 illegal transitions reachable; booking transitions ⊆ ARCH §6.1 canonical matrix (289 pairs checked, 38 allowed, 251 rejected); client status tampering blocked; unapproved fare lines non-payable (`FARE-012`, `PRICE-007`); `crew_size` decoupled from pricing/commission (`D-018`); customer choice guaranteed with zero auto-assignment (`D-005`); commission strictly restricted to approved labor (`D-015`); unpaid commission blocked from matching and booking (`D-020`, `D-021`); Voice Assistant v1 enforces mandatory confirmation dialogs for all 5 consequential actions (`VOICE-007`) and strict allow-list boundary (`VOICE-008`).
+  - Section B (Money & Data): `REL-008` forced re-run idempotency verified; append-only triggers protect ledger, audit log, and location snapshots; address edits do not leak into historical bookings (`PROF-ADDR-002`); PII scrubbing verified.
+  - Section C (Privacy & Permissions): JIT educational permission modals (`PERM-JUST-001..004`); 0 forbidden permissions in manifests; coarse service-zone map notice (`BP §52.2`); private S3 media storage with signed URLs (`BP §34`); 0 secrets in git history or client bundles.
+  - Section D (Reliability): Operational fallbacks on all inputs (AI, mic, camera, GPS, Maps); draft state preserved across upload failures (`MEDIA-009`); optimistic concurrency locking on booking transitions.
+  - Section E (Language & Accessibility): 39 UI files checked by `guard:string-lint` with 0 hardcoded strings and 100% catalog synchronization; RTL layout mirroring and Noto Nastaliq Urdu (2.5× line height) verified; 48×48 dp minimum touch targets verified (`A11Y-002`); device matrix compliance (width ≤ 360 dp).
+  - Section F (Contracts): 11 OpenAPI 3.1.0 specifications validated; 41/41 contract test probes pass.
+  - Regression & Verification Status:
+    - 0 open S1/S2 bugs found across Phase 3.
+    - 4 pre-existing S3/S4 edge case bugs (`BUG-0001..BUG-0004`) remain tracked in `coordination/BUGS.md` for resolution before Phase 6.
+    - Verification: 14 turbo tasks pass, 155 DB tests pass, 110 customer app tests pass, 317 API unit/e2e tests pass, 41 contract tests pass, 5/5 repository quality guards pass.
+  - Verdict: **SWEEP PASS**. Phase 3 Customer MVP is formally cleared for Gate G2.
+
 ## 2026-10-25 — T3.12 Customer Journey E2E (A16) — DONE
 - Customer Journey End-to-End Test Suites (BP §9 Steps 11–20, C40 Supply Gap, C38 Voice Flow; `JOURNEY-001`):
   - Vitest Automated E2E Suite (`apps/customer/src/customer-journey-e2e.spec.ts`):
