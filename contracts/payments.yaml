@@ -1,0 +1,301 @@
+openapi: 3.1.0
+info:
+  title: Payments & Settlement Service
+  description: >
+    Payment state model supporting cash recording and digital payments via gateway abstraction,
+    post-completion timing gating (D-003), and idempotent initiation (ARCH §4 M11, §6.8;
+    BP §17, §25, §26, §31.2; PAY-001..003, PAY-008, PAY-TIMING-001, LEDGER-001..002).
+  version: 0.1.0
+
+paths:
+  /v1/payments/initiate:
+    post:
+      summary: Initiate payment for completed booking
+      description: >
+        Initiates a payment for a completed booking. Payment initiation is permitted strictly
+        after the booking status is COMPLETED (D-003, PAY-TIMING-001). Double-tap requests with
+        the same idempotencyKey return the existing payment without duplication (PAY-002).
+      operationId: initiatePayment
+      x-requirement-ids:
+        - PAY-001
+        - PAY-002
+        - PAY-008
+        - PAY-TIMING-001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitiatePaymentRequest'
+      responses:
+        '201':
+          description: Payment initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Payment not allowed before completion or already settled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/payments/confirm:
+    post:
+      summary: Confirm or fail digital payment via gateway
+      description: >
+        Processes gateway result callback or confirmation. Creates an immutable append-only payment row
+        recording the updated financial state (PAY-001, PAY-003).
+      operationId: confirmDigitalPayment
+      x-requirement-ids:
+        - PAY-001
+        - PAY-003
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmPaymentRequest'
+      responses:
+        '200':
+          description: Digital payment confirmed or marked failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '400':
+          description: Invalid confirmation data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Payment reference not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/payments/cash-record:
+    post:
+      summary: Provider record cash payment at billing
+      description: >
+        Records that the completed booking was paid in cash to the provider (D-016, D-030).
+        CASH can be recorded only when no confirmed digital payment exists (LEDGER-002) and
+        strictly after completion (D-003, PAY-TIMING-001).
+      operationId: recordCashPayment
+      x-requirement-ids:
+        - PAY-001
+        - PAY-TIMING-001
+        - LEDGER-001
+        - LEDGER-002
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordCashPaymentRequest'
+      responses:
+        '201':
+          description: Cash payment recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '400':
+          description: Invalid cash payment data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Caller is not the assigned provider
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Booking not completed or digital payment already settled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/payments/booking/{bookingId}:
+    get:
+      summary: Retrieve payment status for a booking
+      description: >
+        Returns current payment state and history for a given booking (PAY-001, PAY-003).
+      operationId: getBookingPayment
+      x-requirement-ids:
+        - PAY-001
+        - PAY-003
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Payment status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentStatusResponse'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+components:
+  schemas:
+    InitiatePaymentRequest:
+      type: object
+      required:
+        - bookingId
+        - method
+      properties:
+        bookingId:
+          type: string
+          format: uuid
+        method:
+          type: string
+          enum: [DIGITAL, CASH]
+        amountMinor:
+          type: integer
+          minimum: 1
+          description: Optional expected bill amount in PKR minor units (paisa)
+        idempotencyKey:
+          type: string
+          description: Idempotency token to prevent double-tap payment initiation (REL-008)
+
+    ConfirmPaymentRequest:
+      type: object
+      required:
+        - paymentRef
+        - gatewayRef
+        - success
+      properties:
+        paymentRef:
+          type: string
+          format: uuid
+        gatewayRef:
+          type: string
+        success:
+          type: boolean
+        failureReason:
+          type: string
+
+    RecordCashPaymentRequest:
+      type: object
+      required:
+        - bookingId
+      properties:
+        bookingId:
+          type: string
+          format: uuid
+        amountMinor:
+          type: integer
+          minimum: 1
+        notes:
+          type: string
+
+    PaymentResponse:
+      type: object
+      required:
+        - paymentRef
+        - bookingId
+        - method
+        - status
+        - amountMinor
+        - occurredAt
+      properties:
+        paymentRef:
+          type: string
+          format: uuid
+        bookingId:
+          type: string
+          format: uuid
+        customerProfileId:
+          type: string
+          format: uuid
+        providerProfileId:
+          type: string
+          format: uuid
+        method:
+          type: string
+          enum: [CASH, DIGITAL]
+        status:
+          type: string
+          enum: [CASH_RECORDED, PENDING, SUCCEEDED, FAILED]
+        amountMinor:
+          type: integer
+          description: Bill amount in PKR minor units (paisa)
+        gatewayRef:
+          type: string
+        checkoutUrl:
+          type: string
+        occurredAt:
+          type: string
+          format: date-time
+        isSettled:
+          type: boolean
+
+    PaymentStatusResponse:
+      type: object
+      required:
+        - bookingId
+        - hasPayment
+        - isSettled
+      properties:
+        bookingId:
+          type: string
+          format: uuid
+        hasPayment:
+          type: boolean
+        isSettled:
+          type: boolean
+        currentStatus:
+          type: string
+          enum: [CASH_RECORDED, PENDING, SUCCEEDED, FAILED]
+        method:
+          type: string
+          enum: [CASH, DIGITAL]
+        amountMinor:
+          type: integer
+        paidByLabel:
+          type: string
+          description: Customer display string e.g. "Cash to Provider" or "Digital via Gateway" (D-030)
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentResponse'
+
+    ErrorEnvelope:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object

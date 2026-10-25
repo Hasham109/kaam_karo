@@ -19,6 +19,7 @@ import { ProfilesModule } from './modules/profiles';
 import { QuotesModule } from './modules/quotes';
 import { IntakeModule } from './modules/intake';
 import { MatchingModule } from './modules/matching';
+import { PaymentsModule } from './modules/payments';
 import { PlatformModule } from './platform';
 
 @Module({})
@@ -47,6 +48,7 @@ export class AppModule {
         QuotesModule,
         IntakeModule,
         MatchingModule,
+        PaymentsModule,
       ],
       // RQ-008 item 5: refuse to start in staging/production without the security limits.
       providers: [FailClosedStartupCheck],
