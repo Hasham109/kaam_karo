@@ -2,14 +2,7 @@
  * P02 — Provider Registration & Login Screen (Task T4.1; BP §13 P02, D-002, D-004, D-018; SEC-AUTH-001, UX-SCREEN-004).
  */
 import { useState } from 'react';
-import {
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-  ScrollView,
-} from 'react-native';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View, ScrollView } from 'react-native';
 import { isolatePhone, translate } from '@kaamkaro/i18n';
 import {
   COLOR,
@@ -123,9 +116,7 @@ export function P02RegistrationScreen() {
         >
           {translate(
             locale,
-            onboardingMode === 'register'
-              ? 'partner.p02.titleRegister'
-              : 'partner.p02.titleLogin',
+            onboardingMode === 'register' ? 'partner.p02.titleRegister' : 'partner.p02.titleLogin',
           )}
         </Text>
       </View>
@@ -158,11 +149,7 @@ export function P02RegistrationScreen() {
               <Text style={styles.prefixText}>+92</Text>
             </View>
             <TextInput
-              style={[
-                styles.textInput,
-                styles.flex1,
-                { textAlign: mirroring.textAlign },
-              ]}
+              style={[styles.textInput, styles.flex1, { textAlign: mirroring.textAlign }]}
               testID="p02-phone-input"
               keyboardType="phone-pad"
               placeholder={translate(locale, 'partner.p02.phonePlaceholder')}

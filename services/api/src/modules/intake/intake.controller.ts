@@ -37,9 +37,7 @@ export class IntakeController {
   @Public()
   @Post('interpret')
   @HttpCode(HttpStatus.OK)
-  async interpret(
-    @Body() body: InterpretIntentInput,
-  ): Promise<InterpretIntentResponse> {
+  async interpret(@Body() body: InterpretIntentInput): Promise<InterpretIntentResponse> {
     return this.intakeService.interpret(body);
   }
 
@@ -49,9 +47,7 @@ export class IntakeController {
   @Public()
   @Post('requests')
   @HttpCode(HttpStatus.CREATED)
-  async createRequest(
-    @Body() body: CreateCustomerRequestDto,
-  ): Promise<CustomerRequestResponse> {
+  async createRequest(@Body() body: CreateCustomerRequestDto): Promise<CustomerRequestResponse> {
     return this.intakeService.createRequest(body);
   }
 
@@ -60,9 +56,7 @@ export class IntakeController {
    */
   @Public()
   @Get('requests/:id')
-  async getRequest(
-    @Param('id') id: string,
-  ): Promise<CustomerRequestResponse> {
+  async getRequest(@Param('id') id: string): Promise<CustomerRequestResponse> {
     return this.intakeService.getRequest(id);
   }
 

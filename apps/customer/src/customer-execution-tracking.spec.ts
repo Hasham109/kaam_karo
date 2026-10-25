@@ -411,7 +411,11 @@ describe('[T4.6] Customer Execution Tracking Suite', () => {
       ] as const;
 
       for (const key of urduKeys) {
-        const text = translate('ur', key as any, { time: '3:00 PM', n: 2 } as any);
+        const text = translate(
+          'ur',
+          key as Parameters<typeof translate>[1],
+          { time: '3:00 PM', n: 2 } as Parameters<typeof translate>[2],
+        );
         expect(ARABIC_SCRIPT.test(text)).toBe(true);
       }
     });

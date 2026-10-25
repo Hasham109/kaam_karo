@@ -2,13 +2,7 @@
  * P03 — Provider Verification & Document Upload Screen (Task T4.1; BP §13 P03, §22; TRUST-VER-001..003, PROV-CREW-006, M-11).
  */
 import { useState } from 'react';
-import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  ScrollView,
-} from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, ScrollView } from 'react-native';
 import { translate } from '@kaamkaro/i18n';
 import {
   COLOR,
@@ -64,9 +58,7 @@ export function P03VerificationScreen() {
   if (currentState === 'empty' && documents.length === 0) {
     return (
       <View style={styles.centerContainer} testID="p03-empty-view">
-        <Text style={[styles.emptyText, fontStyle]}>
-          {translate(locale, 'partner.p03.empty')}
-        </Text>
+        <Text style={[styles.emptyText, fontStyle]}>{translate(locale, 'partner.p03.empty')}</Text>
       </View>
     );
   }
@@ -84,9 +76,7 @@ export function P03VerificationScreen() {
   const handleSubmit = async () => {
     setErrorMessage(null);
     const requiredDocs = documents.filter((d) => d.required);
-    const missingDocs = requiredDocs.filter(
-      (d) => d.status === 'NOT_UPLOADED',
-    );
+    const missingDocs = requiredDocs.filter((d) => d.status === 'NOT_UPLOADED');
     if (missingDocs.length > 0) {
       setErrorMessage(translate(locale, 'partner.p03.allDocsRequired'));
       return;
@@ -127,9 +117,7 @@ export function P03VerificationScreen() {
 
     return (
       <View style={[styles.statusChip, chipStyle]}>
-        <Text style={[styles.statusChipText, fontStyle]}>
-          {translate(locale, labelKey)}
-        </Text>
+        <Text style={[styles.statusChipText, fontStyle]}>{translate(locale, labelKey)}</Text>
       </View>
     );
   };
@@ -143,24 +131,14 @@ export function P03VerificationScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text
-          style={[
-            styles.title,
-            headlineTokens,
-            fontStyle,
-            { textAlign: mirroring.textAlign },
-          ]}
+          style={[styles.title, headlineTokens, fontStyle, { textAlign: mirroring.textAlign }]}
           testID="p03-title"
         >
           {translate(locale, 'partner.p03.title')}
         </Text>
 
         <Text
-          style={[
-            styles.subtitle,
-            bodyTokens,
-            fontStyle,
-            { textAlign: mirroring.textAlign },
-          ]}
+          style={[styles.subtitle, bodyTokens, fontStyle, { textAlign: mirroring.textAlign }]}
           testID="p03-subtitle"
         >
           {translate(locale, 'partner.p03.subtitle')}
@@ -168,10 +146,7 @@ export function P03VerificationScreen() {
 
         {/* Current Level Chip */}
         <View
-          style={[
-            styles.levelBadgeContainer,
-            { flexDirection: mirroring.row },
-          ]}
+          style={[styles.levelBadgeContainer, { flexDirection: mirroring.row }]}
           testID="p03-level-chip"
         >
           <Text style={[styles.levelLabel, fontStyle]}>
@@ -181,13 +156,7 @@ export function P03VerificationScreen() {
 
         {/* Team Leader Note (D-018) */}
         <View style={styles.teamLeaderBanner} testID="p03-team-leader-note">
-          <Text
-            style={[
-              styles.teamLeaderText,
-              fontStyle,
-              { textAlign: mirroring.textAlign },
-            ]}
-          >
+          <Text style={[styles.teamLeaderText, fontStyle, { textAlign: mirroring.textAlign }]}>
             {translate(locale, 'partner.p03.teamLeaderNote')}
           </Text>
         </View>
@@ -202,55 +171,27 @@ export function P03VerificationScreen() {
 
       {/* Required Documents Section */}
       <View style={styles.docsSection} testID="p03-docs-section">
-        <Text
-          style={[
-            styles.sectionHeading,
-            fontStyle,
-            { textAlign: mirroring.textAlign },
-          ]}
-        >
+        <Text style={[styles.sectionHeading, fontStyle, { textAlign: mirroring.textAlign }]}>
           {translate(locale, 'partner.p03.requiredDocsHeading')}
         </Text>
 
         {documents.map((doc) => {
           const testIdSuffix = doc.id.toLowerCase().replace(/_/g, '-');
           return (
-            <View
-              key={doc.id}
-              style={styles.docCard}
-              testID={`p03-doc-card-${testIdSuffix}`}
-            >
-              <View
-                style={[
-                  styles.docHeader,
-                  { flexDirection: mirroring.row },
-                ]}
-              >
+            <View key={doc.id} style={styles.docCard} testID={`p03-doc-card-${testIdSuffix}`}>
+              <View style={[styles.docHeader, { flexDirection: mirroring.row }]}>
                 <View style={styles.docTitleBlock}>
-                  <Text
-                    style={[
-                      styles.docTitle,
-                      fontStyle,
-                      { textAlign: mirroring.textAlign },
-                    ]}
-                  >
+                  <Text style={[styles.docTitle, fontStyle, { textAlign: mirroring.textAlign }]}>
                     {translate(locale, doc.titleKey)}
                   </Text>
-                  {doc.required && (
-                    <Text style={[styles.requiredBadge, fontStyle]}>
-                      *
-                    </Text>
-                  )}
+                  {doc.required && <Text style={[styles.requiredBadge, fontStyle]}>*</Text>}
                 </View>
                 {renderStatusChip(doc.status)}
               </View>
 
               {doc.fileName && (
                 <Text
-                  style={[
-                    styles.fileHint,
-                    { textAlign: mirroring.textAlign },
-                  ]}
+                  style={[styles.fileHint, { textAlign: mirroring.textAlign }]}
                   testID={`p03-file-hint-${testIdSuffix}`}
                 >
                   {translate(locale, 'partner.p03.fileSize', {
@@ -261,16 +202,9 @@ export function P03VerificationScreen() {
               )}
 
               {doc.reviewerNote && (
-                <View
-                  style={styles.reviewerNoteBox}
-                  testID={`p03-reviewer-note-${testIdSuffix}`}
-                >
+                <View style={styles.reviewerNoteBox} testID={`p03-reviewer-note-${testIdSuffix}`}>
                   <Text
-                    style={[
-                      styles.reviewerNoteText,
-                      fontStyle,
-                      { textAlign: mirroring.textAlign },
-                    ]}
+                    style={[styles.reviewerNoteText, fontStyle, { textAlign: mirroring.textAlign }]}
                   >
                     {translate(locale, 'partner.p03.reviewerNote', {
                       text: doc.reviewerNote,
@@ -279,12 +213,7 @@ export function P03VerificationScreen() {
                 </View>
               )}
 
-              <View
-                style={[
-                  styles.docActionRow,
-                  { flexDirection: mirroring.row },
-                ]}
-              >
+              <View style={[styles.docActionRow, { flexDirection: mirroring.row }]}>
                 {doc.status === 'NOT_UPLOADED' ? (
                   <TouchableOpacity
                     {...interactiveProps({

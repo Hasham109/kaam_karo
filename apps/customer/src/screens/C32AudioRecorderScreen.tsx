@@ -32,13 +32,7 @@ function formatMmSs(totalSeconds: number): { mm: string; ss: string; formatted: 
 }
 
 export function C32AudioRecorderScreen(): React.JSX.Element {
-  const {
-    locale,
-    updateDraft,
-    goBack,
-    permissionStatus,
-    setPermissionStatus,
-  } = useCustomerApp();
+  const { locale, updateDraft, goBack, permissionStatus, setPermissionStatus } = useCustomerApp();
   const mirror = getAppMirroring(locale);
 
   const [screenState, setScreenState] = useState<ScreenState>('E');
@@ -147,11 +141,7 @@ export function C32AudioRecorderScreen(): React.JSX.Element {
         {/* Hint & Privacy */}
         <View style={styles.hintCard} testID="c32-hint-card">
           <Text
-            style={[
-              styles.hintText,
-              textTokens(locale, 'body'),
-              { textAlign: mirror.textAlign },
-            ]}
+            style={[styles.hintText, textTokens(locale, 'body'), { textAlign: mirror.textAlign }]}
           >
             {translate(locale, 'customer.c32.hint')}
           </Text>

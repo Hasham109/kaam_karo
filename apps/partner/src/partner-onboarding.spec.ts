@@ -5,12 +5,7 @@
  * and 5 screen states.
  */
 import { describe, expect, it } from 'vitest';
-import {
-  EN_MESSAGES,
-  UR_MESSAGES,
-  isolatePhone,
-  translate,
-} from '@kaamkaro/i18n';
+import { EN_MESSAGES, UR_MESSAGES, isolatePhone, translate } from '@kaamkaro/i18n';
 import {
   MIN_TAP_TARGET_DP,
   SPACING,
@@ -19,12 +14,7 @@ import {
   minTapTargetStyle,
   textTokens,
 } from '@kaamkaro/ui';
-import type {
-  DocumentItem,
-  DocumentType,
-  PartnerProfile,
-  ScreenStateMode,
-} from './types';
+import type { DocumentItem, DocumentType, PartnerProfile, ScreenStateMode } from './types';
 import { getAppMirroring } from './utils/rtl';
 
 const ARABIC_SCRIPT = /\p{Script=Arabic}/u;
@@ -84,7 +74,16 @@ describe('[T4.1] P02 Provider Registration & Login Screen (BP §13 P02, D-002, D
   });
 
   it('enforces zero passwords anywhere in onboarding (SEC-AUTH-001)', () => {
-    const p02Fields = ['phone', 'otp', 'fullName', 'providerType', 'businessName', 'teamSize', 'city', 'email'];
+    const p02Fields = [
+      'phone',
+      'otp',
+      'fullName',
+      'providerType',
+      'businessName',
+      'teamSize',
+      'city',
+      'email',
+    ];
     expect(p02Fields).not.toContain('password');
     expect(p02Fields).not.toContain('pin');
     expect(p02Fields).not.toContain('confirmPassword');
@@ -199,9 +198,24 @@ describe('[T4.1] P03 Provider Verification Screen (BP §13 P03, §22, TRUST-VER-
 
   it('blocks submission until all required documents are uploaded (BP §10 step 32)', () => {
     const docs: DocumentItem[] = [
-      { id: 'CNIC_FRONT', titleKey: 'partner.p03.docCnicFront', status: 'UPLOADED', required: true },
-      { id: 'CNIC_BACK', titleKey: 'partner.p03.docCnicBack', status: 'NOT_UPLOADED', required: true },
-      { id: 'TRADE_CERT', titleKey: 'partner.p03.docTradeCert', status: 'NOT_UPLOADED', required: true },
+      {
+        id: 'CNIC_FRONT',
+        titleKey: 'partner.p03.docCnicFront',
+        status: 'UPLOADED',
+        required: true,
+      },
+      {
+        id: 'CNIC_BACK',
+        titleKey: 'partner.p03.docCnicBack',
+        status: 'NOT_UPLOADED',
+        required: true,
+      },
+      {
+        id: 'TRADE_CERT',
+        titleKey: 'partner.p03.docTradeCert',
+        status: 'NOT_UPLOADED',
+        required: true,
+      },
     ];
 
     const canSubmit = (items: DocumentItem[]) => {

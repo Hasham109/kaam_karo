@@ -4,14 +4,7 @@
  * Requirement IDs: REQ-AI-001..004, REQ-AI-006, REQ-AI-011, REQ-AI-012, MEDIA-003, PERM-002, PERM-003.
  */
 import React, { useState } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { translate } from '@kaamkaro/i18n';
 import {
   COLOR,
@@ -29,21 +22,11 @@ import { getAppMirroring } from '../utils/rtl';
 import type { AttachedPhoto, ScreenParams, WhenTimeChoice } from '../types';
 
 export function C31ComposerScreen(): React.JSX.Element {
-  const {
-    locale,
-    draft,
-    updateDraft,
-    navigate,
-    user,
-    isGuest,
-    screenParams,
-  } = useCustomerApp();
+  const { locale, draft, updateDraft, navigate, user, isGuest, screenParams } = useCustomerApp();
   const mirror = getAppMirroring(locale);
 
   const c31Params = screenParams as ScreenParams['C31'];
-  const [composerText, setComposerText] = useState(
-    c31Params?.initialText || draft.description,
-  );
+  const [composerText, setComposerText] = useState(c31Params?.initialText || draft.description);
   const [isInterpreting, setIsInterpreting] = useState(false);
 
   // Interpret service from text or default
@@ -152,10 +135,7 @@ export function C31ComposerScreen(): React.JSX.Element {
   });
 
   return (
-    <ScreenContainer
-      testID="c31-composer-screen"
-      title={translate(locale, 'customer.c31.title')}
-    >
+    <ScreenContainer testID="c31-composer-screen" title={translate(locale, 'customer.c31.title')}>
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled"
@@ -203,12 +183,7 @@ export function C31ComposerScreen(): React.JSX.Element {
         </View>
 
         {/* Multimodal Action Buttons Row */}
-        <View
-          style={[
-            styles.actionsRow,
-            { flexDirection: mirror.row },
-          ]}
-        >
+        <View style={[styles.actionsRow, { flexDirection: mirror.row }]}>
           <TouchableOpacity
             onPress={() => navigate('C32', { returnTo: 'C31' })}
             style={[styles.mediaActionBtn, minTapTargetStyle()]}
@@ -256,21 +231,16 @@ export function C31ComposerScreen(): React.JSX.Element {
         </View>
 
         {/* Attached Items Preview */}
-        {(draft.photos.length > 0 || draft.audioNote || draft.video) ? (
+        {draft.photos.length > 0 || draft.audioNote || draft.video ? (
           <View style={styles.attachmentsSection} testID="c31-attachments-preview">
             {draft.photos.map((p) => (
               <View
                 key={p.id}
                 testID={`c31-photo-item-${p.id}`}
-                style={[
-                  styles.attachmentItem,
-                  { flexDirection: mirror.row },
-                ]}
+                style={[styles.attachmentItem, { flexDirection: mirror.row }]}
               >
                 <Text>🖼️</Text>
-                <Text style={[styles.attachmentText, textTokens(locale, 'label')]}>
-                  {p.name}
-                </Text>
+                <Text style={[styles.attachmentText, textTokens(locale, 'label')]}>{p.name}</Text>
                 <TouchableOpacity
                   onPress={() => handleRemovePhoto(p.id)}
                   style={styles.removeBtn}
@@ -288,10 +258,7 @@ export function C31ComposerScreen(): React.JSX.Element {
             {draft.audioNote ? (
               <View
                 testID="c31-audio-item"
-                style={[
-                  styles.attachmentItem,
-                  { flexDirection: mirror.row },
-                ]}
+                style={[styles.attachmentItem, { flexDirection: mirror.row }]}
               >
                 <Text>🎙️</Text>
                 <Text style={[styles.attachmentText, textTokens(locale, 'label')]}>
@@ -317,10 +284,7 @@ export function C31ComposerScreen(): React.JSX.Element {
             {draft.video ? (
               <View
                 testID="c31-video-item"
-                style={[
-                  styles.attachmentItem,
-                  { flexDirection: mirror.row },
-                ]}
+                style={[styles.attachmentItem, { flexDirection: mirror.row }]}
               >
                 <Text>🎬</Text>
                 <Text style={[styles.attachmentText, textTokens(locale, 'label')]}>
@@ -360,12 +324,7 @@ export function C31ComposerScreen(): React.JSX.Element {
           </View>
         ) : hasAnyInput ? (
           <View testID="c31-ai-reply-area" style={styles.aiReplyCard}>
-            <View
-              style={[
-                styles.aiHeaderRow,
-                { flexDirection: mirror.row },
-              ]}
-            >
+            <View style={[styles.aiHeaderRow, { flexDirection: mirror.row }]}>
               <Text
                 testID="c31-likely-service-text"
                 style={[
@@ -406,12 +365,7 @@ export function C31ComposerScreen(): React.JSX.Element {
           >
             {whenLabel}
           </Text>
-          <View
-            style={[
-              styles.chipsRow,
-              { flexDirection: mirror.row },
-            ]}
-          >
+          <View style={[styles.chipsRow, { flexDirection: mirror.row }]}>
             {(['NOW', 'TODAY', 'LATER'] as const).map((choice) => {
               const isSelected = draft.when === choice;
               const labelKey =
@@ -464,11 +418,7 @@ export function C31ComposerScreen(): React.JSX.Element {
           </Text>
           <TouchableOpacity
             onPress={() => navigate('C39', { returnTo: 'C31' })}
-            style={[
-              styles.locationChipBtn,
-              minTapTargetStyle(),
-              { flexDirection: mirror.row },
-            ]}
+            style={[styles.locationChipBtn, minTapTargetStyle(), { flexDirection: mirror.row }]}
             {...interactiveProps({
               testID: 'c31-location-btn',
               accessibilityLabel: locationLabel,
@@ -496,11 +446,7 @@ export function C31ComposerScreen(): React.JSX.Element {
         <TouchableOpacity
           onPress={handleNext}
           disabled={!hasAnyInput}
-          style={[
-            styles.nextBtn,
-            minTapTargetStyle(),
-            !hasAnyInput && styles.disabledBtn,
-          ]}
+          style={[styles.nextBtn, minTapTargetStyle(), !hasAnyInput && styles.disabledBtn]}
           {...interactiveProps({
             testID: 'c31-next-btn',
             accessibilityLabel: translate(locale, 'customer.c31.next'),

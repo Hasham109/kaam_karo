@@ -375,6 +375,7 @@ describe('[T4.7] Steps 38–40: Job Execution & Location Privacy (P12)', () => {
     let isSharingLocation = false;
 
     // 1. SCHEDULED: No location sharing
+    expect(executionStatus).toBe('SCHEDULED');
     expect(isSharingLocation).toBe(false);
 
     // 2. EN ROUTE: Location sharing is active with prominent indicator
@@ -394,9 +395,11 @@ describe('[T4.7] Steps 38–40: Job Execution & Location Privacy (P12)', () => {
 
     // 4. IN PROGRESS & COMPLETED: Sharing remains inactive
     executionStatus = 'IN_PROGRESS';
+    expect(executionStatus).toBe('IN_PROGRESS');
     expect(isSharingLocation).toBe(false);
 
     executionStatus = 'COMPLETED';
+    expect(executionStatus).toBe('COMPLETED');
     expect(isSharingLocation).toBe(false);
   });
 
@@ -543,15 +546,17 @@ describe('[T4.7] Joint Customer + Provider E2E Cross-App Journey', () => {
     // 1. Customer creates booking with base price Rs. 2,500 and crew size 2
     let bookingStatus = 'SCHEDULED';
     let customerPayableTotal = 2500;
-    let providerCrewSize = 2;
+    const providerCrewSize = 2;
     let providerLocationSharing = false;
 
     expect(bookingStatus).toBe('SCHEDULED');
     expect(customerPayableTotal).toBe(2500);
     expect(providerCrewSize).toBe(2);
+    expect(providerLocationSharing).toBe(false);
 
     // 2. Provider starts trip -> Transitions to EN_ROUTE
     bookingStatus = 'PROVIDER_EN_ROUTE';
+    expect(bookingStatus).toBe('PROVIDER_EN_ROUTE');
     providerLocationSharing = true;
 
     // Verification: Provider location sharing is strictly ON; customer tracks live ETA on C17
@@ -568,6 +573,7 @@ describe('[T4.7] Joint Customer + Provider E2E Cross-App Journey', () => {
 
     // 4. Provider starts work -> Transitions to IN_PROGRESS
     bookingStatus = 'IN_PROGRESS';
+    expect(bookingStatus).toBe('IN_PROGRESS');
     const workStartedTime = '14:35';
     expect(workStartedTime).toBeDefined();
 

@@ -15,6 +15,7 @@ import {
 } from '@nestjs/common';
 import { CONFIG_SERVICE, type ConfigService } from '@kaamkaro/platform';
 import { PrismaService } from '../../platform/prisma.service.js';
+import { LedgerService } from './ledger.service.js';
 import {
   BookingStatus,
   ActorRole,
@@ -41,8 +42,44 @@ export class PaymentsService {
     @Optional()
     @Inject(CONFIG_SERVICE)
     private readonly configService?: ConfigService,
+    @Optional()
+    private readonly ledgerService?: LedgerService,
   ) {
     void this.configService;
+  }
+
+  /**
+   * Ensures the caller is a party to the booking (BP §29, D-030).
+   * A provider may only act on bookings assigned to their own profile and a customer only on
+   * their own bookings. Admin sub-role checks happen in the controller.
+   */
+  async assertCallerMayAccessBooking(
+    bookingId: string,
+    callerUserId: string,
+    callerRole: ActorRole,
+  ): Promise<void> {
+    const booking = await this.prisma.booking.findUnique({ where: { id: bookingId } });
+    if (!booking) {
+      throw new NotFoundException({
+        code: 'BOOKING_NOT_FOUND',
+        message: `Booking ${bookingId} not found`,
+      });
+    }
+    if (callerRole === ActorRole.ADMIN) return;
+
+    const profile =
+      callerRole === ActorRole.PROVIDER
+        ? await this.prisma.providerProfile.findUnique({ where: { userId: callerUserId } })
+        : await this.prisma.customerProfile.findUnique({ where: { userId: callerUserId } });
+    const expectedId =
+      callerRole === ActorRole.PROVIDER ? booking.providerProfileId : booking.customerProfileId;
+
+    if (!profile || !expectedId || profile.id !== expectedId) {
+      throw new ForbiddenException({
+        code: 'NOT_A_PARTY_TO_BOOKING',
+        message: 'You are not a party to this booking',
+      });
+    }
   }
 
   /**
@@ -271,7 +308,36 @@ export class PaymentsService {
 
     const nextStatus = dto.success ? PaymentStatus.SUCCEEDED : PaymentStatus.FAILED;
 
-    // Append-only state row
+    if (nextStatus === PaymentStatus.SUCCEEDED && this.ledgerService) {
+      return await this.prisma.$transaction(async (tx) => {
+        const newPaymentRow = await tx.payment.create({
+          data: {
+            paymentRef: latestPayment.paymentRef,
+            bookingId: latestPayment.bookingId,
+            customerProfileId: latestPayment.customerProfileId,
+            providerProfileId: latestPayment.providerProfileId,
+            method: PaymentMethod.DIGITAL,
+            status: nextStatus,
+            amountMinor: latestPayment.amountMinor,
+            gatewayRef: dto.gatewayRef || latestPayment.gatewayRef,
+            actorUserId: null,
+          },
+        });
+
+        await this.ledgerService!.recordJobSettlement(
+          {
+            bookingId: latestPayment.bookingId,
+            paymentId: newPaymentRow.id,
+            method: PaymentMethod.DIGITAL,
+          },
+          tx,
+        );
+
+        return this.formatPaymentResponse(newPaymentRow);
+      });
+    }
+
+    // Append-only state row for failed payments or when ledgerService is not injected
     const newPaymentRow = await this.prisma.payment.create({
       data: {
         paymentRef: latestPayment.paymentRef,
@@ -346,30 +412,45 @@ export class PaymentsService {
     const amountMinor = await this.calculatePayableAmount(booking.id, dto.amountMinor);
     const paymentRef = randomUUID();
 
-    // 1. Create PaymentMethodRecord
-    await this.prisma.paymentMethodRecord.create({
-      data: {
-        bookingId: booking.id,
-        method: PaymentMethod.CASH,
-        recordedByUserId: providerUserId,
-      },
-    });
+    return await this.prisma.$transaction(async (tx) => {
+      // 1. Create PaymentMethodRecord
+      await tx.paymentMethodRecord.create({
+        data: {
+          bookingId: booking.id,
+          method: PaymentMethod.CASH,
+          recordedByUserId: providerUserId,
+        },
+      });
 
-    // 2. Create Payment row (CASH_RECORDED)
-    const paymentRecord = await this.prisma.payment.create({
-      data: {
-        paymentRef,
-        bookingId: booking.id,
-        customerProfileId: booking.customerProfileId,
-        providerProfileId: booking.providerProfileId ?? booking.customerProfileId,
-        method: PaymentMethod.CASH,
-        status: PaymentStatus.CASH_RECORDED,
-        amountMinor,
-        actorUserId: providerUserId,
-      },
-    });
+      // 2. Create Payment row (CASH_RECORDED)
+      const paymentRecord = await tx.payment.create({
+        data: {
+          paymentRef,
+          bookingId: booking.id,
+          customerProfileId: booking.customerProfileId,
+          providerProfileId: booking.providerProfileId ?? booking.customerProfileId,
+          method: PaymentMethod.CASH,
+          status: PaymentStatus.CASH_RECORDED,
+          amountMinor,
+          actorUserId: providerUserId,
+        },
+      });
 
-    return this.formatPaymentResponse(paymentRecord);
+      // 3. Record cash commission debit to provider ledger (ARCH §6.8, D-016)
+      if (this.ledgerService) {
+        await this.ledgerService.recordJobSettlement(
+          {
+            bookingId: booking.id,
+            paymentId: paymentRecord.id,
+            method: PaymentMethod.CASH,
+            actorUserId: providerUserId,
+          },
+          tx,
+        );
+      }
+
+      return this.formatPaymentResponse(paymentRecord);
+    });
   }
 
   /**

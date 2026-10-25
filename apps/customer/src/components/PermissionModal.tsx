@@ -75,11 +75,7 @@ export function PermissionModal({
 
           <Text
             testID="perm-modal-body"
-            style={[
-              styles.dialogBody,
-              textTokens(locale, 'body'),
-              { textAlign: mirror.textAlign },
-            ]}
+            style={[styles.dialogBody, textTokens(locale, 'body'), { textAlign: mirror.textAlign }]}
           >
             {bodyText}
           </Text>
@@ -94,9 +90,7 @@ export function PermissionModal({
                 accessibilityRole: 'button',
               })}
             >
-              <Text style={[styles.notNowText, textTokens(locale, 'label')]}>
-                {notNowText}
-              </Text>
+              <Text style={[styles.notNowText, textTokens(locale, 'label')]}>{notNowText}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -108,9 +102,7 @@ export function PermissionModal({
                 accessibilityRole: 'button',
               })}
             >
-              <Text style={[styles.continueText, textTokens(locale, 'label')]}>
-                {continueText}
-              </Text>
+              <Text style={[styles.continueText, textTokens(locale, 'label')]}>{continueText}</Text>
             </TouchableOpacity>
           </View>
         </View>

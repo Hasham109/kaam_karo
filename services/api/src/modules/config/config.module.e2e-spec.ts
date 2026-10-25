@@ -18,9 +18,7 @@ import { CatalogService, PlatformAuditPort } from '../catalog';
 import { ConfigAdminService, ConfigRulesModule, PrismaConfigRuleStore } from './index';
 
 describe('Config + catalog module wiring', () => {
-  it(
-    '[CFG-RULE-001] resolves the reader, the store, the admin service and the catalog service',
-    async () => {
+  it('[CFG-RULE-001] resolves the reader, the store, the admin service and the catalog service', async () => {
     const env = loadServerEnv({ APP_ENV: 'test', LOG_LEVEL: 'error' });
     const moduleRef = await Test.createTestingModule({
       imports: [ServerEnvModule.forRoot(env), PlatformModule, ConfigRulesModule],

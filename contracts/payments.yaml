@@ -192,6 +192,83 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
 
+  /v1/payments/provider/{providerProfileId}/balance:
+    get:
+      summary: Retrieve current provider earnings balance
+      description: >
+        Calculates current provider balance from append-only ledger entries (ARCH §6.8).
+        Balance = SUM(credits) - SUM(debits). Negative balance indicates unpaid commissions (D-020).
+      operationId: getProviderBalance
+      x-requirement-ids:
+        - LEDGER-001
+        - LEDGER-003
+        - LEDGER-004
+      parameters:
+        - name: providerProfileId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Provider balance summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderBalanceResponse'
+
+  /v1/payments/provider/{providerProfileId}/ledger:
+    get:
+      summary: Retrieve provider earnings ledger history
+      description: >
+        Retrieves list of ledger entries for Partner wallet / earnings history screen P15 (ARCH §6.8, D-016).
+      operationId: getProviderLedger
+      x-requirement-ids:
+        - LEDGER-001
+        - LEDGER-005
+        - LEDGER-006
+      parameters:
+        - name: providerProfileId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of provider ledger entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProviderLedgerEntry'
+
+  /v1/payments/admin/provider/{providerProfileId}/ledger:
+    get:
+      summary: Admin / Finance view of provider ledger
+      description: >
+        Provides complete financial audit view of provider balance and ledger entries for Admin A09 (ARCH §6.8).
+      operationId: getAdminProviderLedger
+      x-requirement-ids:
+        - LEDGER-001
+        - LEDGER-006
+      parameters:
+        - name: providerProfileId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Full admin provider ledger audit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProviderLedgerResponse'
+
 components:
   schemas:
     InitiatePaymentRequest:
@@ -346,3 +423,96 @@ components:
         feeDisplay:
           type: object
           description: Role-specific fee breakdown. Customers do not receive platform commission figures.
+
+    ProviderBalanceResponse:
+      type: object
+      required:
+        - providerProfileId
+        - balanceMinor
+        - isNegative
+        - totalCreditsMinor
+        - totalDebitsMinor
+        - entryCount
+      properties:
+        providerProfileId:
+          type: string
+          format: uuid
+        balanceMinor:
+          type: integer
+          description: Net balance in PKR minor units (paisa). balance = credits - debits.
+        isNegative:
+          type: boolean
+          description: True if balance < 0 (unpaid commission liability D-020).
+        totalCreditsMinor:
+          type: integer
+        totalDebitsMinor:
+          type: integer
+        entryCount:
+          type: integer
+
+    ProviderLedgerEntry:
+      type: object
+      required:
+        - id
+        - providerProfileId
+        - entryType
+        - direction
+        - amountMinor
+        - netImpactMinor
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        providerProfileId:
+          type: string
+          format: uuid
+        entryType:
+          type: string
+          enum:
+            - COMMISSION_DEBIT
+            - JOB_CREDIT
+            - COMPANY_PAYMENT_CREDIT
+            - SETTLEMENT_DEBIT
+            - REVERSAL
+        direction:
+          type: string
+          enum: [DEBIT, CREDIT]
+        amountMinor:
+          type: integer
+          minimum: 1
+        netImpactMinor:
+          type: integer
+          description: Signed integer amount (+ for credit, - for debit)
+        bookingId:
+          type: string
+          format: uuid
+        paymentId:
+          type: string
+          format: uuid
+        billTotalMinor:
+          type: integer
+        commissionableMinor:
+          type: integer
+        commissionMinor:
+          type: integer
+        commissionRate:
+          type: number
+        reason:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    AdminProviderLedgerResponse:
+      type: object
+      required:
+        - balance
+        - history
+      properties:
+        balance:
+          $ref: '#/components/schemas/ProviderBalanceResponse'
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProviderLedgerEntry'

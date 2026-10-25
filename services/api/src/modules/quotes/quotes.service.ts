@@ -101,7 +101,8 @@ export class QuotesService {
    */
   private validateFareLineItem(item: CreateFareLineItemDto | ProposeFareLineDto): void {
     // 1. Amount non-negative
-    const amount = typeof item.amountMinor === 'bigint' ? Number(item.amountMinor) : item.amountMinor;
+    const amount =
+      typeof item.amountMinor === 'bigint' ? Number(item.amountMinor) : item.amountMinor;
     if (amount < 0) {
       throw new BadRequestException({
         code: 'INVALID_FARE_AMOUNT',
@@ -114,7 +115,8 @@ export class QuotesService {
       if (!item.description || item.description.trim().length === 0) {
         throw new BadRequestException({
           code: 'TOOLS_REASON_REQUIRED',
-          message: 'Line type Tools/Equipment usage must state a reason; cannot be empty (BP §58.1; FARE-004)',
+          message:
+            'Line type Tools/Equipment usage must state a reason; cannot be empty (BP §58.1; FARE-004)',
         });
       }
     }
@@ -123,7 +125,8 @@ export class QuotesService {
     if (item.lineType === FareLineType.PARTS && !item.materialsClass) {
       throw new BadRequestException({
         code: 'PARTS_MATERIALS_CLASS_REQUIRED',
-        message: 'Line type Parts/New materials must classify materials (INCLUDED, EXCLUDED, CUSTOMER_APPROVED_EXTRA) (BP §17; PRICE-005)',
+        message:
+          'Line type Parts/New materials must classify materials (INCLUDED, EXCLUDED, CUSTOMER_APPROVED_EXTRA) (BP §17; PRICE-005)',
       });
     }
 
@@ -138,11 +141,13 @@ export class QuotesService {
     // 5. FARE-013 & K-10: Emergency exception flag check
     if (item.isEmergencyException) {
       // Feature flag fare.emergency_exception_enabled is false at launch
-      const emergencyEnabled = this.configService?.get('fare.emergency_exception_enabled', () => false) ?? false;
+      const emergencyEnabled =
+        this.configService?.get('fare.emergency_exception_enabled', () => false) ?? false;
       if (!emergencyEnabled) {
         throw new ForbiddenException({
           code: 'EMERGENCY_EXCEPTION_DISABLED',
-          message: 'Emergency exception for charges is disabled at launch (BP §58.3; FARE-013; K-10)',
+          message:
+            'Emergency exception for charges is disabled at launch (BP §58.3; FARE-013; K-10)',
         });
       }
     }
@@ -167,7 +172,8 @@ export class QuotesService {
     ) {
       throw new BadRequestException({
         code: 'CREW_SIZE_REQUIRED',
-        message: 'Provider must state crew size (integer >= 1) on every quote/offer (D-004; PROV-CREW-001)',
+        message:
+          'Provider must state crew size (integer >= 1) on every quote/offer (D-004; PROV-CREW-001)',
       });
     }
 
@@ -213,7 +219,9 @@ export class QuotesService {
     }
 
     // 6. Validity date: default to 48 hours if not provided
-    const validUntil = dto.validUntil ? new Date(dto.validUntil) : new Date(Date.now() + 48 * 3600 * 1000);
+    const validUntil = dto.validUntil
+      ? new Date(dto.validUntil)
+      : new Date(Date.now() + 48 * 3600 * 1000);
 
     // 7. Atomic quote creation
     return this.prisma.$transaction(async (tx) => {
@@ -501,7 +509,11 @@ export class QuotesService {
   /**
    * Customer declines a quote (QUOTE-006, ARCH §6.6).
    */
-  async declineQuote(quoteId: string, customerUserId: string, reason?: string): Promise<QuoteResponseDto> {
+  async declineQuote(
+    quoteId: string,
+    customerUserId: string,
+    reason?: string,
+  ): Promise<QuoteResponseDto> {
     const quote = await this.prisma.quote.findUnique({
       where: { id: quoteId },
       include: { lines: true },
@@ -566,7 +578,11 @@ export class QuotesService {
   /**
    * Customer requests clarification on a quote (QUOTE-006).
    */
-  async requestClarification(quoteId: string, customerUserId: string, message: string): Promise<QuoteResponseDto> {
+  async requestClarification(
+    quoteId: string,
+    customerUserId: string,
+    message: string,
+  ): Promise<QuoteResponseDto> {
     const quote = await this.prisma.quote.findUnique({
       where: { id: quoteId },
       include: { lines: true },
@@ -785,7 +801,11 @@ export class QuotesService {
   /**
    * Customer rejects a proposed fare line (FARE-012).
    */
-  async rejectFareLine(fareLineId: string, customerUserId: string, reason?: string): Promise<FareLineResponseDto> {
+  async rejectFareLine(
+    fareLineId: string,
+    customerUserId: string,
+    reason?: string,
+  ): Promise<FareLineResponseDto> {
     const line = await this.prisma.fareLine.findUnique({
       where: { id: fareLineId },
     });
@@ -918,7 +938,9 @@ export class QuotesService {
           action: 'CREW_SIZE_CHANGE_PROPOSED',
           actorRole: ActorRole.PROVIDER,
           actorUserId: providerUserId,
-          reason: dto.reason ?? `Crew size change proposed from ${booking.crewSize ?? 1} to ${dto.proposedCrewSize}`,
+          reason:
+            dto.reason ??
+            `Crew size change proposed from ${booking.crewSize ?? 1} to ${dto.proposedCrewSize}`,
           sourceMetadata: {
             previousCrewSize: booking.crewSize ?? 1,
             proposedCrewSize: dto.proposedCrewSize,

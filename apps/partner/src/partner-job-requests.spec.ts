@@ -134,23 +134,19 @@ describe('[T4.3] P08 Incoming Job Requests Screen (BP §13 P08, BP §85, BP §62
 
   it('supports 5 canonical screen states: loading, empty, success, error, pending', () => {
     const states: ScreenStateMode[] = ['loading', 'empty', 'success', 'error', 'pending'];
-    for (const st of states) {
-      if (st === 'loading') {
-        expect(translate('en', 'partner.p08.loading')).toBe('Looking for new requests…');
-        expect(translate('ur', 'partner.p08.loading')).toMatch(ARABIC_SCRIPT);
-      } else if (st === 'empty') {
-        expect(translate('en', 'partner.p08.empty')).toContain('No new requests');
-        expect(translate('ur', 'partner.p08.empty')).toMatch(ARABIC_SCRIPT);
-      } else if (st === 'error') {
-        expect(translate('en', 'partner.p08.error')).toContain("couldn't load");
-        expect(translate('ur', 'partner.p08.error')).toMatch(ARABIC_SCRIPT);
-      } else if (st === 'pending') {
-        expect(translate('en', 'partner.p08.pending')).toContain('Updating');
-        expect(translate('ur', 'partner.p08.pending')).toMatch(ARABIC_SCRIPT);
-      } else if (st === 'success') {
-        expect(translate('en', 'partner.p08.acceptedSuccess')).toContain('Accepted');
-        expect(translate('ur', 'partner.p08.acceptedSuccess')).toMatch(ARABIC_SCRIPT);
-      }
+    expect(states).toHaveLength(5);
+
+    const tr = translate as unknown as (locale: 'en' | 'ur', key: string) => string;
+    const cases: Array<[string, string]> = [
+      ['partner.p08.loading', 'Looking for new requests…'],
+      ['partner.p08.empty', 'No new requests'],
+      ['partner.p08.error', "couldn't load"],
+      ['partner.p08.pending', 'Updating'],
+      ['partner.p08.acceptedSuccess', 'Accepted'],
+    ];
+    for (const [key, enText] of cases) {
+      expect(tr('en', key)).toContain(enText);
+      expect(tr('ur', key)).toMatch(ARABIC_SCRIPT);
     }
   });
 

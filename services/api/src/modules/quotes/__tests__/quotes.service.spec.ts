@@ -555,7 +555,9 @@ describe('QuotesService Unit Tests (T3.5)', () => {
         lines: [],
       });
 
-      await expect(service.acceptQuote(mockQuoteId, mockCustomerUserId)).rejects.toThrow(ConflictException);
+      await expect(service.acceptQuote(mockQuoteId, mockCustomerUserId)).rejects.toThrow(
+        ConflictException,
+      );
       expect(mockPrisma.quote.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ status: QuoteStatus.EXPIRED }),

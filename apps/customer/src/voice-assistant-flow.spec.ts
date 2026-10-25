@@ -21,11 +21,7 @@ import { MIN_TAP_TARGET_DP } from '@kaamkaro/ui';
 import { DEFAULT_INTAKE_DRAFT } from './state/CustomerContext';
 import { VoiceAssistantSession } from './services/voice-assistant';
 import { getAppMirroring } from './utils/rtl';
-import type {
-  ConsequentialConfirmationPrompt,
-  IntakeDraft,
-  ScreenId,
-} from './types';
+import type { ConsequentialConfirmationPrompt, IntakeDraft, ScreenId } from './types';
 
 const ARABIC_SCRIPT = /\p{Script=Arabic}/u;
 

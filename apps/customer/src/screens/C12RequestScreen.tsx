@@ -4,14 +4,7 @@
  * Requirement IDs: REQ-AI-006, REQ-AI-012, PERF-002, PROF-ADDR-002, LOC-GEO-003, MEDIA-003, UX-SCREEN-005.
  */
 import React, { useState } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { translate } from '@kaamkaro/i18n';
 import {
   COLOR,
@@ -29,25 +22,14 @@ import { getAppMirroring } from '../utils/rtl';
 import type { AttachedPhoto, ScreenParams, WhenTimeChoice } from '../types';
 
 export function C12RequestScreen(): React.JSX.Element {
-  const {
-    locale,
-    draft,
-    updateDraft,
-    navigate,
-    user,
-    isGuest,
-    screenParams,
-  } = useCustomerApp();
+  const { locale, draft, updateDraft, navigate, user, isGuest, screenParams } = useCustomerApp();
   const mirror = getAppMirroring(locale);
 
   const c12Params = screenParams as ScreenParams['C12'];
-  const initialServiceId =
-    c12Params?.serviceId || draft.serviceId || MOCK_SERVICES[0]?.id;
+  const initialServiceId = c12Params?.serviceId || draft.serviceId || MOCK_SERVICES[0]?.id;
   const initialProviderId = c12Params?.providerId || draft.providerId;
 
-  const [selectedServiceId, setSelectedServiceId] = useState<string | undefined>(
-    initialServiceId,
-  );
+  const [selectedServiceId, setSelectedServiceId] = useState<string | undefined>(initialServiceId);
   const [descriptionText, setDescriptionText] = useState(draft.description);
   const [whenChoice, setWhenChoice] = useState<WhenTimeChoice>(draft.when || 'TODAY');
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -127,10 +109,7 @@ export function C12RequestScreen(): React.JSX.Element {
   };
 
   return (
-    <ScreenContainer
-      testID="c12-request-screen"
-      title={translate(locale, 'customer.c12.title')}
-    >
+    <ScreenContainer testID="c12-request-screen" title={translate(locale, 'customer.c12.title')}>
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled"
@@ -215,11 +194,7 @@ export function C12RequestScreen(): React.JSX.Element {
 
           <TouchableOpacity
             onPress={() => navigate('C39', { returnTo: 'C12' })}
-            style={[
-              styles.locationCard,
-              minTapTargetStyle(),
-              { flexDirection: mirror.row },
-            ]}
+            style={[styles.locationCard, minTapTargetStyle(), { flexDirection: mirror.row }]}
             {...interactiveProps({
               testID: 'c12-location-tap-btn',
               accessibilityLabel: translate(locale, 'customer.c12.locationLabel'),
@@ -268,12 +243,7 @@ export function C12RequestScreen(): React.JSX.Element {
             {translate(locale, 'customer.c12.whenLabel')}
           </Text>
 
-          <View
-            style={[
-              styles.whenRow,
-              { flexDirection: mirror.row },
-            ]}
-          >
+          <View style={[styles.whenRow, { flexDirection: mirror.row }]}>
             {(['NOW', 'TODAY', 'LATER'] as const).map((choice) => {
               const isSelected = whenChoice === choice;
               const labelKey =
@@ -364,12 +334,7 @@ export function C12RequestScreen(): React.JSX.Element {
           </Text>
 
           {/* Action Buttons to Add Media */}
-          <View
-            style={[
-              styles.mediaButtonRow,
-              { flexDirection: mirror.row },
-            ]}
-          >
+          <View style={[styles.mediaButtonRow, { flexDirection: mirror.row }]}>
             <TouchableOpacity
               onPress={handleAddSamplePhoto}
               style={[styles.mediaActionBtn, minTapTargetStyle()]}
@@ -422,10 +387,7 @@ export function C12RequestScreen(): React.JSX.Element {
               <View
                 key={photo.id}
                 testID={`c12-attached-photo-${photo.id}`}
-                style={[
-                  styles.attachedItemCard,
-                  { flexDirection: mirror.row },
-                ]}
+                style={[styles.attachedItemCard, { flexDirection: mirror.row }]}
               >
                 <Text style={styles.attachedIcon}>🖼️</Text>
                 <Text style={[styles.attachedName, textTokens(locale, 'label')]}>
@@ -448,10 +410,7 @@ export function C12RequestScreen(): React.JSX.Element {
             {draft.audioNote ? (
               <View
                 testID="c12-attached-audio"
-                style={[
-                  styles.attachedItemCard,
-                  { flexDirection: mirror.row },
-                ]}
+                style={[styles.attachedItemCard, { flexDirection: mirror.row }]}
               >
                 <Text style={styles.attachedIcon}>🎙️</Text>
                 <Text style={[styles.attachedName, textTokens(locale, 'label')]}>
@@ -477,10 +436,7 @@ export function C12RequestScreen(): React.JSX.Element {
             {draft.video ? (
               <View
                 testID="c12-attached-video"
-                style={[
-                  styles.attachedItemCard,
-                  { flexDirection: mirror.row },
-                ]}
+                style={[styles.attachedItemCard, { flexDirection: mirror.row }]}
               >
                 <Text style={styles.attachedIcon}>🎬</Text>
                 <Text style={[styles.attachedName, textTokens(locale, 'label')]}>

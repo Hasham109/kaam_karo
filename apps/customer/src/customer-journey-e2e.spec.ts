@@ -29,11 +29,7 @@ import {
   minTapTargetStyle,
   URDU_FONT_FAMILY,
 } from '@kaamkaro/ui';
-import {
-  MOCK_CITIES,
-  MOCK_PROVIDERS,
-  MOCK_SERVICES,
-} from './data/mock-data';
+import { MOCK_CITIES, MOCK_PROVIDERS, MOCK_SERVICES } from './data/mock-data';
 import {
   MOCK_BOOKING_REVIEW,
   MOCK_CONFIRMATION_INFO,
@@ -259,8 +255,6 @@ describe('[T3.12] Step 15 & 16: Service Detail & Request Composition (BP §9 Ste
       expect(bookNowBtn.length).toBeGreaterThan(0);
     }
   });
-
-
 
   it('supports direct simple request form and multimodal intake fallback (C12, C31)', () => {
     const whenChoices: WhenTimeChoice[] = ['NOW', 'TODAY', 'LATER'];

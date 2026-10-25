@@ -33,6 +33,7 @@ describe('[T4.5] Location Sharing Indicator Only Active During En Route (BP §57
     let isSharingLocation = false;
 
     // Initially SCHEDULED: location sharing is inactive
+    expect(executionStatus).toBe('SCHEDULED');
     expect(isSharingLocation).toBe(false);
 
     // Transition: Scheduled -> Provider En Route (startTrip)
@@ -69,8 +70,9 @@ describe('[T4.5] Location Sharing Indicator Only Active During En Route (BP §57
   });
 
   it('allows provider to manually stop location sharing while En Route without cancelling job (BP §81, OQ-025)', () => {
-    let executionStatus: ExecutionStatus = 'EN_ROUTE';
+    const executionStatus: ExecutionStatus = 'EN_ROUTE';
     let isSharingLocation = true;
+    expect(isSharingLocation).toBe(true);
 
     // Provider taps "Stop sharing location"
     isSharingLocation = false;
@@ -126,7 +128,7 @@ describe('[T4.5] P12 Stepper Transitions & Unpaid Block (BP §15, D-021, BOOK-ST
 
   it('blocks trip start when unpaid commission is owed (D-021, LEDGER-NEG-005)', () => {
     const unpaidCommissionOwed = 1500;
-    let executionStatus: ExecutionStatus = 'SCHEDULED';
+    const executionStatus: ExecutionStatus = 'SCHEDULED';
 
     const canStartTrip = (unpaid: number): boolean => {
       if (unpaid > 0) return false;
@@ -342,22 +344,22 @@ describe('[T4.5] Canonical Screen States (P12, P13, P14)', () => {
   const modes: ScreenStateMode[] = ['loading', 'empty', 'success', 'error', 'pending'];
 
   it('verifies all 5 canonical states exist for P12, P13, and P14', () => {
-    for (const mode of modes) {
-      if (mode === 'loading') {
-        expect(translate('en', 'partner.p12.loading')).toContain('Updating');
-        expect(translate('en', 'partner.p13.loading')).toContain('Sending');
-        expect(translate('en', 'partner.p14.loading')).toContain('evidence');
-      }
-      if (mode === 'empty') {
-        expect(translate('en', 'partner.p12.empty')).toBe('You have no job to start right now.');
-        expect(translate('en', 'partner.p13.empty')).toContain('No extra charges');
-        expect(translate('en', 'partner.p14.empty')).toContain('Add notes or photos');
-      }
-      if (mode === 'error') {
-        expect(translate('en', 'partner.p12.error')).toContain('Could not update status');
-        expect(translate('en', 'partner.p13.error')).toContain("couldn't send this charge");
-        expect(translate('en', 'partner.p14.error')).toContain("couldn't save this");
-      }
+    expect(modes).toHaveLength(5);
+
+    const tr = translate as unknown as (locale: 'en' | 'ur', key: string) => string;
+    const cases: Array<[string, string]> = [
+      ['partner.p12.loading', 'Updating'],
+      ['partner.p13.loading', 'Sending'],
+      ['partner.p14.loading', 'evidence'],
+      ['partner.p12.empty', 'You have no job to start right now.'],
+      ['partner.p13.empty', 'No extra charges'],
+      ['partner.p14.empty', 'Add notes or photos'],
+      ['partner.p12.error', 'Could not update status'],
+      ['partner.p13.error', "couldn't send this charge"],
+      ['partner.p14.error', "couldn't save this"],
+    ];
+    for (const [key, enText] of cases) {
+      expect(tr('en', key)).toContain(enText);
     }
   });
 });

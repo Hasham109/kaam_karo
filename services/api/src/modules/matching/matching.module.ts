@@ -11,12 +11,7 @@ import { MatchingController } from './matching.controller.js';
 import { MatchingService } from './matching.service.js';
 
 @Module({
-  imports: [
-    PlatformModule,
-    LocationModule,
-    AvailabilityModule,
-    CatalogModule,
-  ],
+  imports: [PlatformModule, LocationModule, AvailabilityModule, CatalogModule],
   controllers: [MatchingController],
   providers: [MatchingService],
   exports: [MatchingService],

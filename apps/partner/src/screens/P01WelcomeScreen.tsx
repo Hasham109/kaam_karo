@@ -51,28 +51,16 @@ export function P01WelcomeScreen() {
       testID="p01-welcome-screen"
     >
       {/* Language Selector Header */}
-      <View
-        style={[styles.langBar, { flexDirection: mirroring.row }]}
-        testID="p01-lang-selector"
-      >
+      <View style={[styles.langBar, { flexDirection: mirroring.row }]} testID="p01-lang-selector">
         <TouchableOpacity
           {...interactiveProps({
             testID: 'p01-lang-en',
             accessibilityLabel: translate(locale, 'partner.p01.langEnglishA11y'),
           })}
-          style={[
-            styles.langChip,
-            minTapTargetStyle(),
-            locale === 'en' && styles.langChipActive,
-          ]}
+          style={[styles.langChip, minTapTargetStyle(), locale === 'en' && styles.langChipActive]}
           onPress={() => setLocale('en')}
         >
-          <Text
-            style={[
-              styles.langChipText,
-              locale === 'en' && styles.langChipTextActive,
-            ]}
-          >
+          <Text style={[styles.langChipText, locale === 'en' && styles.langChipTextActive]}>
             {translate(locale, 'partner.p01.langEnglish')}
           </Text>
         </TouchableOpacity>
@@ -82,19 +70,11 @@ export function P01WelcomeScreen() {
             testID: 'p01-lang-ur',
             accessibilityLabel: translate(locale, 'partner.p01.langUrduA11y'),
           })}
-          style={[
-            styles.langChip,
-            minTapTargetStyle(),
-            locale === 'ur' && styles.langChipActive,
-          ]}
+          style={[styles.langChip, minTapTargetStyle(), locale === 'ur' && styles.langChipActive]}
           onPress={() => setLocale('ur')}
         >
           <Text
-            style={[
-              styles.langChipText,
-              fontStyle,
-              locale === 'ur' && styles.langChipTextActive,
-            ]}
+            style={[styles.langChipText, fontStyle, locale === 'ur' && styles.langChipTextActive]}
           >
             {translate(locale, 'partner.p01.langUrdu')}
           </Text>

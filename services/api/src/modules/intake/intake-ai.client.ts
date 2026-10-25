@@ -106,9 +106,7 @@ export class FakeIntakeAiClient implements IntakeAiClient {
 
     // High confidence matched service
     const supplierSummary =
-      lang === AppLanguage.UR
-        ? serviceMatch.summaryUr
-        : serviceMatch.summaryEn;
+      lang === AppLanguage.UR ? serviceMatch.summaryUr : serviceMatch.summaryEn;
 
     return {
       serviceId: serviceMatch.serviceIdHint ?? null,

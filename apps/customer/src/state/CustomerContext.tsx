@@ -167,15 +167,12 @@ export function CustomerAppProvider({
     });
   }, []);
 
-  const setPermissionStatus = useCallback(
-    (kind: PermissionKind, state: PermissionStateValue) => {
-      setPermissionStatusState((prev) => ({
-        ...prev,
-        [kind]: state,
-      }));
-    },
-    [],
-  );
+  const setPermissionStatus = useCallback((kind: PermissionKind, state: PermissionStateValue) => {
+    setPermissionStatusState((prev) => ({
+      ...prev,
+      [kind]: state,
+    }));
+  }, []);
 
   const contextValue: CustomerAppContextValue = {
     locale,

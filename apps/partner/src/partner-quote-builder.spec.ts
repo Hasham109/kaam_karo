@@ -259,24 +259,19 @@ describe('[T4.4] Totals & Commission Split on Labour Lines ONLY (D-006, D-015, D
 describe('[T4.4] Canonical Screen States on P24 (BP §13 P24)', () => {
   it('supports loading, empty, success, error, pending states', () => {
     const states: ScreenStateMode[] = ['loading', 'empty', 'success', 'error', 'pending'];
+    expect(states).toHaveLength(5);
 
-    for (const st of states) {
-      if (st === 'loading') {
-        expect(translate('en', 'partner.p24.loading')).toContain('Calculating');
-        expect(translate('ur', 'partner.p24.loading')).toMatch(ARABIC_SCRIPT);
-      } else if (st === 'empty') {
-        expect(translate('en', 'partner.p24.empty')).toContain('Add at least one charge');
-        expect(translate('ur', 'partner.p24.empty')).toMatch(ARABIC_SCRIPT);
-      } else if (st === 'success') {
-        expect(translate('en', 'partner.p24.success')).toContain('Quote sent');
-        expect(translate('ur', 'partner.p24.success')).toMatch(ARABIC_SCRIPT);
-      } else if (st === 'error') {
-        expect(translate('en', 'partner.p24.error')).toContain("couldn't send");
-        expect(translate('ur', 'partner.p24.error')).toMatch(ARABIC_SCRIPT);
-      } else if (st === 'pending') {
-        expect(translate('en', 'partner.p24.pending')).toContain('Sending');
-        expect(translate('ur', 'partner.p24.pending')).toMatch(ARABIC_SCRIPT);
-      }
+    const tr = translate as unknown as (locale: 'en' | 'ur', key: string) => string;
+    const cases: Array<[string, string]> = [
+      ['partner.p24.loading', 'Calculating'],
+      ['partner.p24.empty', 'Add at least one charge'],
+      ['partner.p24.success', 'Quote sent'],
+      ['partner.p24.error', "couldn't send"],
+      ['partner.p24.pending', 'Sending'],
+    ];
+    for (const [key, enText] of cases) {
+      expect(tr('en', key)).toContain(enText);
+      expect(tr('ur', key)).toMatch(ARABIC_SCRIPT);
     }
   });
 });

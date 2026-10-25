@@ -55,6 +55,8 @@ class MockPrismaService {
   public payments: MockPayment[] = [];
   public paymentMethodRecords = new Map<string, MockPaymentMethodRecord>();
 
+  $transaction = async <T>(fn: (tx: unknown) => Promise<T>): Promise<T> => fn(this as unknown);
+
   booking = {
     findUnique: async ({ where }: { where: { id: string } }) => {
       return this.bookings.get(where.id) ?? null;
@@ -108,7 +110,7 @@ class MockPrismaService {
       where: { bookingId: string };
       orderBy?: { occurredAt: 'asc' | 'desc' };
     }) => {
-      let list = this.payments.filter((p) => p.bookingId === where.bookingId);
+      const list = this.payments.filter((p) => p.bookingId === where.bookingId);
       if (orderBy?.occurredAt === 'asc') {
         list.sort((a, b) => a.occurredAt.getTime() - b.occurredAt.getTime());
       }
@@ -188,16 +190,14 @@ describe('PaymentsService (T6.1, Module M11)', () => {
           }),
         ).rejects.toThrow(ConflictException);
 
-        try {
-          await service.initiatePayment({
+        await expect(
+          service.initiatePayment({
             bookingId,
             method: PaymentMethod.DIGITAL,
-          });
-        } catch (err) {
-          expect(err).toBeInstanceOf(ConflictException);
-          const response = (err as ConflictException).getResponse() as { code: string };
-          expect(response.code).toBe('PAYMENT_NOT_ALLOWED_BEFORE_COMPLETION');
-        }
+          }),
+        ).rejects.toMatchObject({
+          response: { code: 'PAYMENT_NOT_ALLOWED_BEFORE_COMPLETION' },
+        });
       },
     );
 
@@ -215,12 +215,11 @@ describe('PaymentsService (T6.1, Module M11)', () => {
         service.recordCashPayment({ bookingId, amountMinor: 250000 }, 'prov-user-1'),
       ).rejects.toThrow(ConflictException);
 
-      try {
-        await service.recordCashPayment({ bookingId, amountMinor: 250000 }, 'prov-user-1');
-      } catch (err) {
-        const response = (err as ConflictException).getResponse() as { code: string };
-        expect(response.code).toBe('PAYMENT_NOT_ALLOWED_BEFORE_COMPLETION');
-      }
+      await expect(
+        service.recordCashPayment({ bookingId, amountMinor: 250000 }, 'prov-user-1'),
+      ).rejects.toMatchObject({
+        response: { code: 'PAYMENT_NOT_ALLOWED_BEFORE_COMPLETION' },
+      });
     });
 
     it('successfully initiates payment when booking is in COMPLETED state', async () => {
@@ -459,12 +458,9 @@ describe('PaymentsService (T6.1, Module M11)', () => {
         ConflictException,
       );
 
-      try {
-        await service.recordCashPayment({ bookingId }, 'prov-user-1');
-      } catch (err) {
-        const response = (err as ConflictException).getResponse() as { code: string };
-        expect(response.code).toBe('DIGITAL_PAYMENT_ALREADY_SUCCEEDED');
-      }
+      await expect(service.recordCashPayment({ bookingId }, 'prov-user-1')).rejects.toMatchObject({
+        response: { code: 'DIGITAL_PAYMENT_ALREADY_SUCCEEDED' },
+      });
     });
 
     it('refuses cash recording if already recorded once (LEDGER-002)', async () => {
@@ -483,12 +479,9 @@ describe('PaymentsService (T6.1, Module M11)', () => {
         ConflictException,
       );
 
-      try {
-        await service.recordCashPayment({ bookingId }, 'prov-user-1');
-      } catch (err) {
-        const response = (err as ConflictException).getResponse() as { code: string };
-        expect(response.code).toBe('PAYMENT_ALREADY_RECORDED');
-      }
+      await expect(service.recordCashPayment({ bookingId }, 'prov-user-1')).rejects.toMatchObject({
+        response: { code: 'PAYMENT_ALREADY_RECORDED' },
+      });
     });
   });
 

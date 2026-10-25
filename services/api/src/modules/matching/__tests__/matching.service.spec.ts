@@ -120,7 +120,9 @@ describe('MatchingService (T3.7)', () => {
     mockPrisma = {
       customerRequest: {
         findUnique: vi.fn().mockResolvedValue({ ...defaultMockRequest }),
-        update: vi.fn().mockImplementation(({ data }) => Promise.resolve({ ...defaultMockRequest, ...data })),
+        update: vi
+          .fn()
+          .mockImplementation(({ data }) => Promise.resolve({ ...defaultMockRequest, ...data })),
       },
       service: {
         findUnique: vi.fn().mockResolvedValue({ ...defaultMockCatalogService }),
@@ -179,7 +181,11 @@ describe('MatchingService (T3.7)', () => {
       },
       matchCandidate: {
         deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
-        create: vi.fn().mockImplementation(({ data }) => Promise.resolve({ id: `cand-${data.providerProfileId}`, ...data })),
+        create: vi
+          .fn()
+          .mockImplementation(({ data }) =>
+            Promise.resolve({ id: `cand-${data.providerProfileId}`, ...data }),
+          ),
         findMany: vi.fn().mockResolvedValue([]),
       },
       auditLog: {
@@ -299,8 +305,8 @@ describe('MatchingService (T3.7)', () => {
       mockAvailabilityService.getServiceAreas.mockResolvedValueOnce([
         {
           kind: ServiceAreaKind.RADIUS,
-          centerLatitude: 31.9000,
-          centerLongitude: 74.9000,
+          centerLatitude: 31.9,
+          centerLongitude: 74.9,
           radiusMeters: 5000,
         },
       ]);
@@ -421,13 +427,14 @@ describe('MatchingService (T3.7)', () => {
       // Provider 1 owes Rs. 600 commission in cash debits
       mockPrisma.providerLedgerEntry.findMany.mockImplementation(
         ({ where }: { where: { providerProfileId?: string } }) => {
-        if (where.providerProfileId === mockProviderProfileId1) {
-          return Promise.resolve([
-            { direction: 'DEBIT', amountMinor: 60000n }, // -Rs. 600
-          ]);
-        }
-        return Promise.resolve([]);
-      });
+          if (where.providerProfileId === mockProviderProfileId1) {
+            return Promise.resolve([
+              { direction: 'DEBIT', amountMinor: 60000n }, // -Rs. 600
+            ]);
+          }
+          return Promise.resolve([]);
+        },
+      );
 
       const res = await service.findMatchesForRequest(mockRequestId);
 
@@ -476,11 +483,12 @@ describe('MatchingService (T3.7)', () => {
 
       mockGeoService.computeRoute.mockImplementation(
         (origin: { latitude: number; longitude: number }) => {
-        if (origin.latitude === 31.5204) {
-          return Promise.resolve({ distanceMeters: 1000, durationSeconds: 300 });
-        }
-        return Promise.resolve({ distanceMeters: 10000, durationSeconds: 1800 });
-      });
+          if (origin.latitude === 31.5204) {
+            return Promise.resolve({ distanceMeters: 1000, durationSeconds: 300 });
+          }
+          return Promise.resolve({ distanceMeters: 10000, durationSeconds: 1800 });
+        },
+      );
 
       mockTrustService.getProviderStanding.mockImplementation((id: string) => {
         if (id === mockProviderProfileId1) {
@@ -506,7 +514,7 @@ describe('MatchingService (T3.7)', () => {
         reason: 'Dominant distance weighting for emergency pilot',
         weights: {
           ...DEFAULT_MATCHING_WEIGHTS,
-          distanceWeight: 0.80,
+          distanceWeight: 0.8,
           verificationWeight: 0.05,
         },
       });
@@ -521,7 +529,7 @@ describe('MatchingService (T3.7)', () => {
         weights: {
           ...DEFAULT_MATCHING_WEIGHTS,
           distanceWeight: 0.02,
-          verificationWeight: 0.90,
+          verificationWeight: 0.9,
         },
       });
 
@@ -682,9 +690,9 @@ describe('MatchingService (T3.7)', () => {
     });
 
     it('rejects config update with empty or short audit reason', async () => {
-      await expect(
-        service.updateMatchingConfig({ reason: 'abc' }),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.updateMatchingConfig({ reason: 'abc' })).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -750,7 +758,7 @@ describe('MatchingService (T3.7)', () => {
         completedJobsCount: 5,
         medianResponseSeconds: 300,
         providerCancellationRate: 0.0,
-        repeatCustomerRate: 0.80, // High rate, but only 5 jobs total!
+        repeatCustomerRate: 0.8, // High rate, but only 5 jobs total!
         repeatCustomerTotalJobs: 5, // Below 10
         priceMinor: 200000n,
         categoryMedianPriceMinor: 200000n,

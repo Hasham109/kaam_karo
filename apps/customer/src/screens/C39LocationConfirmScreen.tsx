@@ -4,14 +4,7 @@
  * Requirement IDs: LOC-GEO-001..006, PROF-ADDR-001, PROF-ADDR-003, SCOPE-GEO-001, PERM-001, A11Y-006.
  */
 import React, { useState } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { translate } from '@kaamkaro/i18n';
 import {
   COLOR,
@@ -69,9 +62,7 @@ export function C39LocationConfirmScreen(): React.JSX.Element {
   const [detectedAddress, setDetectedAddress] = useState<string | null>(
     draft.location?.address ?? null,
   );
-  const [selectedArea, setSelectedArea] = useState<string>(
-    draft.location?.area ?? 'Gulberg III',
-  );
+  const [selectedArea, setSelectedArea] = useState<string>(draft.location?.area ?? 'Gulberg III');
 
   const handleUseCurrentLocationTap = () => {
     // SEC-REVIEW #19: Permission only requested on tap of "Use current location"
@@ -142,11 +133,7 @@ export function C39LocationConfirmScreen(): React.JSX.Element {
         {/* City Suggestion */}
         <View style={styles.cityCard} testID="c39-city-card">
           <Text
-            style={[
-              styles.cityText,
-              textTokens(locale, 'body'),
-              { textAlign: mirror.textAlign },
-            ]}
+            style={[styles.cityText, textTokens(locale, 'body'), { textAlign: mirror.textAlign }]}
           >
             {translate(locale, 'customer.c39.cityPrompt', { city: selectedCity })}
           </Text>
@@ -239,11 +226,7 @@ export function C39LocationConfirmScreen(): React.JSX.Element {
         {/* Search Place Input */}
         <View style={styles.inputGroup}>
           <Text
-            style={[
-              styles.label,
-              textTokens(locale, 'label'),
-              { textAlign: mirror.textAlign },
-            ]}
+            style={[styles.label, textTokens(locale, 'label'), { textAlign: mirror.textAlign }]}
           >
             {translate(locale, 'customer.c39.searchPlaceholder', { city: selectedCity })}
           </Text>
@@ -256,13 +239,11 @@ export function C39LocationConfirmScreen(): React.JSX.Element {
                 setManualAddress(`${txt.trim()}, ${selectedCity}`);
               }
             }}
-            placeholder={translate(locale, 'customer.c39.searchPlaceholder', { city: selectedCity })}
+            placeholder={translate(locale, 'customer.c39.searchPlaceholder', {
+              city: selectedCity,
+            })}
             placeholderTextColor={COLOR.textMuted}
-            style={[
-              styles.input,
-              textTokens(locale, 'body'),
-              { textAlign: mirror.textAlign },
-            ]}
+            style={[styles.input, textTokens(locale, 'body'), { textAlign: mirror.textAlign }]}
           />
         </View>
 
@@ -316,11 +297,7 @@ export function C39LocationConfirmScreen(): React.JSX.Element {
         {/* Manual Address Fallback */}
         <View style={styles.inputGroup}>
           <Text
-            style={[
-              styles.label,
-              textTokens(locale, 'label'),
-              { textAlign: mirror.textAlign },
-            ]}
+            style={[styles.label, textTokens(locale, 'label'), { textAlign: mirror.textAlign }]}
           >
             {translate(locale, 'customer.c39.manualEntryHeader')}
           </Text>
@@ -343,11 +320,7 @@ export function C39LocationConfirmScreen(): React.JSX.Element {
         <TouchableOpacity
           onPress={handleConfirm}
           disabled={!canConfirm}
-          style={[
-            styles.confirmBtn,
-            minTapTargetStyle(),
-            !canConfirm && styles.disabledBtn,
-          ]}
+          style={[styles.confirmBtn, minTapTargetStyle(), !canConfirm && styles.disabledBtn]}
           {...interactiveProps({
             testID: 'c39-confirm-address-btn',
             accessibilityLabel: translate(locale, 'customer.c39.confirmAddress'),

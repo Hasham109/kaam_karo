@@ -120,8 +120,7 @@ describe('IntakeService (T3.3)', () => {
       });
 
       const result = await intakeService.interpret({
-        intentText:
-          'Mera geyser leak kar raha hai, DHA Phase 4 mein hoon, aaj 7 baje ke baad…',
+        intentText: 'Mera geyser leak kar raha hai, DHA Phase 4 mein hoon, aaj 7 baje ke baad…',
         appLanguage: AppLanguage.UR,
       });
 

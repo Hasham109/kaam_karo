@@ -35,11 +35,7 @@ import { ScreenContainer } from '../components/ScreenContainer';
 import { PermissionModal } from '../components/PermissionModal';
 import { useCustomerApp } from '../state/CustomerContext';
 import { VoiceAssistantSession } from '../services/voice-assistant';
-import type {
-  ConsequentialConfirmationPrompt,
-  ScreenId,
-  VoiceAssistantResult,
-} from '../types';
+import type { ConsequentialConfirmationPrompt, ScreenId, VoiceAssistantResult } from '../types';
 
 export const EXAMPLE_HINTS = [
   'Mera AC thanda nahi kar raha',
@@ -49,10 +45,7 @@ export const EXAMPLE_HINTS = [
   'Show quotes',
 ] as const;
 
-function renderConfirmationMessage(
-  locale: Locale,
-  conf: ConsequentialConfirmationPrompt,
-): string {
+function renderConfirmationMessage(locale: Locale, conf: ConsequentialConfirmationPrompt): string {
   switch (conf.actionType) {
     case 'PLACE_BOOKING':
       return translate(locale, 'customer.c38.confirmBooking', {
@@ -98,8 +91,7 @@ export const C38VoiceAssistantScreen: React.FC = () => {
 
   const mirror = getAppMirroring(locale);
   const params = screenParams as
-    | { initialQuery?: string | undefined; returnTo?: ScreenId | undefined }
-    | undefined;
+    { initialQuery?: string | undefined; returnTo?: ScreenId | undefined } | undefined;
 
   // Session state with undo history
   const session = useMemo(() => new VoiceAssistantSession(draft), []);
@@ -245,10 +237,7 @@ export const C38VoiceAssistantScreen: React.FC = () => {
       showLanguageToggle={false}
       scrollable={true}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         {/* Language Switcher Chip (VOICE-006) */}
         <View style={[styles.topBar, { flexDirection: mirror.row }]}>
           <TouchableOpacity
@@ -271,10 +260,7 @@ export const C38VoiceAssistantScreen: React.FC = () => {
         {/* Listening / Status Visual Indicator (VOICE-002: visible for whole capture) */}
         <View style={styles.centerStatusSection}>
           {isListening ? (
-            <View
-              style={styles.listeningBadge}
-              testID="c38-listening-indicator"
-            >
+            <View style={styles.listeningBadge} testID="c38-listening-indicator">
               <Text style={styles.listeningPulseIcon}>🔴</Text>
               <Text style={[styles.listeningText, textTokens(locale, 'title')]}>
                 {translate(locale, 'customer.c38.listening')}
@@ -454,9 +440,7 @@ export const C38VoiceAssistantScreen: React.FC = () => {
                   accessibilityRole: 'button',
                 })}
               >
-                <Text style={[styles.hintChipText, textTokens(locale, 'label')]}>
-                  💬 {hint}
-                </Text>
+                <Text style={[styles.hintChipText, textTokens(locale, 'label')]}>💬 {hint}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -506,9 +490,7 @@ export const C38VoiceAssistantScreen: React.FC = () => {
                 { textAlign: mirror.textAlign },
               ]}
             >
-              {activeConfirmation
-                ? renderConfirmationMessage(locale, activeConfirmation)
-                : ''}
+              {activeConfirmation ? renderConfirmationMessage(locale, activeConfirmation) : ''}
             </Text>
 
             <View style={[styles.modalActionsRow, { flexDirection: mirror.row }]}>

@@ -12,10 +12,7 @@ import {
 } from '@nestjs/common';
 import { CONFIG_SERVICE, type ConfigService } from '@kaamkaro/platform';
 import { Prisma } from '../../generated/prisma/client.js';
-import {
-  AuditWriter,
-  PrismaService,
-} from '../../platform/index.js';
+import { AuditWriter, PrismaService } from '../../platform/index.js';
 import {
   AvailabilityService,
   AvailabilityStatus,
@@ -257,10 +254,7 @@ export class MatchingService {
               coversLocation = true;
               break;
             }
-          } else if (
-            area.kind === ServiceAreaKind.ZONE &&
-            area.serviceZoneId
-          ) {
+          } else if (area.kind === ServiceAreaKind.ZONE && area.serviceZoneId) {
             coversLocation = true;
             break;
           }
@@ -275,7 +269,10 @@ export class MatchingService {
       if (liveStatus.status === AvailabilityStatus.OFFLINE) {
         ineligibleReasons.push(HardRuleCode.RULE_76_UNAVAILABLE);
         availabilityCheck = AvailabilityCheck.UNAVAILABLE;
-      } else if (liveStatus.status === AvailabilityStatus.EMERGENCY_AVAILABLE && !request.isEmergency) {
+      } else if (
+        liveStatus.status === AvailabilityStatus.EMERGENCY_AVAILABLE &&
+        !request.isEmergency
+      ) {
         ineligibleReasons.push(HardRuleCode.RULE_76_UNAVAILABLE);
         availabilityCheck = AvailabilityCheck.UNAVAILABLE;
       } else {
@@ -312,7 +309,10 @@ export class MatchingService {
 
       // Rule 77: Meets service's verification level requirement (MATCH-ELIG-077)
       const requiredLevel = service.requiredVerificationLevel ?? VerificationLevel.VERIFIED;
-      const meetsVerification = this.isVerificationSufficient(standing.verificationLevel, requiredLevel);
+      const meetsVerification = this.isVerificationSufficient(
+        standing.verificationLevel,
+        requiredLevel,
+      );
       if (!meetsVerification) {
         ineligibleReasons.push(HardRuleCode.RULE_77_VERIFICATION_LEVEL);
       }
@@ -343,7 +343,10 @@ export class MatchingService {
       }
 
       // Preferred verification filter (customer preference)
-      if (options.preferredVerificationOnly && standing.verificationLevel === VerificationLevel.BASIC) {
+      if (
+        options.preferredVerificationOnly &&
+        standing.verificationLevel === VerificationLevel.BASIC
+      ) {
         ineligibleReasons.push('PREFERRED_VERIFIED_ONLY');
       }
 
@@ -505,7 +508,10 @@ export class MatchingService {
             distanceMeters: evalItem.distanceMeters,
             etaSeconds: evalItem.etaSeconds,
             availability: evalItem.availabilityCheck,
-            matchReasons: evalItem.matchReasons.length > 0 ? (evalItem.matchReasons as unknown as Prisma.InputJsonValue) : Prisma.JsonNull,
+            matchReasons:
+              evalItem.matchReasons.length > 0
+                ? (evalItem.matchReasons as unknown as Prisma.InputJsonValue)
+                : Prisma.JsonNull,
             score: evalItem.score !== null ? new Prisma.Decimal(evalItem.score) : null,
             rank: evalItem.rank,
             rankingVersion,
@@ -516,9 +522,7 @@ export class MatchingService {
 
     // 7. Update CustomerRequest status based on matching outcome
     const isSupplyGap = shownCandidates.length === 0;
-    const finalRequestStatus = isSupplyGap
-      ? RequestStatus.NO_SUPPLY
-      : RequestStatus.MATCHES_SHOWN;
+    const finalRequestStatus = isSupplyGap ? RequestStatus.NO_SUPPLY : RequestStatus.MATCHES_SHOWN;
 
     await this.prisma.customerRequest.update({
       where: { id: requestId },
@@ -632,7 +636,8 @@ export class MatchingService {
     },
     actorUserId?: string,
   ): Promise<MatchingConfig> {
-    if (!dto.reason || dto.reason.trim().length < 5) { // kk-allow-literal: technical — min reason length
+    const minReasonLength = 5; // kk-allow-literal: technical — min reason length
+    if (!dto.reason || dto.reason.trim().length < minReasonLength) {
       throw new BadRequestException('A non-empty audit reason (minimum 5 chars) is required.');
     }
 
@@ -707,7 +712,8 @@ export class MatchingService {
     ) {
       badges.push('Verified');
     }
-    if (completedJobs >= 30) { // kk-allow-literal: BP §55
+    const experiencedJobs = 30; // kk-allow-literal: BP §55
+    if (completedJobs >= experiencedJobs) {
       badges.push('Experienced');
     }
     badges.push('Fast Response');

@@ -442,9 +442,7 @@ export class IntakeService {
       requestedWindowFrom: request.requestedWindowFrom
         ? request.requestedWindowFrom.toISOString()
         : null,
-      requestedWindowTo: request.requestedWindowTo
-        ? request.requestedWindowTo.toISOString()
-        : null,
+      requestedWindowTo: request.requestedWindowTo ? request.requestedWindowTo.toISOString() : null,
       isEmergency: request.isEmergency,
       submittedAt: request.submittedAt ? request.submittedAt.toISOString() : null,
       createdAt: request.createdAt.toISOString(),

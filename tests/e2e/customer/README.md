@@ -11,6 +11,7 @@
 This directory contains the End-to-End (E2E) customer journey test suites covering Blueprint **BP §9 steps 11 through 20** (up to "Confirm request/booking").
 
 The journey covers:
+
 1. **Step 11 (App Launch & Auth):** `C01` Splash → `C41` Language Selection → `C02` Welcome → `C03` Phone Login (+92) → `C05` 6-digit OTP verification → `C04` Register (Lahore launch city) or Guest browsing.
 2. **Step 12 (Service Address):** `C06` Home → `C39` Location confirmation with educational GPS pre-prompt (`PERM-JUST-001`), saved addresses, and manual text fallback.
 3. **Step 13 (Browse & Search in everyday language):** `C06` Home category grid → `C07` Search input ("AC not cooling", "پائپ لیک") with voice mic trigger → `C08` Search Results (Services / Providers tabs) → `C31` Multimodal Composer → `C38` Push-to-Talk Voice Assistant.
@@ -27,12 +28,12 @@ The journey covers:
 
 ## 2. Test Files in this Directory
 
-| File | Purpose | Tool | Locale | Profile |
-|---|---|---|---|---|
-| `customer-journey-en.yaml` | Full customer journey BP §9 steps 11–20 | Maestro | `en` | `D-REF`, `E-REF`, `D-MID`, `E-MID` |
-| `customer-journey-ur.yaml` | Full customer journey BP §9 steps 11–20 with RTL mirroring | Maestro | `ur` | `D-REF`, `E-REF`, `D-MID`, `E-MID` |
-| `customer-supply-gap.yaml` | Supply gap / no supply journey & recovery options (BP §61.3) | Maestro | `en` / `ur` | `D-REF`, `E-REF` |
-| `customer-voice-journey.yaml` | Voice assistant push-to-talk & confirmation dialogs (BP §77) | Maestro | `en` / `ur` | `D-REF`, `E-REF` |
+| File                          | Purpose                                                      | Tool    | Locale      | Profile                            |
+| ----------------------------- | ------------------------------------------------------------ | ------- | ----------- | ---------------------------------- |
+| `customer-journey-en.yaml`    | Full customer journey BP §9 steps 11–20                      | Maestro | `en`        | `D-REF`, `E-REF`, `D-MID`, `E-MID` |
+| `customer-journey-ur.yaml`    | Full customer journey BP §9 steps 11–20 with RTL mirroring   | Maestro | `ur`        | `D-REF`, `E-REF`, `D-MID`, `E-MID` |
+| `customer-supply-gap.yaml`    | Supply gap / no supply journey & recovery options (BP §61.3) | Maestro | `en` / `ur` | `D-REF`, `E-REF`                   |
+| `customer-voice-journey.yaml` | Voice assistant push-to-talk & confirmation dialogs (BP §77) | Maestro | `en` / `ur` | `D-REF`, `E-REF`                   |
 
 ---
 
@@ -62,6 +63,7 @@ In addition to static Maestro flows, the journey is automated as an executable V
 `apps/customer/src/customer-journey-e2e.spec.ts`
 
 Run via:
+
 ```bash
 pnpm --filter @kaamkaro/customer test
 ```

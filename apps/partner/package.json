@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@kaamkaro/i18n": "workspace:*",
+    "@kaamkaro/ui": "workspace:*",
     "expo": "catalog:",
     "expo-build-properties": "catalog:",
     "expo-dev-client": "catalog:",

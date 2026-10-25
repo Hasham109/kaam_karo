@@ -146,9 +146,7 @@ export class VoiceAssistantSession {
     // 3. Consequential Actions (VOICE-007: cancel, pay, accept quote, complaint, book)
     // Mandatory confirmation step; nothing is sent without user confirm
     if (
-      (lower.includes('cancel') ||
-        lower.includes('mansookh') ||
-        trimmed.includes('منسوخ')) &&
+      (lower.includes('cancel') || lower.includes('mansookh') || trimmed.includes('منسوخ')) &&
       !lower.includes('policy') &&
       !lower.includes('explain') &&
       !lower.includes('what is')
@@ -251,9 +249,7 @@ export class VoiceAssistantSession {
       trimmed.includes('بکنگ') ||
       trimmed.includes('درخواست بھیجیں')
     ) {
-      const provider = this.currentDraft?.providerId
-        ? 'Tariq AC'
-        : 'Tariq AC';
+      const provider = this.currentDraft?.providerId ? 'Tariq AC' : 'Tariq AC';
       const service = this.currentDraft?.serviceId || 'AC Repair';
       const prompt: ConsequentialConfirmationPrompt = {
         actionType: 'PLACE_BOOKING',
@@ -365,11 +361,7 @@ export class VoiceAssistantSession {
       };
     }
 
-    if (
-      lower.includes('verified') ||
-      lower.includes('tasdeeq') ||
-      trimmed.includes('تصدیق شدہ')
-    ) {
+    if (lower.includes('verified') || lower.includes('tasdeeq') || trimmed.includes('تصدیق شدہ')) {
       return {
         recognizedText: trimmed,
         intentType: 'FILTER_PREFERENCE',
@@ -400,11 +392,7 @@ export class VoiceAssistantSession {
       };
     }
 
-    if (
-      lower.includes('nearest') ||
-      lower.includes('qareeb') ||
-      trimmed.includes('قریب ترین')
-    ) {
+    if (lower.includes('nearest') || lower.includes('qareeb') || trimmed.includes('قریب ترین')) {
       return {
         recognizedText: trimmed,
         intentType: 'FILTER_PREFERENCE',
@@ -451,7 +439,11 @@ export class VoiceAssistantSession {
       trimmed.includes('سمجھائیں') ||
       trimmed.includes('کیا ہے')
     ) {
-      if (lower.includes('inspection fee') || lower.includes('visit fee') || trimmed.includes('معائنہ فیس')) {
+      if (
+        lower.includes('inspection fee') ||
+        lower.includes('visit fee') ||
+        trimmed.includes('معائنہ فیس')
+      ) {
         return {
           recognizedText: trimmed,
           intentType: 'EXPLAIN',
@@ -513,9 +505,10 @@ export class VoiceAssistantSession {
       trimmed.includes('گلبرگ') ||
       trimmed.includes('ماڈل ٹاؤن')
     ) {
-      const detectedLocation = lower.includes('gulberg') || trimmed.includes('گلبرگ')
-        ? 'Gulberg III, Lahore'
-        : 'Model Town, Lahore';
+      const detectedLocation =
+        lower.includes('gulberg') || trimmed.includes('گلبرگ')
+          ? 'Gulberg III, Lahore'
+          : 'Model Town, Lahore';
       this.pushUndoSnapshot('location updated', 'پتہ تبدیل کیا گیا');
       return {
         recognizedText: trimmed,
@@ -546,7 +539,10 @@ export class VoiceAssistantSession {
       trimmed.includes('اے سی') ||
       trimmed.includes('ٹھنڈا')
     ) {
-      this.pushUndoSnapshot('draft updated with AC service request', 'اے سی سروس کی درخواست شامل کی گئی');
+      this.pushUndoSnapshot(
+        'draft updated with AC service request',
+        'اے سی سروس کی درخواست شامل کی گئی',
+      );
       return {
         recognizedText: trimmed,
         intentType: 'DRAFT_UPDATE',
@@ -571,7 +567,10 @@ export class VoiceAssistantSession {
       trimmed.includes('الیکٹریشن') ||
       trimmed.includes('بجلی')
     ) {
-      this.pushUndoSnapshot('draft updated with Electrician request', 'الیکٹریشن کی درخواست شامل کی گئی');
+      this.pushUndoSnapshot(
+        'draft updated with Electrician request',
+        'الیکٹریشن کی درخواست شامل کی گئی',
+      );
       return {
         recognizedText: trimmed,
         intentType: 'DRAFT_UPDATE',
@@ -612,11 +611,7 @@ export class VoiceAssistantSession {
       };
     }
 
-    if (
-      lower.includes('search') ||
-      lower.includes('dhoondo') ||
-      trimmed.includes('تلاش')
-    ) {
+    if (lower.includes('search') || lower.includes('dhoondo') || trimmed.includes('تلاش')) {
       const query = trimmed.replace(/^(search|dhoondo|find|تلاش کریں|ڈھونڈیں)\s*/i, '');
       return {
         recognizedText: trimmed,

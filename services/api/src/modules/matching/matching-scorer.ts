@@ -180,7 +180,8 @@ export class MatchingScorer {
   }
 
   private static computePriceScore(price: bigint | null, median: bigint | null): number {
-    if (price === null || median === null || median <= 0n) { // kk-allow-literal: technical — zero guard
+    const zeroMedian = 0n; // kk-allow-literal: technical — zero guard
+    if (price === null || median === null || median <= zeroMedian) {
       return 0.5; // kk-allow-literal: technical — neutral fallback
     }
     const priceNum = Number(price);

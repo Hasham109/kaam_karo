@@ -25,13 +25,7 @@ import type { AttachedVideo, ScreenState } from '../types';
 const MAX_VIDEO_SECONDS = 30; // 30 seconds max
 
 export function C33VideoRecorderScreen(): React.JSX.Element {
-  const {
-    locale,
-    updateDraft,
-    goBack,
-    permissionStatus,
-    setPermissionStatus,
-  } = useCustomerApp();
+  const { locale, updateDraft, goBack, permissionStatus, setPermissionStatus } = useCustomerApp();
   const mirror = getAppMirroring(locale);
 
   const [screenState, setScreenState] = useState<ScreenState>('E');
@@ -147,11 +141,7 @@ export function C33VideoRecorderScreen(): React.JSX.Element {
         {/* Hint */}
         <View style={styles.hintCard} testID="c33-hint-card">
           <Text
-            style={[
-              styles.hintText,
-              textTokens(locale, 'body'),
-              { textAlign: mirror.textAlign },
-            ]}
+            style={[styles.hintText, textTokens(locale, 'body'), { textAlign: mirror.textAlign }]}
           >
             {translate(locale, 'customer.c33.hint')}
           </Text>
@@ -169,9 +159,7 @@ export function C33VideoRecorderScreen(): React.JSX.Element {
           ) : (
             <View style={styles.emptyViewfinder}>
               <Text style={styles.viewfinderIcon}>📹</Text>
-              <Text style={[styles.timerOverlay, textTokens(locale, 'title')]}>
-                {timerText}
-              </Text>
+              <Text style={[styles.timerOverlay, textTokens(locale, 'title')]}>{timerText}</Text>
               {isRecording ? (
                 <View style={styles.recordingPill}>
                   <View style={styles.pulseDot} />
