@@ -1,6 +1,50 @@
 # CHANGELOG — Kaam Karo
 
-## 2026-10-25 — Bug Sweep Phase 3 (A17) — PASS
+## 2026-10-25 — T4.1 Partner Onboarding + Verification Upload / Document Picker (A12) — DONE
+- Partner Onboarding & Verification Flow across Screens P01, P02, P03, and P04 (BP §10 Steps 21–32, §22; `TRUST-VER-001..003`, `PROV-CREW-006`, `MEDIA-008`, `PERM-005`, `M-11`, `D-002`, `D-004`, `D-018`):
+  - **P01 Provider Welcome Screen (`apps/partner/src/screens/P01WelcomeScreen.tsx`):**
+    - Instant bilingual language toggle (`en` / `ur`) without app reload (`I18N-002`).
+    - 3 value proposition points: "Get job requests near you", "Set your own hours and area", "Track your earnings and keep 70% of labour".
+    - "Get started" CTA (routes to P02 in register mode) and "I already have an account" CTA (routes to P02 in login mode).
+    - Zero permissions requested on welcome screen (`BP §10`).
+    - Supports all 5 standard screen states (`loading`, `empty`, `success`, `error`, `pending`).
+  - **P02 Provider Registration & Login Screen (`apps/partner/src/screens/P02RegistrationScreen.tsx`):**
+    - 3-step progressive onboarding:
+      - Step (a) Mobile Number: +92 prefix, Pakistani mobile validation (10 digits starting with `3`), bidi-isolated phone rendering in Urdu (`isolatePhone`).
+      - Step (b) OTP Entry: 6-digit numeric verification code, 60-second countdown timer with resend trigger, edit phone number action, localized invalid OTP error banner.
+      - Step (c) Profile Setup: Full name, provider type choice (`SOLO` vs `TEAM`), conditional business name and team size inputs for `TEAM`, active city constrained to Lahore (`LAUNCH-CITY-001`, `D-007`, `D-019`), and optional email.
+    - Crew verification disclaimer banner (`D-018`, `PROV-CREW-006`): *"Only you, the team leader, are verified. Team members are not added to the app."*
+    - Strictly passwordless: zero passwords or PINs requested anywhere (`SEC-AUTH-001`).
+    - Supports all 5 canonical screen states.
+  - **P03 Provider Verification Screen (`apps/partner/src/screens/P03VerificationScreen.tsx`):**
+    - Displays trust standing badge (`Basic` default, `Verified`, `Business Verified`).
+    - Displays crew leader verification notice banner (`D-018`).
+    - Required documents checklist based on provider type:
+      - Individual (`SOLO`): CNIC Front, CNIC Back, Trade Certificate / Police Clearance.
+      - Team (`TEAM`): CNIC Front, CNIC Back, Trade Certificate, Business Registration Document (`TRUST-VER-003`).
+    - System document picker flow requiring zero camera or storage runtime permissions (`MEDIA-008`, `PERM-005`).
+    - Document status chips (`NOT_UPLOADED`, `UPLOADED`, `UNDER_REVIEW`, `ACCEPTED`, `NEEDS_ACTION`).
+    - Kaam Karo reviewer note display when action is required (`OQ-064`, `BP §22`).
+    - Document replace / retry upload actions.
+    - Pre-submission validation: blocks submission if any required document is missing.
+    - "Submit for review" CTA (`BP §10 step 32`) transitions provider to review state and navigates to home dashboard (`P04HomeScreen.tsx`).
+    - Supports all 5 canonical screen states.
+  - **i18n & Localization (`packages/i18n`):**
+    - Synchronized all P01, P02, P03, and P04 message keys in `PARTNER_EN` and `PARTNER_UR`.
+    - `guard:string-lint` verified 44 UI files with 0 hardcoded literals and 100% catalog parity.
+  - **Device Matrix & Typography Compliance:**
+    - Small device width ≤ 360 dp support (Infinix Note 40, Tecno Spark 20).
+    - Noto Nastaliq Urdu (`URDU_FONT_FAMILY`) with 2.5× line height ratio in Urdu.
+    - Full RTL layout mirroring (`direction: rtl`, `flexDirection: row-reverse`, `textAlign: right`).
+    - 48×48 dp minimum touch targets on all interactive elements (`A11Y-002`, `minTapTargetStyle()`).
+  - **Quality & Sign-off:**
+    - Automated unit test suite `apps/partner/src/partner-onboarding.spec.ts` (20/20 tests pass).
+    - QA Sign-off: `docs/qa/T4.1-qa.md` (`QA PASS`).
+    - Security Review: `docs/security/SEC-REVIEW-T4.1.md` (`SEC PASS`).
+    - Task Handoff: `coordination/handoffs/T-4.1.md`.
+    - All 5 repository guards pass (`guard:permissions`, `guard:hardcoded`, `guard:string-lint`, `guard:transition-table`, `guard:traceability`).
+
+
 - Phase 3 Comprehensive Bug Sweep (`docs/qa/bug-sweep-phase3.md`):
   - Completed IMPL §7.3 audit checklist covering all Phase 3 modules: Location (`T3.1`), Media (`T3.2`), IntakeAI (`T3.3`), Booking State Machine (`T3.4`), Quotes & Fare Lines (`T3.5`), Availability (`T3.6`), Matching Engine (`T3.7`), Customer App Core UI (`T3.8`), Intake & Media UI (`T3.9`), Quotes & Booking UI (`T3.10`), Voice Assistant v1 (`T3.11`), and Customer Journey E2E (`T3.12`).
   - Section A (Rule Integrity): 0 illegal transitions reachable; booking transitions ⊆ ARCH §6.1 canonical matrix (289 pairs checked, 38 allowed, 251 rejected); client status tampering blocked; unapproved fare lines non-payable (`FARE-012`, `PRICE-007`); `crew_size` decoupled from pricing/commission (`D-018`); customer choice guaranteed with zero auto-assignment (`D-005`); commission strictly restricted to approved labor (`D-015`); unpaid commission blocked from matching and booking (`D-020`, `D-021`); Voice Assistant v1 enforces mandatory confirmation dialogs for all 5 consequential actions (`VOICE-007`) and strict allow-list boundary (`VOICE-008`).
