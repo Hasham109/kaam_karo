@@ -1,0 +1,161 @@
+# Partner Journey E2E Flow — English (Task T4.7; BP §10 Steps 21–42)
+# Covers: Provider onboarding, OTP login, verification, service setup, availability,
+# incoming requests (zero customer PII pre-match), quote builder, job execution (en route with visible location indicator),
+# extras proposal (strictly non-payable until customer approval), and completion evidence with two-step billing.
+# Requirement IDs: JOURNEY-002, UX-PROV-001..005, BP §10, BP §13, BP §57.4, BP §58.1..2, BP §81, D-003, D-004, D-018, D-030.
+appId: com.kaamkaro.partner
+---
+# Step 21: Welcome & Language Choice (P01)
+- launchApp
+- assertVisible:
+    id: p01-welcome-screen
+- takeScreenshot: en-step21-01-partner-welcome
+- tapOn:
+    id: p01-start-btn
+
+# Step 22-26: Registration & Mobile OTP Login (P02)
+- assertVisible:
+    id: p02-registration-screen
+- tapOn:
+    id: p02-phone-input
+- inputText: '3019876543'
+- hideKeyboard
+- tapOn:
+    id: p02-type-solo
+- takeScreenshot: en-step22-01-register
+- tapOn:
+    id: p02-send-otp-btn
+
+# OTP Verification on P02
+- assertVisible:
+    id: p02-otp-input
+- tapOn:
+    id: p02-otp-input
+- inputText: '123456'
+- hideKeyboard
+- tapOn:
+    id: p02-verify-otp-btn
+
+# Step 27-32: Provider Verification Checklist (P03)
+- assertVisible:
+    id: p03-verification-screen
+- assertVisible:
+    id: p03-trust-badge
+- takeScreenshot: en-step27-01-verification
+- tapOn:
+    id: p03-submit-review-btn
+
+# Step 33: Partner Home Dashboard (P04)
+- assertVisible:
+    id: p04-home-screen
+- takeScreenshot: en-step33-01-partner-home
+
+# Service Setup (P05)
+- tapOn:
+    id: p04-services-btn
+- assertVisible:
+    id: p05-service-setup-screen
+- takeScreenshot: en-step33-02-service-setup
+- tapOn:
+    id: p05-back-btn
+
+# Availability & Service Area (P06, P07, P22)
+- tapOn:
+    id: p04-availability-btn
+- assertVisible:
+    id: p06-availability-screen
+- takeScreenshot: en-step33-03-availability
+- tapOn:
+    id: p06-back-btn
+
+# Step 34: Incoming Job Requests (P08)
+- tapOn:
+    id: p04-requests-btn
+- assertVisible:
+    id: p08-job-requests-screen
+- takeScreenshot: en-step34-01-requests-list
+
+# Step 35: Job Detail with Pre-match Zero PII Guard (P09)
+- tapOn:
+    id: p08-request-card-req-101
+- assertVisible:
+    id: p09-job-detail-screen
+# Verify zero customer PII pre-match notice is displayed
+- assertVisible:
+    id: p09-pre-match-pii-notice
+- takeScreenshot: en-step35-01-pre-match-detail
+
+# Step 36: Action Sheet Response with Crew Size (P10)
+- tapOn:
+    id: p09-accept-btn
+- assertVisible:
+    id: p10-action-sheet
+- assertVisible:
+    id: p10-crew-size-stepper
+- takeScreenshot: en-step36-01-action-sheet
+- tapOn:
+    id: p10-confirm-accept-btn
+
+# Step 38: Job Execution — En Route with Visible Active Location Sharing (P12)
+- assertVisible:
+    id: p12-job-execution-screen
+- tapOn:
+    id: p12-start-trip-btn
+# Verify active location indicator is strictly visible while en route
+- assertVisible:
+    id: p12-location-indicator-strip
+- takeScreenshot: en-step38-01-en-route-location-sharing
+
+# Arrived on site — Location sharing terminated immediately
+- tapOn:
+    id: p12-arrived-btn
+- assertNotVisible:
+    id: p12-location-indicator-strip
+- takeScreenshot: en-step38-02-arrived-on-site
+
+# Start Work on site
+- tapOn:
+    id: p12-start-work-btn
+- takeScreenshot: en-step38-03-work-in-progress
+
+# Step 39: Propose Extra Charges (P13)
+- tapOn:
+    id: p12-propose-extras-btn
+- assertVisible:
+    id: p13-extras-screen
+- assertVisible:
+    id: p13-propose-only-warning-banner
+- takeScreenshot: en-step39-01-propose-extras
+- tapOn:
+    id: p13-add-line-btn
+- tapOn:
+    id: p13-submit-proposals-btn
+
+# Step 40-42: Completion Evidence & Two-Step Billing (P14)
+- assertVisible:
+    id: p12-job-execution-screen
+- tapOn:
+    id: p12-complete-job-btn
+- assertVisible:
+    id: p14-completion-evidence-screen
+- takeScreenshot: en-step40-01-completion-evidence
+- tapOn:
+    id: p14-mark-complete-btn
+
+# Step 41: Post-Completion Billing & Payment Recording (D-003, D-030)
+- assertVisible:
+    id: p14-final-bill-section
+- assertVisible:
+    id: p14-labour-line
+- assertVisible:
+    id: p14-commission-line
+- takeScreenshot: en-step41-01-final-bill
+- tapOn:
+    id: p14-payment-cash-btn
+
+# Cash Confirmation Sheet with Commission Debit Notice (D-006, COMM-001)
+- assertVisible:
+    id: p14-cash-confirm-sheet
+- takeScreenshot: en-step42-01-cash-confirm
+- tapOn:
+    id: p14-confirm-cash-btn

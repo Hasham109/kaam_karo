@@ -1,0 +1,136 @@
+# Partner Journey E2E Flow — Urdu (Task T4.7; BP §10 Steps 21–42; RTL & Noto Nastaliq)
+# Covers: Provider onboarding, verification, incoming requests with zero PII, job execution,
+# en route location sharing indicator, extras proposal, and post-completion billing in Urdu.
+# Requirement IDs: JOURNEY-002, UX-PROV-001..005, I18N-001, I18N-008, A11Y-007, BP §10, BP §57.4, BP §81.
+appId: com.kaamkaro.partner
+---
+# Step 21: Welcome & Urdu Language (P01)
+- launchApp
+- assertVisible:
+    id: p01-welcome-screen
+- tapOn:
+    id: p01-ur-button
+- takeScreenshot: ur-step21-01-partner-welcome
+- tapOn:
+    id: p01-start-btn
+
+# Step 22-26: Registration & Mobile OTP Login in Urdu (P02)
+- assertVisible:
+    id: p02-registration-screen
+- tapOn:
+    id: p02-phone-input
+- inputText: '3019876543'
+- hideKeyboard
+- tapOn:
+    id: p02-type-solo
+- takeScreenshot: ur-step22-01-register
+- tapOn:
+    id: p02-send-otp-btn
+
+# OTP Verification
+- assertVisible:
+    id: p02-otp-input
+- tapOn:
+    id: p02-otp-input
+- inputText: '123456'
+- hideKeyboard
+- tapOn:
+    id: p02-verify-otp-btn
+
+# Step 27-32: Verification in Urdu (P03)
+- assertVisible:
+    id: p03-verification-screen
+- assertVisible:
+    id: p03-trust-badge
+- takeScreenshot: ur-step27-01-verification
+- tapOn:
+    id: p03-submit-review-btn
+
+# Step 33: Partner Home Dashboard (P04)
+- assertVisible:
+    id: p04-home-screen
+- takeScreenshot: ur-step33-01-partner-home
+
+# Step 34: Incoming Job Requests (P08)
+- tapOn:
+    id: p04-requests-btn
+- assertVisible:
+    id: p08-job-requests-screen
+- takeScreenshot: ur-step34-01-requests-list
+
+# Step 35: Job Detail with Pre-match Zero PII Guard in Urdu (P09)
+- tapOn:
+    id: p08-request-card-req-101
+- assertVisible:
+    id: p09-job-detail-screen
+- assertVisible:
+    id: p09-pre-match-pii-notice
+- takeScreenshot: ur-step35-01-pre-match-detail
+
+# Step 36: Action Sheet Response with Crew Size (P10)
+- tapOn:
+    id: p09-accept-btn
+- assertVisible:
+    id: p10-action-sheet
+- assertVisible:
+    id: p10-crew-size-stepper
+- takeScreenshot: ur-step36-01-action-sheet
+- tapOn:
+    id: p10-confirm-accept-btn
+
+# Step 38: Job Execution — En Route with Visible Active Location Sharing in Urdu (P12)
+- assertVisible:
+    id: p12-job-execution-screen
+- tapOn:
+    id: p12-start-trip-btn
+- assertVisible:
+    id: p12-location-indicator-strip
+- takeScreenshot: ur-step38-01-en-route-location-sharing
+
+# Arrived on site
+- tapOn:
+    id: p12-arrived-btn
+- assertNotVisible:
+    id: p12-location-indicator-strip
+- takeScreenshot: ur-step38-02-arrived-on-site
+
+# Start Work
+- tapOn:
+    id: p12-start-work-btn
+- takeScreenshot: ur-step38-03-work-in-progress
+
+# Step 39: Propose Extra Charges (P13)
+- tapOn:
+    id: p12-propose-extras-btn
+- assertVisible:
+    id: p13-extras-screen
+- assertVisible:
+    id: p13-propose-only-warning-banner
+- takeScreenshot: ur-step39-01-propose-extras
+- tapOn:
+    id: p13-submit-proposals-btn
+
+# Step 40-42: Completion Evidence & Billing in Urdu (P14)
+- assertVisible:
+    id: p12-job-execution-screen
+- tapOn:
+    id: p12-complete-job-btn
+- assertVisible:
+    id: p14-completion-evidence-screen
+- takeScreenshot: ur-step40-01-completion-evidence
+- tapOn:
+    id: p14-mark-complete-btn
+
+# Post-Completion Billing
+- assertVisible:
+    id: p14-final-bill-section
+- takeScreenshot: ur-step41-01-final-bill
+- tapOn:
+    id: p14-payment-cash-btn
+
+# Cash Confirmation Sheet
+- assertVisible:
+    id: p14-cash-confirm-sheet
+- takeScreenshot: ur-step42-01-cash-confirm
+- tapOn:
+    id: p14-confirm-cash-btn

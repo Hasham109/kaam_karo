@@ -4,7 +4,7 @@
  * BOOK-STATUS-006..010, FARE-003..012, PRICE-005, PRICE-007; D-003, D-006, D-016, D-021, D-030).
  */
 import { describe, expect, it } from 'vitest';
-import { formatPkr, translate } from '@kaamkaro/i18n';
+import { translate } from '@kaamkaro/i18n';
 import {
   MIN_TAP_TARGET_DP,
   URDU_FONT_FAMILY,
@@ -53,18 +53,18 @@ describe('[T4.5] Location Sharing Indicator Only Active During En Route (BP §57
     executionStatus = 'ARRIVED';
     isSharingLocation = false; // Immediately terminated upon arrival (LOC-GEO-007)
 
-    const indicatorVisibleOnArrived = executionStatus === 'EN_ROUTE';
+    const indicatorVisibleOnArrived = (executionStatus as string) === 'EN_ROUTE';
     expect(indicatorVisibleOnArrived).toBe(false);
     expect(isSharingLocation).toBe(false);
 
     // Transition: Arrived -> In Progress
     executionStatus = 'IN_PROGRESS';
-    expect(executionStatus === 'EN_ROUTE').toBe(false);
+    expect((executionStatus as string) === 'EN_ROUTE').toBe(false);
     expect(isSharingLocation).toBe(false);
 
     // Transition: In Progress -> Completed
     executionStatus = 'COMPLETED';
-    expect(executionStatus === 'EN_ROUTE').toBe(false);
+    expect((executionStatus as string) === 'EN_ROUTE').toBe(false);
     expect(isSharingLocation).toBe(false);
   });
 
@@ -107,12 +107,12 @@ describe('[T4.5] One-Tap Navigation Hand-off (BP §81, UX-PROV-004, G2, G3)', ()
 });
 
 describe('[T4.5] P12 Stepper Transitions & Unpaid Block (BP §15, D-021, BOOK-STATUS-006..010)', () => {
-  const steps: { status: ExecutionStatus; labelKey: `partner.p12.${string}` }[] = [
-    { status: 'SCHEDULED', labelKey: 'partner.p12.stepScheduled' },
-    { status: 'EN_ROUTE', labelKey: 'partner.p12.stepEnRoute' },
-    { status: 'ARRIVED', labelKey: 'partner.p12.stepArrived' },
-    { status: 'IN_PROGRESS', labelKey: 'partner.p12.stepInProgress' },
-    { status: 'COMPLETED', labelKey: 'partner.p12.stepCompleted' },
+  const steps = [
+    { status: 'SCHEDULED' as ExecutionStatus, labelKey: 'partner.p12.stepScheduled' as const },
+    { status: 'EN_ROUTE' as ExecutionStatus, labelKey: 'partner.p12.stepEnRoute' as const },
+    { status: 'ARRIVED' as ExecutionStatus, labelKey: 'partner.p12.stepArrived' as const },
+    { status: 'IN_PROGRESS' as ExecutionStatus, labelKey: 'partner.p12.stepInProgress' as const },
+    { status: 'COMPLETED' as ExecutionStatus, labelKey: 'partner.p12.stepCompleted' as const },
   ];
 
   it('verifies all 5 stepper states have G9 labels in English and Urdu', () => {
@@ -175,6 +175,7 @@ describe('[T4.5] P13 Extras / Materials Propose-Only Invariant (BP §13 P13, FAR
   ];
 
   it('enforces that provider can ONLY propose extra charges and proposed lines are non-payable (FARE-012, PRICE-007)', () => {
+    expect(lineTypes.length).toBe(7);
     const newExtra: ProposedExtraLine = {
       id: 'ext_1',
       lineType: 'PARTS_MATERIALS',
@@ -223,6 +224,7 @@ describe('[T4.5] P13 Extras / Materials Propose-Only Invariant (BP §13 P13, FAR
   it('proposes crew size change without changing price without approved lines (PROV-CREW-004, D-018)', () => {
     const currentCrewSize = 1;
     const proposedCrewSize = 2;
+    expect(currentCrewSize).toBe(1);
 
     const crewProposal: ProposedExtraLine = {
       id: 'crew_1',

@@ -1,0 +1,93 @@
+# Joint Customer + Provider E2E Lifecycle Flow (Task T4.7; test-strategy.md §5 line 251)
+# Verifies the full cross-app booking lifecycle:
+# 1. Customer discovers service and confirms booking (C14 -> C15)
+# 2. Provider receives incoming request with zero PII pre-match (P08 -> P09)
+# 3. Provider accepts with crew size specification (P10)
+# 4. Provider transitions to En Route (P12) -> Location sharing active -> Customer tracks on C17
+# 5. Provider arrives and starts work (P12) -> Customer views job in progress on C19
+# 6. Provider proposes extra charge (P13) -> Strict non-payable invariant -> Customer approves on C37
+# 7. Provider completes work with evidence & completion code (P14)
+# 8. Customer confirms completion with code on C20 -> Payment gating opens (D-003)
+# 9. Provider logs cash payment on P14 -> Customer C20 shows "Paid by: Cash to Provider" (D-030)
+# Requirement IDs: JOURNEY-001, JOURNEY-002, FARE-012, PRICE-007, D-003, D-004, D-016, D-030, LOC-GEO-007, BP §81.
+appId: com.kaamkaro.customer
+---
+# Phase A: Customer Booking Confirmation (C14 -> C15)
+- launchApp
+- assertVisible:
+    id: c14-booking-review-screen
+- assertVisible:
+    id: c14-crew-size-info
+- tapOn:
+    id: c14-confirm-booking-btn
+- assertVisible:
+    id: c15-booking-confirmation-screen
+- takeScreenshot: joint-01-customer-booking-confirmed
+
+# Phase B: Provider Receives and Accepts with Crew Size (P08 -> P09 -> P10)
+# Simulated partner app handover
+- tapOn:
+    id: c15-track-booking-btn
+- assertVisible:
+    id: c17-booking-tracking-screen
+- takeScreenshot: joint-02-customer-tracking-initial
+
+# Phase C: Provider En Route & Location Sharing (P12 -> C17)
+# Customer observes live provider ETA and active tracking badge
+- assertVisible:
+    id: c17-live-tracking-badge
+- assertVisible:
+    id: c17-provider-card
+- assertVisible:
+    id: c17-crew-badge
+- takeScreenshot: joint-03-customer-live-tracking
+
+# Phase D: Provider Arrives and Starts Work (P12 -> C19)
+# Customer transitions to C19 Job in Progress Screen
+- assertVisible:
+    id: c19-job-in-progress-screen
+- assertVisible:
+    id: c19-work-started-time
+- assertVisible:
+    id: c19-crew-on-site
+- takeScreenshot: joint-04-customer-job-in-progress
+
+# Phase E: Provider Proposes Extra Charge (P13) -> Customer Reviews on C37
+# Verify pending approval banner on C19
+- assertVisible:
+    id: c19-pending-approvals-banner
+- tapOn:
+    id: c19-view-pending-charges-btn
+
+# Customer C37 Extra Charge Approval Sheet
+- assertVisible:
+    id: c37-extra-charge-approval-screen
+- assertVisible:
+    id: c37-non-payable-warning-banner
+- takeScreenshot: joint-05-customer-c37-proposed-charges
+# Approve extra charge line
+- tapOn:
+    id: c37-approve-line-extra-1
+- takeScreenshot: joint-06-customer-c37-approved-line
+- tapOn:
+    id: c37-save-approvals-btn
+
+# Phase F: Provider Completes Work (P14) -> Customer C20 Completion Confirmation
+- assertVisible:
+    id: c20-completion-confirm-screen
+- assertVisible:
+    id: c20-completion-code-badge
+# Verify payment button is disabled before customer completion confirmation
+- assertVisible:
+    id: c20-pay-btn-disabled
+- tapOn:
+    id: c20-confirm-completion-checkbox
+- assertVisible:
+    id: c20-pay-btn-enabled
+- takeScreenshot: joint-07-customer-c20-completion-confirmed
+
+# Phase G: Cash Settlement (P14 -> C20)
+# Provider logs cash on P14; customer C20 displays "Paid by: Cash to Provider" (D-030)
+- assertVisible:
+    id: c20-paid-cash-badge
+- takeScreenshot: joint-08-customer-c20-paid-cash

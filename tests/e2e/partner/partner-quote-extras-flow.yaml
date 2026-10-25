@@ -1,0 +1,63 @@
+# Partner Structured Quote & Extras Proposal Flow (Task T4.7; BP §58.1..2; P24, P13)
+# Covers: Custom quote building with BP §58.1 line types, inclusions/exclusions, crew size invariant,
+# and extra charges proposal with strict non-payable invariant until customer approval.
+# Requirement IDs: FARE-001..013, PRICE-001..007, PROV-CREW-004..005, D-004, D-018, D-025, D-029.
+appId: com.kaamkaro.partner
+---
+# Launch and navigate to Job Requests (P08)
+- launchApp
+- tapOn:
+    id: p04-requests-btn
+- assertVisible:
+    id: p08-job-requests-screen
+
+# Select request requesting quote (P09)
+- tapOn:
+    id: p08-request-card-req-102
+- assertVisible:
+    id: p09-job-detail-screen
+- tapOn:
+    id: p09-quote-btn
+
+# Structured Quote Builder Screen (P24)
+- assertVisible:
+    id: p24-quote-builder-screen
+# Verify crew size invariant banner (never changes customer price)
+- assertVisible:
+    id: p24-crew-invariant-banner
+- takeScreenshot: en-p24-01-quote-builder
+
+# Set required fields: Validity, Inclusions, Exclusions, Crew Size
+- tapOn:
+    id: p24-validity-selector
+- tapOn:
+    id: p24-validity-opt-48h
+- tapOn:
+    id: p24-crew-stepper-plus
+- tapOn:
+    id: p24-inclusions-input
+- inputText: 'Full diagnostics, compressor service, gas top-up'
+- hideKeyboard
+- tapOn:
+    id: p24-exclusions-input
+- inputText: 'Major motor rewinding not included'
+- hideKeyboard
+- takeScreenshot: en-p24-02-quote-inputs
+
+# Add custom line items (Labour, Parts with materials class, Tools with reason)
+- tapOn:
+    id: p24-add-line-btn
+- tapOn:
+    id: p24-line-type-parts
+- tapOn:
+    id: p24-parts-class-included
+- takeScreenshot: en-p24-03-quote-lines
+
+# Review commission split (30% strictly on labour only)
+- assertVisible:
+    id: p24-commission-preview
+- takeScreenshot: en-p24-04-commission-split
+
+# Send Quote to customer
+- tapOn:
+    id: p24-send-quote-btn

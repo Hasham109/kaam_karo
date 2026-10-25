@@ -75,5 +75,5 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 | A13 | admin-portal | T1.3 Admin screen specs A01–A26 + sub-role access matrix (OPS-ADMIN-001…026, ADMIN-ROLE-001…008, ROLE-003, UX-SCREEN-003, SEC-AUTH-005) | DONE | t2.1-monorepo (docs only) | — | T5.1 (T1.3 QA PASS; SEC fixes #1,4,5,6,8,15-18,22,24,25 + QA F-04 done, A15 re-review pending) | 2026-10-23 |
 | A14 | i18n-a11y | T1.4 i18n + RTL + Urdu typography kit; string-lint rule (I18N-001..008, A11Y-001..008) | DONE | work/parallel-t1.4-t3.2 | — | T3.8 / T3.9 | 2026-10-24 |
 | A15 | security-reviewer | T2.8 Security review of T2.1–T2.6 | DONE | t2.8-security-review | — | Phase 3 security review | 2026-10-24 |
-| A16 | qa-tester | T3.12 Customer journey E2E (BP §9 steps 11–20 en/ur, C40 supply gap, C38 voice, Maestro & Vitest suites; JOURNEY-001) | DONE | t3.12-customer-journey-qa | — | T4.7 | 2026-10-25 |
+| A16 | qa-tester | T4.7 Provider journey E2E (BP §10) + joint customer/provider E2E | IN_PROGRESS | t4.7-provider-journey-qa | — | T4.7 handoff | 2026-10-25 |
 | A17 | bug-hunter | Phase 3 bug sweep (docs/qa/bug-sweep-phase3.md, 0 S1/S2) | DONE | — | — | Phase 4 bug sweep | 2026-10-25 |
