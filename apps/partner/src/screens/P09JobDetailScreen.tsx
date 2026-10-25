@@ -231,19 +231,35 @@ export function P09JobDetailScreen() {
         <View style={styles.actionSection}>
           {!isAccepted && !isCancelled && !isRejected && (
             <View style={[styles.actionRow, { flexDirection: mirroring.row }]}>
-              <TouchableOpacity
-                {...interactiveProps({
-                  testID: 'p09-accept-btn',
-                  accessibilityRole: 'button',
-                  accessibilityLabel: translate(locale, 'partner.p08.acceptBtn'),
-                })}
-                style={[styles.primaryActionBtn, minTapTargetStyle()]}
-                onPress={handleOpenAccept}
-              >
-                <Text style={[styles.primaryActionBtnText, fontStyle]}>
-                  {translate(locale, 'partner.p08.acceptBtn')}
-                </Text>
-              </TouchableOpacity>
+              {selectedJob.commercialModel === 'REQUEST_QUOTES' ? (
+                <TouchableOpacity
+                  {...interactiveProps({
+                    testID: 'p09-quote-btn',
+                    accessibilityRole: 'button',
+                    accessibilityLabel: translate(locale, 'partner.p08.quoteBtn'),
+                  })}
+                  style={[styles.primaryActionBtn, minTapTargetStyle()]}
+                  onPress={() => navigate('P24')}
+                >
+                  <Text style={[styles.primaryActionBtnText, fontStyle]}>
+                    {translate(locale, 'partner.p08.quoteBtn')}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  {...interactiveProps({
+                    testID: 'p09-accept-btn',
+                    accessibilityRole: 'button',
+                    accessibilityLabel: translate(locale, 'partner.p08.acceptBtn'),
+                  })}
+                  style={[styles.primaryActionBtn, minTapTargetStyle()]}
+                  onPress={handleOpenAccept}
+                >
+                  <Text style={[styles.primaryActionBtnText, fontStyle]}>
+                    {translate(locale, 'partner.p08.acceptBtn')}
+                  </Text>
+                </TouchableOpacity>
+              )}
 
               <TouchableOpacity
                 {...interactiveProps({

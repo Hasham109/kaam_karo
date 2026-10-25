@@ -15,6 +15,7 @@ import { P08JobRequestsScreen } from './screens/P08JobRequestsScreen';
 import { P09JobDetailScreen } from './screens/P09JobDetailScreen';
 import { P22LiveStatusScreen } from './screens/P22LiveStatusScreen';
 import { P23DateOverridesScreen } from './screens/P23DateOverridesScreen';
+import { P24QuoteBuilderScreen } from './screens/P24QuoteBuilderScreen';
 import { P25MediaPlayerScreen } from './screens/P25MediaPlayerScreen';
 import { PartnerProvider, usePartner } from './state/PartnerContext';
 import { getAppMirroring } from './utils/rtl';
@@ -37,6 +38,7 @@ function PartnerAppContent() {
         {currentScreen === 'P09' && <P09JobDetailScreen />}
         {currentScreen === 'P22' && <P22LiveStatusScreen />}
         {currentScreen === 'P23' && <P23DateOverridesScreen />}
+        {currentScreen === 'P24' && <P24QuoteBuilderScreen />}
         {currentScreen === 'P25' && <P25MediaPlayerScreen />}
       </View>
     </SafeAreaView>

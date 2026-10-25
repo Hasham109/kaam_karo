@@ -13,6 +13,9 @@ import type {
   PartnerProfile,
   ProviderServiceItem,
   ProviderType,
+  QuoteDraft,
+  QuoteLineItem,
+  QuoteTotals,
   RegStep,
   ScreenId,
   ScreenStateMode,
@@ -96,6 +99,15 @@ interface PartnerContextValue {
   setActiveMediaIndex: (idx: number) => void;
   isPlayingMedia: boolean;
   setIsPlayingMedia: (playing: boolean) => void;
+
+  // --- T4.4 Structured Quote Builder ---
+  quoteDraft: QuoteDraft | null;
+  quoteTotals: QuoteTotals;
+  initQuoteDraft: (bookingId: string) => void;
+  addQuoteLine: (line: Omit<QuoteLineItem, 'id'>) => void;
+  removeQuoteLine: (id: string) => void;
+  updateQuoteMetadata: (updates: Partial<QuoteDraft>) => void;
+  sendQuote: () => Promise<boolean>;
 }
 
 const INITIAL_DOCS: DocumentItem[] = [
@@ -351,6 +363,7 @@ export function PartnerProvider({ children }: { children: React.ReactNode }) {
     P10: 'empty',
     P22: 'empty',
     P23: 'empty',
+    P24: 'empty',
     P25: 'empty',
   });
 
@@ -610,6 +623,119 @@ export function PartnerProvider({ children }: { children: React.ReactNode }) {
     return true;
   };
 
+  // T4.4 Quote Builder state
+  const [quoteDraft, setQuoteDraft] = useState<QuoteDraft | null>({
+    bookingId: 'BK-2026-7841',
+    lines: [
+      {
+        id: 'line_1',
+        lineType: 'LABOUR_SERVICE',
+        description: 'Standard repair and maintenance',
+        quantity: 1,
+        unit: 'job',
+        amountPkr: 1500,
+      },
+    ],
+    validUntil: '2026-10-31',
+    inclusions: 'Standard labour and diagnosis included',
+    exclusions: 'Replacement hardware parts not included',
+    expectedDurationHours: 2,
+    crewSize: 1,
+    noteToCustomer: '',
+  });
+
+  const quoteTotals = useMemo<QuoteTotals>(() => {
+    if (!quoteDraft || quoteDraft.lines.length === 0) {
+      return {
+        subtotalPkr: 0,
+        taxPkr: 0,
+        totalCustomerPkr: 0,
+        commissionPkr: 0,
+        providerSharePkr: 0,
+      };
+    }
+    let subtotal = 0;
+    let labourTotal = 0;
+    for (const line of quoteDraft.lines) {
+      if (line.lineType === 'DISCOUNT') {
+        subtotal -= Math.abs(line.amountPkr);
+      } else {
+        subtotal += line.amountPkr;
+      }
+      if (line.lineType === 'LABOUR_SERVICE') {
+        labourTotal += line.amountPkr;
+      }
+    }
+    const totalCustomerPkr = Math.max(0, subtotal);
+    // Commission: 30% on labour lines only (D-006, D-015)
+    const commissionPkr = Math.round(labourTotal * 0.3);
+    const providerSharePkr = Math.max(0, totalCustomerPkr - commissionPkr);
+    return {
+      subtotalPkr: totalCustomerPkr,
+      taxPkr: 0,
+      totalCustomerPkr,
+      commissionPkr,
+      providerSharePkr,
+    };
+  }, [quoteDraft]);
+
+  const initQuoteDraft = (bookingId: string) => {
+    setQuoteDraft({
+      bookingId,
+      lines: [
+        {
+          id: 'line_1',
+          lineType: 'LABOUR_SERVICE',
+          description: 'Standard repair and maintenance',
+          quantity: 1,
+          unit: 'job',
+          amountPkr: 1500,
+        },
+      ],
+      validUntil: '2026-10-31',
+      inclusions: 'Standard labour and diagnosis included',
+      exclusions: 'Replacement hardware parts not included',
+      expectedDurationHours: 2,
+      crewSize: 1,
+      noteToCustomer: '',
+    });
+  };
+
+  const addQuoteLine = (line: Omit<QuoteLineItem, 'id'>) => {
+    setQuoteDraft((prev) => {
+      if (!prev) return prev;
+      const newLine: QuoteLineItem = {
+        ...line,
+        id: `line_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      };
+      return {
+        ...prev,
+        lines: [...prev.lines, newLine],
+      };
+    });
+  };
+
+  const removeQuoteLine = (id: string) => {
+    setQuoteDraft((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        lines: prev.lines.filter((l) => l.id !== id),
+      };
+    });
+  };
+
+  const updateQuoteMetadata = (updates: Partial<QuoteDraft>) => {
+    setQuoteDraft((prev) => (prev ? { ...prev, ...updates } : null));
+  };
+
+  const sendQuote = async (): Promise<boolean> => {
+    setScreenState('P24', 'loading');
+    await new Promise((r) => setTimeout(r, 50));
+    setScreenState('P24', 'success');
+    return true;
+  };
+
   const resetToStart = () => {
     setProfile(null);
     setPhone('');
@@ -693,6 +819,15 @@ export function PartnerProvider({ children }: { children: React.ReactNode }) {
       setActiveMediaIndex,
       isPlayingMedia,
       setIsPlayingMedia,
+
+      // T4.4
+      quoteDraft,
+      quoteTotals,
+      initQuoteDraft,
+      addQuoteLine,
+      removeQuoteLine,
+      updateQuoteMetadata,
+      sendQuote,
     }),
     [
       locale,
@@ -722,6 +857,8 @@ export function PartnerProvider({ children }: { children: React.ReactNode }) {
       activeActionSheet,
       activeMediaIndex,
       isPlayingMedia,
+      quoteDraft,
+      quoteTotals,
     ],
   );
 

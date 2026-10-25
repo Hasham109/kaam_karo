@@ -14,6 +14,7 @@ export type ScreenId =
   | 'P10'
   | 'P22'
   | 'P23'
+  | 'P24'
   | 'P25';
 
 export type OnboardingMode = 'register' | 'login';
@@ -167,4 +168,49 @@ export interface IncomingJobRequest {
   matchedAddress?: string | undefined;
   customerPhone?: string | undefined;
   customerName?: string | undefined;
+}
+
+// --- P24 Structured Quote Builder Types (Task T4.4; BP §18, §58; BP §13 P24; D-004, D-018) ---
+export type QuoteLineType =
+  | 'VISIT_CALLOUT'
+  | 'INSPECTION_DIAGNOSIS'
+  | 'LABOUR_SERVICE'
+  | 'TOOLS_EQUIPMENT'
+  | 'CONSUMABLES'
+  | 'PARTS_MATERIALS'
+  | 'EMERGENCY_AFTER_HOURS'
+  | 'TRAVEL_DISTANCE'
+  | 'DISCOUNT';
+
+export type MaterialsClass = 'INCLUDED' | 'NOT_INCLUDED' | 'EXTRA_NEEDS_APPROVAL';
+
+export interface QuoteLineItem {
+  id: string;
+  lineType: QuoteLineType;
+  description: string;
+  quantity: number;
+  unit?: string | undefined;
+  amountPkr: number;
+  toolsReason?: string | undefined;
+  isDeductible?: boolean | undefined;
+  materialsClass?: MaterialsClass | undefined;
+}
+
+export interface QuoteDraft {
+  bookingId: string;
+  lines: QuoteLineItem[];
+  validUntil: string;
+  inclusions: string;
+  exclusions: string;
+  expectedDurationHours: number;
+  crewSize: number;
+  noteToCustomer?: string | undefined;
+}
+
+export interface QuoteTotals {
+  subtotalPkr: number;
+  taxPkr: number;
+  totalCustomerPkr: number;
+  commissionPkr: number;
+  providerSharePkr: number;
 }

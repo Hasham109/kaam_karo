@@ -225,19 +225,38 @@ export function P08JobRequestsScreen() {
 
                 {/* Action Buttons (Accept / Quote / Decline reachable in ≤ 2 taps) */}
                 <View style={[styles.actionRow, { flexDirection: mirroring.row }]}>
-                  <TouchableOpacity
-                    {...interactiveProps({
-                      testID: `p08-accept-btn-${job.id}`,
-                      accessibilityRole: 'button',
-                      accessibilityLabel: translate(locale, 'partner.p08.acceptBtn'),
-                    })}
-                    style={[styles.acceptBtn, minTapTargetStyle()]}
-                    onPress={() => handleOpenAcceptSheet(job)}
-                  >
-                    <Text style={[styles.acceptBtnText, fontStyle]}>
-                      {translate(locale, 'partner.p08.acceptBtn')}
-                    </Text>
-                  </TouchableOpacity>
+                  {job.commercialModel === 'REQUEST_QUOTES' ? (
+                    <TouchableOpacity
+                      {...interactiveProps({
+                        testID: `p08-quote-btn-${job.id}`,
+                        accessibilityRole: 'button',
+                        accessibilityLabel: translate(locale, 'partner.p08.quoteBtn'),
+                      })}
+                      style={[styles.acceptBtn, minTapTargetStyle()]}
+                      onPress={() => {
+                        selectJob(job.id);
+                        navigate('P24');
+                      }}
+                    >
+                      <Text style={[styles.acceptBtnText, fontStyle]}>
+                        {translate(locale, 'partner.p08.quoteBtn')}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      {...interactiveProps({
+                        testID: `p08-accept-btn-${job.id}`,
+                        accessibilityRole: 'button',
+                        accessibilityLabel: translate(locale, 'partner.p08.acceptBtn'),
+                      })}
+                      style={[styles.acceptBtn, minTapTargetStyle()]}
+                      onPress={() => handleOpenAcceptSheet(job)}
+                    >
+                      <Text style={[styles.acceptBtnText, fontStyle]}>
+                        {translate(locale, 'partner.p08.acceptBtn')}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
 
                   <TouchableOpacity
                     {...interactiveProps({
