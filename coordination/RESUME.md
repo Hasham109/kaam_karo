@@ -1,7 +1,7 @@
 # RESUME — where the work stopped and how to continue
 
 > **For any AI model or developer picking up this project.** Read this file first, then `CLAUDE.md`.
-> Snapshot written by A00 (orchestrator) on **2026-10-24**. If `git log` or `coordination/TASKS.md` show newer work, they win over this file. Update this file every time a task changes state.
+> Snapshot written by A00 (orchestrator) on **2026-10-25**. If `git log` or `coordination/TASKS.md` show newer work, they win over this file. Update this file every time a task changes state.
 
 ---
 
@@ -43,8 +43,20 @@ Parallel agents share one working tree, so give each agent explicit path limits.
 | `d487eac` | **T2.8** Security review of T2.1–T2.6, OQ-023..028 renamed in policy, health connection exhaustion fix (SEC-REVIEW-T2.1 #3) | QA PASS, SEC PASS |
 | `03b2b6d` | **Bug Sweep Phase 2** (§7.3 A–F, 0 open S1/S2 bugs, docs/qa/bug-sweep-phase2.md) + **Gate G1: PASS** | SWEEP PASS, GATE PASS |
 | `cea0b63` | **T3.1** `GeoService` + Pakistan boundary + Location Snapshot + fallback (contracts/location.yaml v0.1.0) | QA PASS, SEC PASS |
+| `cfc21ef` | **T3.2** Media upload sessions, private S3 storage signed URLs, limits, thumbnails, retention job | QA PASS, SEC PASS |
+| `57bfcc4` | **T3.6** Availability schedules, service areas, trust standing, capacity limits | QA PASS, SEC PASS |
+| `dad33e3` | **T3.4** Booking state machine, transition table (ARCH §6.1), job events, cancellation rules | QA PASS, SEC PASS |
+| `bf738c6` | **T3.5** Quotes, multi-supplier offers, fare lines, crew size, labor-only commission | QA PASS, SEC PASS |
+| `7786559` | **T3.3** IntakeAI fake, closed catalog schema, confidence fallback, PII scrubbing | QA PASS, SEC PASS |
+| `7c96b81` | **T3.7** Matching engine, 13 scoring signals, fairness boost, reasons, supply gap, zero auto-assignment | QA PASS, SEC PASS |
+| `6187cba` | **T3.8** Customer app core UI screens C01–C11 + C41 in English and Urdu with RTL mirroring | QA PASS, SEC PASS |
+| `dcdde79` | **T3.9** Customer app intake flow C12, C31–C34, C39, permission-on-tap modals, input fallbacks | QA PASS, SEC PASS |
+| `0cad775` | **T3.10** Match results, quote comparison, booking review/confirm C35, C36, C13–C15, C40 | QA PASS, SEC PASS |
+| `30d477c` | **T3.11** Voice Assistant v1 (push-to-talk, intents, mandatory confirmation dialogs, C38) | QA PASS, SEC PASS |
+| `372fc48` | **T3.12** Customer journey E2E BP §9 steps 11–20 en/ur (Vitest 30 tests + Maestro suites) | QA PASS, SEC PASS |
+| `0a01acf` | **Bug Sweep Phase 3** (§7.3 A–F, 0 open S1/S2 bugs, docs/qa/bug-sweep-phase3.md) + **Gate G2: PASS** | SWEEP PASS, GATE PASS |
 
-Earlier commits: Phase 0 (T0.1–T0.5) docs and decisions D-001…D-029.
+Earlier commits: Phase 0 (T0.1–T0.5) docs and decisions D-001…D-030.
 
 ---
 
@@ -54,12 +66,20 @@ Earlier commits: Phase 0 (T0.1–T0.5) docs and decisions D-001…D-029.
 - Code is committed. The on-device run is pending: this PC has no JDK 17 and no phone/emulator connected.
 - Owner steps (Roman Urdu) and the checklist: `docs/qa/urdu-smoke/README.md`. When the owner sends screenshots, record PASS/FAIL there. If any check C1–C9 fails, D-001 must be reopened.
 
+### Phase 3 formally CLOSED; Gate G2 PASSED. Phase 4 (Provider MVP) unblocked.
+
 ---
 
 ## 5. Next steps (agreed order with the owner)
 
-1. **T1.4** i18n kit (A14; includes RQ-010 Urdu names review, QA F-03 shared copy catalogues, G9 No-show verb).
-2. Phase 3 feature development: **T3.2** media upload sessions (A08), **T3.3** intake AI (A07), **T3.4** booking state machine (A04).
+1. **Phase 4 — Provider MVP:**
+   - **T4.1** Partner onboarding + verification upload (document picker) (A12)
+   - **T4.2** Service setup, availability, overrides, status switch, service area (A12)
+   - **T4.3** Incoming requests + job detail with media player; Accept/Quote/Ask/Decline ≤ 2 taps (A12)
+   - **T4.4** Quote builder with line types + crew size (A12)
+   - **T4.5** Job execution: en route, arrived, in progress, extras (proposed), completion evidence, navigation (A12 + A06)
+   - **T4.6** Customer side of execution: tracking, charge approval sheet, completion confirm (A11)
+   - **T4.7** QA: provider journey E2E (BP §10) + joint customer/provider E2E (A16)
 
 ---
 

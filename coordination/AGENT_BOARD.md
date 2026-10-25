@@ -2,6 +2,13 @@
 
 Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate verdicts above the table.
 
+## Gate G2 (Phase 3): PASS (2026-10-25)
+- Phase 3 (Customer MVP incl. smart request — BP §44 Phase 3) exit condition met: "customer can request a real job".
+- All 12 tasks T3.1–T3.12 DONE with handoffs, QA PASS, and SEC PASS.
+- Bug sweep `/bug-sweep 3` complete: 0 open S1/S2 bugs (`docs/qa/bug-sweep-phase3.md`).
+- Verification passes: 14/14 turbo tasks, 155/155 DB tests, 110/110 customer app tests, 317/317 API unit/e2e tests, 41/41 contract tests, 5/5 repository quality guards (0 hardcoded literals across 39 UI files).
+- Verdict: PASS. Phase 3 closed; Phase 4 unblocked.
+
 ## Gate G1 (Phase 2): PASS (2026-10-24)
 - Phase 2 (Backend foundation — BP §44 Phase 2) exit condition met: "secure login and data model working".
 - All 8 tasks T2.1–T2.8 DONE with handoffs, QA PASS, and SEC PASS.
@@ -46,7 +53,7 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 
 | Agent | Subagent file | Now doing (task) | Status | Branch | Blocked by | Next planned | Last update (UTC) |
 |---|---|---|---|---|---|---|---|
-| A00 | main session | Orchestration | DONE | — | — | T1.4 delegation | 2026-10-24 |
+| A00 | main session | Orchestration | DONE | — | — | T4.1 delegation | 2026-10-25 |
 | A01 | platform-devops | T2.7 Database backup + restore drill (REL-012; BP §31.2, §31.3, §49) | DONE | t2.7-backup-restore | — | T8.5 | 2026-10-24 |
 | A02 | identity-profiles | T2.5 Profiles, addresses, location snapshots, favorites (PROF-ADDR-001..004, PROF-FAV-001, LOC-GEO-003..004) | DONE | t2.5-profiles | — | T3.6 | 2026-10-24 |
 | A03 | catalog-config | T2.6 Catalog + Config | DONE | t2.6-catalog-config | — | T6.2 (with A09); controllers after T2.4 | 2026-10-24 |
@@ -57,8 +64,8 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 | A08 | media | T3.2 Media upload sessions, limits from config, thumbnails, retention job | DONE | t3.2-media | — | T4.3 (with A12) | 2026-10-24 |
 | A09 | payments-ledger | — | IDLE | — | — | T6.1 | — |
 | A10 | comms-notify-reviews | — | IDLE | — | — | T7.1 | — |
-| A11 | customer-app | T3.11 Voice assistant v1 (push-to-talk, intents only, confirmation dialogs, C38 in en/ur) | DONE | t3.11-voice-assistant | — | T3.12 | 2026-10-25 |
-| A12 | partner-app | T1.2 Screen specs P01–P26 — review fixes QA F-01/F-02/F-05 + SEC #2/#6/#7/#10/#11/#13/#21/#23 done (UX-SCREEN-002/003) | DONE | t2.1-monorepo | — | T4.1 | 2026-10-23 |
+| A11 | customer-app | T3.10 / T3.11 Customer App UI & Voice (C01–C15, C31–C41) | DONE | — | — | T4.6 | 2026-10-25 |
+| A12 | partner-app | T1.2 Screen specs P01–P26 (UX-SCREEN-002/003) | DONE | — | — | T4.1 | 2026-10-25 |
 | A13 | admin-portal | T1.3 Admin screen specs A01–A26 + sub-role access matrix (OPS-ADMIN-001…026, ADMIN-ROLE-001…008, ROLE-003, UX-SCREEN-003, SEC-AUTH-005) | DONE | t2.1-monorepo (docs only) | — | T5.1 (T1.3 QA PASS; SEC fixes #1,4,5,6,8,15-18,22,24,25 + QA F-04 done, A15 re-review pending) | 2026-10-23 |
 | A14 | i18n-a11y | T1.4 i18n + RTL + Urdu typography kit; string-lint rule (I18N-001..008, A11Y-001..008) | DONE | work/parallel-t1.4-t3.2 | — | T3.8 / T3.9 | 2026-10-24 |
 | A15 | security-reviewer | T2.8 Security review of T2.1–T2.6 | DONE | t2.8-security-review | — | Phase 3 security review | 2026-10-24 |
