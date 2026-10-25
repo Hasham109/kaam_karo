@@ -16,6 +16,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard, type AuthenticatedRequest, Public } from '../identity/index.js';
 import { PaymentsService } from './payments.service.js';
+import { CommissionService } from './commission.service.js';
 import {
   ActorRole,
   type InitiatePaymentDto,
@@ -34,7 +35,10 @@ function resolveCaller(req: AuthenticatedRequest): { userId?: string; role: Acto
 @Controller(['v1/payments', 'payments'])
 @UseGuards(AuthGuard)
 export class PaymentsController {
-  constructor(private readonly paymentsService: PaymentsService) {}
+  constructor(
+    private readonly paymentsService: PaymentsService,
+    private readonly commissionService: CommissionService,
+  ) {}
 
   @Public()
   @Post('initiate')
@@ -63,5 +67,31 @@ export class PaymentsController {
   @Get('booking/:bookingId')
   async getBookingPayment(@Param('bookingId') bookingId: string) {
     return this.paymentsService.getBookingPaymentStatus(bookingId);
+  }
+
+  @Public()
+  @Get('booking/:bookingId/fee-display')
+  async getBookingFeeDisplay(
+    @Param('bookingId') bookingId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const { role } = resolveCaller(req);
+    const split = await this.commissionService.calculateSplit({ bookingId });
+    if (role === ActorRole.CUSTOMER) {
+      return {
+        role: 'CUSTOMER',
+        feeDisplay: this.commissionService.getCustomerFeeDisplay(split),
+      };
+    }
+    if (role === ActorRole.PROVIDER) {
+      return {
+        role: 'PROVIDER',
+        feeDisplay: this.commissionService.getProviderFeeDisplay(split),
+      };
+    }
+    return {
+      role: 'ADMIN',
+      feeDisplay: this.commissionService.getFinanceFeeDisplay(split),
+    };
   }
 }

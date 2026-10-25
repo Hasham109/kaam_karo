@@ -7,18 +7,20 @@ import { Module } from '@nestjs/common';
 import { PaymentsController } from './payments.controller.js';
 import { PaymentsService } from './payments.service.js';
 import { FakePaymentGateway } from './fake-payment-gateway.js';
+import { CommissionService } from './commission.service.js';
 import { PAYMENT_GATEWAY } from './payments.types.js';
 
 @Module({
   controllers: [PaymentsController],
   providers: [
     PaymentsService,
+    CommissionService,
     FakePaymentGateway,
     {
       provide: PAYMENT_GATEWAY,
       useExisting: FakePaymentGateway,
     },
   ],
-  exports: [PaymentsService, PAYMENT_GATEWAY, FakePaymentGateway],
+  exports: [PaymentsService, CommissionService, PAYMENT_GATEWAY, FakePaymentGateway],
 })
 export class PaymentsModule {}

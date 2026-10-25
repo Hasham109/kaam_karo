@@ -158,6 +158,40 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
 
+  /v1/payments/booking/{bookingId}/fee-display:
+    get:
+      summary: Retrieve per-party fee display data for booking
+      description: >
+        Returns role-scoped fee display data. Customers see bill lines and total with platform
+        commission strictly hidden (D-025, COMM-004). Providers see total bill, labour commission deduction
+        and net earnings (D-016, COMM-004). Finance sees full audit transparency.
+      operationId: getBookingFeeDisplay
+      x-requirement-ids:
+        - COMM-001
+        - COMM-002
+        - COMM-003
+        - COMM-004
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Fee display retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeeDisplayResponse'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
 components:
   schemas:
     InitiatePaymentRequest:
@@ -299,3 +333,16 @@ components:
               type: string
             details:
               type: object
+
+    FeeDisplayResponse:
+      type: object
+      required:
+        - role
+        - feeDisplay
+      properties:
+        role:
+          type: string
+          enum: [CUSTOMER, PROVIDER, ADMIN]
+        feeDisplay:
+          type: object
+          description: Role-specific fee breakdown. Customers do not receive platform commission figures.
