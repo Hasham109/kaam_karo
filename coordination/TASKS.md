@@ -47,7 +47,7 @@ Acceptance criteria and BP refs per task: docs/implementation.md §6 (same task 
 | T5.1 | Admin auth (separate path, MFA) + sub-role guards | A13 + A02 | T2.4 | DONE | handoffs/T-5.1.md |
 | T5.2 | Users, provider verification queue, categories/services, city activation | A13 | T2.6, T3.6 | DONE | handoffs/T-5.2.md |
 | T5.3 | Bookings, quotes exceptions, matching weights, badge rules, AI guidance editor | A13 | T3.5, T3.7 | DONE | handoffs/T-5.3.md |
-| T5.4 | Audit log viewer, reports, marketplace health, AI interaction viewer, system health | A13 + A01 | T2.2 | TODO | — |
+| T5.4 | Audit log viewer, reports, marketplace health, AI interaction viewer, system health | A13 + A01 | T2.2 | DONE | handoffs/T-5.4.md |
 | T6.1 | Payment state model: cash + digital (fake gateway), idempotent initiation, **payment allowed only after `Completed`** (D-003) | A09 | T3.4 | TODO | — |
 | T6.2 | Commission split from config `commission.rate = 0.30` (D-006) on labour lines only (D-015), per-party fee display data | A09 + A03 | T6.1 | TODO | — |
 | T6.6 | Provider earnings ledger (ARCH §6.8): "How was it paid?" CASH/DIGITAL at billing (P14/P15), cash → debit 30% of labour, digital → credit bill − commission, history in P15 and admin A09, "Paid by" shown on C20 | A09 + A12 + A13 + A11 | T6.2 | TODO | — |
