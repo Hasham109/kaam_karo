@@ -7,6 +7,7 @@ import type {
   DateOverrideItem,
   DocumentItem,
   DocumentType,
+  IncomingJobRequest,
   LiveStatus,
   OnboardingMode,
   PartnerProfile,
@@ -80,6 +81,21 @@ interface PartnerContextValue {
   dateOverrides: DateOverrideItem[];
   addDateOverride: (override: Omit<DateOverrideItem, 'id'>) => Promise<boolean>;
   removeDateOverride: (id: string) => Promise<boolean>;
+
+  // --- T4.3 Job Requests & Detail & Media Player ---
+  jobRequests: IncomingJobRequest[];
+  selectedJobId: string | null;
+  selectedJob: IncomingJobRequest | null;
+  selectJob: (id: string | null) => void;
+  acceptJob: (id: string, crewSize: number) => Promise<boolean>;
+  declineJob: (id: string) => Promise<boolean>;
+  cancelJob: (id: string) => Promise<boolean>;
+  activeActionSheet: 'ACCEPT' | 'DECLINE' | null;
+  setActiveActionSheet: (sheet: 'ACCEPT' | 'DECLINE' | null) => void;
+  activeMediaIndex: number;
+  setActiveMediaIndex: (idx: number) => void;
+  isPlayingMedia: boolean;
+  setIsPlayingMedia: (playing: boolean) => void;
 }
 
 const INITIAL_DOCS: DocumentItem[] = [
@@ -226,6 +242,67 @@ const INITIAL_SERVICE_AREA: ServiceAreaConfig = {
   selectedZones: ['Gulberg', 'DHA', 'Model Town', 'Johar Town', 'Cantt', 'Faisal Town'],
 };
 
+const INITIAL_JOB_REQUESTS: IncomingJobRequest[] = [
+  {
+    id: 'req_001',
+    bookingId: 'BK-2026-7841',
+    status: 'REQUESTED',
+    serviceName: 'Ceiling Fan Installation',
+    shortSummary: 'Need installation of 2 ceiling fans in bedrooms',
+    areaName: 'Gulberg III',
+    distanceKm: 3.2,
+    commercialModel: 'INSTANT',
+    priceType: 'FIXED',
+    pricePkr: 1500,
+    timeWindow: 'Today, 2:00 PM – 4:00 PM',
+    expiresInMinutes: 15,
+    media: [
+      {
+        type: 'voice',
+        url: 'https://cdn.kaamkaro.pk/audio/fan_install.m4a',
+        durationSeconds: 24,
+        transcriptText: 'Hamare drawing room aur bedroom mein naye fan lagwane hain.',
+      },
+      {
+        type: 'photo',
+        url: 'https://cdn.kaamkaro.pk/images/fan_box.jpg',
+      },
+      {
+        type: 'photo',
+        url: 'https://cdn.kaamkaro.pk/images/ceiling_hook.jpg',
+      },
+    ],
+  },
+  {
+    id: 'req_002',
+    bookingId: 'BK-2026-9023',
+    status: 'REQUESTED',
+    serviceName: 'AC Repair & Service',
+    shortSummary: 'Split AC not cooling properly and making buzzing sound',
+    areaName: 'DHA Phase 5',
+    distanceKm: 7.5,
+    commercialModel: 'CHOOSE_SUPPLIER',
+    priceType: 'FROM',
+    pricePkr: 2500,
+    timeWindow: 'Tomorrow, 10:00 AM – 1:00 PM',
+    expiresInMinutes: 45,
+    media: [
+      {
+        type: 'video',
+        url: 'https://cdn.kaamkaro.pk/video/ac_sound.mp4',
+        thumbnailUrl: 'https://cdn.kaamkaro.pk/video/ac_thumb.jpg',
+        durationSeconds: 15,
+      },
+      {
+        type: 'voice',
+        url: 'https://cdn.kaamkaro.pk/audio/ac_issue.m4a',
+        durationSeconds: 18,
+        transcriptText: 'AC se hawa thandi nahi aa rahi aur ajeeb awaz aa rahi hai.',
+      },
+    ],
+  },
+];
+
 const PartnerContext = createContext<PartnerContextValue | null>(null);
 
 export function PartnerProvider({ children }: { children: React.ReactNode }) {
@@ -254,6 +331,13 @@ export function PartnerProvider({ children }: { children: React.ReactNode }) {
   const [hasPromptedNotification, setHasPromptedNotification] = useState<boolean>(false);
   const [dateOverrides, setDateOverrides] = useState<DateOverrideItem[]>([]);
 
+  // T4.3 state
+  const [jobRequests, setJobRequests] = useState<IncomingJobRequest[]>(INITIAL_JOB_REQUESTS);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>('req_001');
+  const [activeActionSheet, setActiveActionSheet] = useState<'ACCEPT' | 'DECLINE' | null>(null);
+  const [activeMediaIndex, setActiveMediaIndex] = useState<number>(0);
+  const [isPlayingMedia, setIsPlayingMedia] = useState<boolean>(false);
+
   const [screenStates, setScreenStates] = useState<Record<ScreenId, ScreenStateMode>>({
     P01: 'empty',
     P02: 'empty',
@@ -262,8 +346,12 @@ export function PartnerProvider({ children }: { children: React.ReactNode }) {
     P05: 'empty',
     P06: 'empty',
     P07: 'empty',
+    P08: 'empty',
+    P09: 'empty',
+    P10: 'empty',
     P22: 'empty',
     P23: 'empty',
+    P25: 'empty',
   });
 
   const navigate = (screen: ScreenId) => {
@@ -469,6 +557,59 @@ export function PartnerProvider({ children }: { children: React.ReactNode }) {
     return true;
   };
 
+  // --- T4.3 Job Requests Handlers ---
+  const selectedJob = useMemo(
+    () => jobRequests.find((j) => j.id === selectedJobId) ?? null,
+    [jobRequests, selectedJobId],
+  );
+
+  const selectJob = (id: string | null) => {
+    setSelectedJobId(id);
+  };
+
+  const acceptJob = async (id: string, crewSize: number): Promise<boolean> => {
+    setScreenState('P10', 'loading');
+    await new Promise((r) => setTimeout(r, 50));
+    setJobRequests((prev) =>
+      prev.map((j) => {
+        if (j.id !== id) return j;
+        return {
+          ...j,
+          status: 'ACCEPTED',
+          crewSize,
+          responsibleName: profile?.fullName || 'Muhammad Ahmad',
+          matchedAddress: 'House 12-B, Street 4, Gulberg III, Lahore',
+          customerPhone: '03001234567',
+          customerName: 'Tariq Mahmood',
+        };
+      }),
+    );
+    setActiveActionSheet(null);
+    setScreenState('P08', 'success');
+    setScreenState('P09', 'success');
+    setScreenState('P10', 'success');
+    return true;
+  };
+
+  const declineJob = async (id: string): Promise<boolean> => {
+    setScreenState('P10', 'loading');
+    await new Promise((r) => setTimeout(r, 50));
+    setJobRequests((prev) => prev.map((j) => (j.id === id ? { ...j, status: 'REJECTED' } : j)));
+    setActiveActionSheet(null);
+    setScreenState('P08', 'success');
+    setScreenState('P09', 'success');
+    setScreenState('P10', 'success');
+    return true;
+  };
+
+  const cancelJob = async (id: string): Promise<boolean> => {
+    setScreenState('P09', 'loading');
+    await new Promise((r) => setTimeout(r, 50));
+    setJobRequests((prev) => prev.map((j) => (j.id === id ? { ...j, status: 'CANCELLED' } : j)));
+    setScreenState('P09', 'success');
+    return true;
+  };
+
   const resetToStart = () => {
     setProfile(null);
     setPhone('');
@@ -537,6 +678,21 @@ export function PartnerProvider({ children }: { children: React.ReactNode }) {
       dateOverrides,
       addDateOverride,
       removeDateOverride,
+
+      // T4.3
+      jobRequests,
+      selectedJobId,
+      selectedJob,
+      selectJob,
+      acceptJob,
+      declineJob,
+      cancelJob,
+      activeActionSheet,
+      setActiveActionSheet,
+      activeMediaIndex,
+      setActiveMediaIndex,
+      isPlayingMedia,
+      setIsPlayingMedia,
     }),
     [
       locale,
@@ -560,6 +716,12 @@ export function PartnerProvider({ children }: { children: React.ReactNode }) {
       liveStatus,
       hasPromptedNotification,
       dateOverrides,
+      jobRequests,
+      selectedJobId,
+      selectedJob,
+      activeActionSheet,
+      activeMediaIndex,
+      isPlayingMedia,
     ],
   );
 

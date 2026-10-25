@@ -66,8 +66,22 @@ export function P04HomeScreen() {
             : translate(locale, 'partner.banner.verificationNeeded')}
         </Text>
 
-        {/* Quick Menu to T4.2 Screens */}
+        {/* Quick Menu to T4.2 and T4.3 Screens */}
         <View style={styles.menuGrid}>
+          <TouchableOpacity
+            {...interactiveProps({
+              testID: 'p04-nav-p08-btn',
+              accessibilityRole: 'button',
+              accessibilityLabel: translate(locale, 'partner.p08.title'),
+            })}
+            style={[styles.menuBtn, minTapTargetStyle()]}
+            onPress={() => navigate('P08')}
+          >
+            <Text style={[styles.menuBtnText, fontStyle]}>
+              {translate(locale, 'partner.p08.title')}
+            </Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
             {...interactiveProps({
               testID: 'p04-nav-p05-btn',

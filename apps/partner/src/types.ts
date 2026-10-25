@@ -1,7 +1,20 @@
 /**
  * Partner App Canonical Types (Tasks T4.1, T4.2; BP §10, §13 P01–P07, P22, P23, §22, §59; D-002, D-004, D-018).
  */
-export type ScreenId = 'P01' | 'P02' | 'P03' | 'P04' | 'P05' | 'P06' | 'P07' | 'P22' | 'P23';
+export type ScreenId =
+  | 'P01'
+  | 'P02'
+  | 'P03'
+  | 'P04'
+  | 'P05'
+  | 'P06'
+  | 'P07'
+  | 'P08'
+  | 'P09'
+  | 'P10'
+  | 'P22'
+  | 'P23'
+  | 'P25';
 
 export type OnboardingMode = 'register' | 'login';
 
@@ -121,4 +134,37 @@ export interface DateOverrideItem {
   endTime?: string | undefined;
   limitedMaxJobs?: number | undefined;
   isEmergency?: boolean | undefined;
+}
+
+// --- P08 / P09 / P10 / P25 Job Request & Media Types (Task T4.3; BP §13 P08..P10, P25; BP §85, §62.2, §76.1) ---
+export type CommercialModel = 'INSTANT' | 'CHOOSE_SUPPLIER' | 'REQUEST_QUOTES';
+
+export interface JobMediaItem {
+  type: 'voice' | 'video' | 'photo';
+  url: string;
+  thumbnailUrl?: string | undefined;
+  durationSeconds?: number | undefined;
+  transcriptText?: string | undefined;
+}
+
+export interface IncomingJobRequest {
+  id: string;
+  bookingId: string;
+  status: 'REQUESTED' | 'QUOTE_PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED';
+  serviceName: string;
+  shortSummary: string;
+  areaName: string;
+  distanceKm: number;
+  commercialModel: CommercialModel;
+  priceType: 'FIXED' | 'FROM' | 'INSPECTION_QUOTE';
+  pricePkr: number;
+  timeWindow: string;
+  expiresInMinutes?: number | undefined;
+  media: JobMediaItem[];
+  crewSize?: number | undefined;
+  responsibleName?: string | undefined;
+  // Pre-match: matchedAddress, customerPhone, and customerName are STRICTLY undefined (BP §52.2, PROF-ADDR-004)
+  matchedAddress?: string | undefined;
+  customerPhone?: string | undefined;
+  customerName?: string | undefined;
 }

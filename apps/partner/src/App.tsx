@@ -11,8 +11,11 @@ import { P04HomeScreen } from './screens/P04HomeScreen';
 import { P05ServiceSetupScreen } from './screens/P05ServiceSetupScreen';
 import { P06AvailabilityScreen } from './screens/P06AvailabilityScreen';
 import { P07ServiceAreaScreen } from './screens/P07ServiceAreaScreen';
+import { P08JobRequestsScreen } from './screens/P08JobRequestsScreen';
+import { P09JobDetailScreen } from './screens/P09JobDetailScreen';
 import { P22LiveStatusScreen } from './screens/P22LiveStatusScreen';
 import { P23DateOverridesScreen } from './screens/P23DateOverridesScreen';
+import { P25MediaPlayerScreen } from './screens/P25MediaPlayerScreen';
 import { PartnerProvider, usePartner } from './state/PartnerContext';
 import { getAppMirroring } from './utils/rtl';
 
@@ -30,8 +33,11 @@ function PartnerAppContent() {
         {currentScreen === 'P05' && <P05ServiceSetupScreen />}
         {currentScreen === 'P06' && <P06AvailabilityScreen />}
         {currentScreen === 'P07' && <P07ServiceAreaScreen />}
+        {currentScreen === 'P08' && <P08JobRequestsScreen />}
+        {currentScreen === 'P09' && <P09JobDetailScreen />}
         {currentScreen === 'P22' && <P22LiveStatusScreen />}
         {currentScreen === 'P23' && <P23DateOverridesScreen />}
+        {currentScreen === 'P25' && <P25MediaPlayerScreen />}
       </View>
     </SafeAreaView>
   );
