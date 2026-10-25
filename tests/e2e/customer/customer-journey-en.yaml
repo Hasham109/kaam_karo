@@ -1,0 +1,159 @@
+# Customer Journey E2E Flow — English (Task T3.12; BP §9 Steps 11–20)
+# Covers: App launch, Login/OTP, Location confirmation, Everyday search, Service detail,
+# Request intake, Discovery-only matching, Booking review, and Confirmation with notification pre-prompt.
+# Requirement IDs: JOURNEY-001, UX-SCREEN-001, I18N-001, D-004, D-005, D-023, D-029, D-030, PERM-JUST-004.
+appId: com.kaamkaro.customer
+---
+# Step 11: Open App & Language Choice (BP §9 Step 11)
+- launchApp
+- assertVisible:
+    id: c01-splash-screen
+- takeScreenshot: en-step11-01-splash
+
+# Select English language (C41)
+- tapOn:
+    id: c41-en-button
+- tapOn:
+    id: c41-save-button
+
+# Welcome Screen (C02)
+- assertVisible:
+    id: c02-welcome-screen
+- takeScreenshot: en-step11-02-welcome
+- tapOn:
+    id: c02-login-button
+
+# Mobile Login (C03)
+- assertVisible:
+    id: c03-login-screen
+- tapOn:
+    id: c03-phone-input
+- inputText: '3001234567'
+- hideKeyboard
+- takeScreenshot: en-step11-03-login
+- tapOn:
+    id: c03-submit-button
+
+# OTP Verification (C05)
+- assertVisible:
+    id: c05-otp-screen
+- tapOn:
+    id: c05-otp-input
+- inputText: '123456'
+- hideKeyboard
+- takeScreenshot: en-step11-04-otp
+- tapOn:
+    id: c05-verify-button
+
+# Step 12: Home & Service Address Confirmation (BP §9 Step 12)
+- assertVisible:
+    id: c06-home-screen
+- takeScreenshot: en-step12-01-home
+- tapOn:
+    id: c06-location-chip
+
+# Location Confirmation Screen (C39)
+- assertVisible:
+    id: c39-location-screen
+- tapOn:
+    id: c39-saved-address-1
+- takeScreenshot: en-step12-02-location-confirm
+- tapOn:
+    id: c39-confirm-btn
+
+# Step 13: Browse / Search in Everyday Language (BP §9 Step 13)
+- assertVisible:
+    id: c06-home-screen
+- tapOn:
+    id: c06-search-entry
+
+# Search Screen (C07)
+- assertVisible:
+    id: c07-search-screen
+- tapOn:
+    id: c07-query-input
+- inputText: 'AC not cooling'
+- hideKeyboard
+- takeScreenshot: en-step13-01-search-input
+- tapOn:
+    id: c07-composer-cta
+
+# Step 14 & 15: Search Results & Service Detail (BP §9 Steps 14 & 15)
+- assertVisible:
+    id: c08-results-screen
+- takeScreenshot: en-step14-01-results
+- tapOn:
+    id: c08-tab-services
+
+# Navigate to Service Detail (C10)
+- tapOn:
+    id: c08-service-card-ac-general-service
+- assertVisible:
+    id: c10-detail-screen
+- assertVisible:
+    id: c10-base-price
+- takeScreenshot: en-step15-01-service-detail
+- tapOn:
+    id: c10-book-button
+
+# Step 16, 17, 18: Intake & Request Composition (BP §9 Steps 16–18)
+- assertVisible:
+    id: c12-request-screen
+- tapOn:
+    id: c12-when-chip-TODAY
+- tapOn:
+    id: c12-description-input
+- inputText: 'Master bedroom split AC cooling slowly with mild water leakage.'
+- hideKeyboard
+- takeScreenshot: en-step16-01-request-form
+- tapOn:
+    id: c12-continue-button
+
+# Step 14 (Matches): Match Results with Customer Choice (BP §9 Step 14; D-005)
+- assertVisible:
+    id: c35-match-screen
+- assertVisible:
+    id: c35-candidate-card-cand-01
+- takeScreenshot: en-step14-02-candidates
+
+# Expand "Why am I seeing this?" rationale (BP §55.1)
+- tapOn:
+    id: c35-why-seeing-this-cand-01
+- takeScreenshot: en-step14-03-candidate-rationale
+
+# Customer explicitly selects provider (zero auto-assignment, D-005)
+- tapOn:
+    id: c35-choose-btn-cand-01
+
+# Step 19: Review Price, Terms & Crew Size (BP §9 Step 19; D-003, D-004, D-023)
+- assertVisible:
+    id: c14-review-screen
+- assertVisible:
+    id: c14-fee-summary-card
+- takeScreenshot: en-step19-01-booking-review
+- tapOn:
+    id: c14-send-booking-button
+
+# Consequential Action Modal (VOICE-007 / Booking confirmation modal)
+- assertVisible:
+    id: c14-confirm-modal
+- takeScreenshot: en-step20-01-confirm-modal
+- tapOn:
+    id: c14-modal-confirm-button
+
+# Step 20: Booking Confirmation & Notification Pre-Prompt (BP §9 Step 20; PERM-JUST-004, D-030)
+- assertVisible:
+    id: c15-confirmation-screen
+- assertVisible:
+    id: c15-booking-number-badge
+- assertVisible:
+    id: c15-status-chip
+- assertVisible:
+    id: c15-notif-rationale-box
+- takeScreenshot: en-step20-02-confirmation-success
+
+# Grant notification permission rationale
+- tapOn:
+    id: c15-grant-notif-button
+- tapOn:
+    id: c15-track-button

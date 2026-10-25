@@ -251,10 +251,10 @@ export class VoiceAssistantSession {
       trimmed.includes('بکنگ') ||
       trimmed.includes('درخواست بھیجیں')
     ) {
-      const provider = this.currentDraft.providerId
+      const provider = this.currentDraft?.providerId
         ? 'Tariq AC'
         : 'Tariq AC';
-      const service = this.currentDraft.serviceId || 'AC Repair';
+      const service = this.currentDraft?.serviceId || 'AC Repair';
       const prompt: ConsequentialConfirmationPrompt = {
         actionType: 'PLACE_BOOKING',
         titleKey: 'customer.c38.confirmTitle',

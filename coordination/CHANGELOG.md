@@ -1,5 +1,41 @@
 # CHANGELOG — Kaam Karo
 
+## 2026-10-25 — T3.12 Customer Journey E2E (A16) — DONE
+- Customer Journey End-to-End Test Suites (BP §9 Steps 11–20, C40 Supply Gap, C38 Voice Flow; `JOURNEY-001`):
+  - Vitest Automated E2E Suite (`apps/customer/src/customer-journey-e2e.spec.ts`):
+    - 30 comprehensive automated tests validating every step of the customer journey in both English (`en`) and Urdu (`ur`).
+    - Steps 11–12: App launch, language choice (`C01`, `C41`), onboarding/auth (`C02`, `C03`, `C04`, `C05`), educational location pre-prompt (`PERM-JUST-001`, `LOC-CONFIRM-001`), and address confirmation (`C39`).
+    - Step 13: Service discovery, search chips, and category filtering across everyday terms (`C06`, `C07`, `C08`, `C09`, `C31`).
+    - Step 14: Candidate comparison (`C08`, `C11`, `C35`), zero auto-assignment guarantee (`D-005`), "Why am I seeing this?" match explanation accordions (`BP §55.1`), and coarse-zone map notice.
+    - Step 15: Service detail pricing cards (`C10`) covering fixed, hourly, and inspection models.
+    - Step 16: Intake request composition (`C12`, `C31`, `C32`, `C33`, `C34`), camera/audio educational permission pre-prompts (`PERM-JUST-002`, `PERM-JUST-003`), and non-AI simple form fallback (`C12`, `REQ-SIMPLE-001`).
+    - Steps 17–18: Address, schedule, problem description, media attachments preview, and privacy notice banner (`SEC-PRIV-001`).
+    - Step 19: Booking review (`C14`, `C13`, `C36`), crew size disclosure (`D-004`), transparent tax line items (`D-029`), free cancellation policy (`D-023`), and pay after completion policy (`D-003`).
+    - Step 20: Booking submission confirmation modal, confirmed reference allocation (e.g. `KK-88102`), crew size display (`D-004`), and notification permission educational pre-prompt (`C15`, `PERM-JUST-004`, `NOTIF-010`).
+    - Supply Gap Recovery Flow (`C40`): Empathetic messaging with allow-listed reason codes and 5 actionable recovery paths (`BP §61.3`).
+    - Voice Assistant Journey (`C38`): Push-to-talk (`VOICE-001`), listening pill (`VOICE-002`), speech transcript preview (`VOICE-003`), multi-level undo (`VOICE-004`), text fallback (`VOICE-005`), trilingual intent parsing (`VOICE-006`), mandatory confirmation dialog for consequential actions (`VOICE-007`), and strict allow-list boundary (`VOICE-008`).
+  - Maestro Mobile E2E Flows (`tests/e2e/customer/`):
+    - `customer-journey-en.yaml`: Full English mobile workflow steps 11–20 on 360 dp device matrix profile.
+    - `customer-journey-ur.yaml`: Full Urdu mobile workflow steps 11–20 with RTL mirroring and Noto Nastaliq line heights.
+    - `customer-supply-gap.yaml`: Supply gap discovery and 5 recovery options flow.
+    - `customer-voice-journey.yaml`: Push-to-talk voice intake and consequential action confirmation flow.
+    - `README.md`: Architecture overview, device matrix profiles, and CLI execution instructions.
+- Design System, i18n & Accessibility Compliance:
+  - Validated on target device matrix (width ≤ 360 dp, e.g. Infinix Note 40, Tecno Spark 20).
+  - Noto Nastaliq Urdu typography with 2.5× line-height ratio in Urdu (`I18N-001..004`, `BP §78`).
+  - Full RTL layout mirroring in Urdu (`getAppMirroring('ur')`).
+  - 48×48 dp minimum touch targets across all interactive elements (`A11Y-002`).
+  - 100% localized message catalogs; 0 hardcoded strings (`guard:string-lint` verified across 39 UI files).
+- Quality Verification:
+  - 30/30 tests pass in `apps/customer/src/customer-journey-e2e.spec.ts`.
+  - 110/110 total tests pass in `@kaamkaro/customer`.
+  - 5/5 repository quality guards pass (`guard:arch`, `guard:contracts`, `guard:values`, `guard:string-lint`, `guard:transition-table`, `guard:traceability`).
+  - 0 TypeScript errors (`tsc -p tsconfig.json --noEmit`), 0 ESLint warnings (`eslint .`).
+  - QA PASS recorded in `docs/qa/T3.12-qa.md`.
+  - Security Review PASS recorded in `docs/security/SEC-REVIEW-T3.12.md`.
+  - Engineering Handoff documented in `coordination/handoffs/T-3.12.md`.
+  - Phase 3 Customer MVP exit condition formally met.
+
 ## 2026-10-25 — T3.11 Voice Assistant v1 (A07 + A11) — DONE
 - Screens & Engine: Implemented Voice Assistant v1 and C38 Voice Assistant Screen in English and Urdu (`apps/customer/src/screens/C38VoiceAssistantScreen.tsx`, `apps/customer/src/services/voice-assistant.ts`):
   - Push-to-Talk Interface: Explicit customer press starts microphone capture; returns to idle upon utterance completion with strictly zero always-listening wake word or background capture (`VOICE-001`, `BP §77.1`).

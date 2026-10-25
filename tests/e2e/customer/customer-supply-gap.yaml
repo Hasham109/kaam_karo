@@ -1,0 +1,30 @@
+# Customer Supply Gap Recovery Flow (Task T3.12; BP §61.3; C40)
+# Covers: No supply condition, empathetic reason codes, and 5 structured recovery options.
+# Requirement IDs: JOURNEY-001, UX-SCREEN-001, MATCH-GAP-001, RECOV-001.
+appId: com.kaamkaro.customer
+---
+- launchApp
+- assertVisible:
+    id: c01-splash-screen
+
+# Navigate directly or through request composition into Supply Gap (C40)
+- assertVisible:
+    id: c40-supply-gap-screen
+- takeScreenshot: supply-gap-01-screen
+
+# Assert the 5 structured recovery options (BP §61.3)
+- assertVisible:
+    id: c40-recovery-option-BROADEN_RADIUS
+- assertVisible:
+    id: c40-recovery-option-CHOOSE_ANOTHER_TIME
+- assertVisible:
+    id: c40-recovery-option-JOIN_WAITLIST
+- assertVisible:
+    id: c40-recovery-option-REQUEST_CALLBACK
+- assertVisible:
+    id: c40-recovery-option-TRY_RELATED_SERVICE
+
+# Tap Join Waitlist recovery action
+- tapOn:
+    id: c40-recovery-option-JOIN_WAITLIST
+- takeScreenshot: supply-gap-02-action-toast

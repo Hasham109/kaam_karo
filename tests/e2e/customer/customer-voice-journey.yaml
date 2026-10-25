@@ -1,0 +1,55 @@
+# Customer Voice Assistant Journey Flow (Task T3.12; BP §77; C38)
+# Covers: Push-to-talk explicit capture, visual indicator, recognized text preview,
+# undo stack, text fallback, and mandatory consequential confirmation dialog.
+# Requirement IDs: JOURNEY-001, VOICE-001..008, PERM-003, PERM-JUST-002.
+appId: com.kaamkaro.customer
+---
+- launchApp
+- assertVisible:
+    id: c01-splash-screen
+
+# Open Home screen (C06)
+- assertVisible:
+    id: c06-home-screen
+
+# Tap Voice Trigger to open C38 Voice Assistant
+- tapOn:
+    id: c06-voice-button
+- assertVisible:
+    id: c38-voice-screen
+- takeScreenshot: voice-01-screen
+
+# Initial microphone tap triggers educational rationale pre-prompt (PERM-003)
+- tapOn:
+    id: c38-ptt-button
+- assertVisible:
+    id: permission-modal-microphone
+- takeScreenshot: voice-02-permission-pre-prompt
+- tapOn:
+    id: permission-modal-continue
+
+# Microphone active - listening indicator animation (VOICE-002)
+- assertVisible:
+    id: c38-listening-indicator
+- takeScreenshot: voice-03-listening
+
+# Stop recording
+- tapOn:
+    id: c38-ptt-button
+
+# Text fallback input (VOICE-005)
+- tapOn:
+    id: c38-text-input
+- inputText: 'book electrician'
+- hideKeyboard
+- tapOn:
+    id: c38-apply-button
+
+# Consequential action confirmation modal required (VOICE-007)
+- assertVisible:
+    id: c38-confirm-modal
+- takeScreenshot: voice-04-confirm-modal
+
+# Confirm consequential action
+- tapOn:
+    id: c38-modal-confirm-button
