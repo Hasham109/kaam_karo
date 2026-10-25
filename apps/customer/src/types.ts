@@ -20,12 +20,16 @@ export type ScreenId =
   | 'C13' // Quote Details
   | 'C14' // Booking Review
   | 'C15' // Booking Confirmation
+  | 'C17' // Booking Tracking
+  | 'C19' // Job in Progress (On-site)
+  | 'C20' // Job Completion & Payment
   | 'C31' // "What do you need?" Conversational Composer
   | 'C32' // Audio Note Recorder
   | 'C33' // Problem Video Recorder
   | 'C34' // Request Summary Confirmation
   | 'C35' // Supplier Match Results
   | 'C36' // Multi-supplier Offers Comparison
+  | 'C37' // Extra-Charge Approval Sheet & Dispute
   | 'C38' // Voice Assistant Overlay (VOICE-001..008, BP §77)
   | 'C39' // Location Confirm
   | 'C40' // No-supply / Supply-gap Screen
@@ -74,6 +78,16 @@ export interface ScreenParams {
     | undefined;
   C15?:
     | { bookingId: string; status?: BookingStatus | undefined; returnTo?: ScreenId | undefined }
+    | undefined;
+  C17?: { bookingId?: string | undefined; returnTo?: ScreenId | undefined } | undefined;
+  C19?: { bookingId?: string | undefined; returnTo?: ScreenId | undefined } | undefined;
+  C20?: { bookingId?: string | undefined; returnTo?: ScreenId | undefined } | undefined;
+  C37?:
+    | {
+        bookingId?: string | undefined;
+        initialTab?: 'charges' | 'dispute' | 'crew' | undefined;
+        returnTo?: ScreenId | undefined;
+      }
     | undefined;
   C31?:
     | {
@@ -221,6 +235,94 @@ export interface ActiveBooking {
   readonly providerName: string;
   readonly status: BookingStatus;
   readonly scheduledTime: string;
+}
+
+export type ExecutionStatus =
+  | 'SCHEDULED'
+  | 'EN_ROUTE'
+  | 'ARRIVED'
+  | 'IN_PROGRESS'
+  | 'COMPLETED'
+  | 'AWAITING_APPROVAL'
+  | 'CANCELLED'
+  | 'DISPUTED';
+
+export type ExtraLineType =
+  | 'LABOUR_SERVICE'
+  | 'TOOLS_EQUIPMENT'
+  | 'CONSUMABLES'
+  | 'PARTS_MATERIALS'
+  | 'EMERGENCY_AFTER_HOURS'
+  | 'TRAVEL_DISTANCE'
+  | 'DISCOUNT';
+
+export type ExtraLineStatus = 'PROPOSED' | 'APPROVED' | 'REJECTED';
+
+export type CustomerMaterialsClass = 'INCLUDED' | 'CUSTOMER_PROVIDED' | 'CHARGED_SEPARATELY';
+
+export interface ProposedExtraChargeItem {
+  readonly id: string;
+  readonly lineType: ExtraLineType;
+  readonly description: string;
+  readonly quantity?: number | undefined;
+  readonly unit?: string | undefined;
+  readonly amountPkr: number;
+  readonly toolsReason?: string | undefined;
+  readonly materialsClass?: CustomerMaterialsClass | undefined;
+  readonly status: ExtraLineStatus;
+}
+
+export interface TrackingJobEvent {
+  readonly id: string;
+  readonly status: string;
+  readonly labelEn: string;
+  readonly labelUr: string;
+  readonly timestamp: string;
+  readonly isCompleted: boolean;
+}
+
+export interface CustomerTrackingBooking {
+  readonly id: string;
+  readonly bookingNumber: string;
+  readonly serviceTitleEn: string;
+  readonly serviceTitleUr: string;
+  readonly providerId: string;
+  readonly providerName: string;
+  readonly providerRating: number;
+  readonly providerReviewCount: number;
+  readonly isVerified: boolean;
+  readonly crewSize: number;
+  readonly status: ExecutionStatus;
+  readonly scheduledTime: string;
+  readonly address: string;
+  readonly etaMinutes?: number | undefined;
+  readonly isEnRouteLiveTracking?: boolean | undefined;
+  readonly pendingChargesCount?: number | undefined;
+  readonly pendingCrewChange?: { readonly oldSize: number; readonly newSize: number } | undefined;
+  readonly agreedPricePkr: number;
+  readonly events: readonly TrackingJobEvent[];
+}
+
+export interface CustomerCompletionDetails {
+  readonly bookingId: string;
+  readonly providerNotes: string;
+  readonly beforePhotos: readonly string[];
+  readonly afterPhotos: readonly string[];
+  readonly completionCode: string;
+  readonly isCustomerConfirmed: boolean;
+  readonly labourPkr: number;
+  readonly extrasApprovedPkr: number;
+  readonly taxPkr: number;
+  readonly totalPayablePkr: number;
+  readonly recordedPaymentMethod?: 'CASH' | 'DIGITAL' | undefined;
+  readonly digitalPaymentStatus?: 'WAITING' | 'PAID' | 'NOT_RECEIVED' | undefined;
+}
+
+export interface CancellationDisputeSubmission {
+  readonly bookingId: string;
+  readonly reasonCode: string;
+  readonly notes?: string | undefined;
+  readonly isSafetyDispute: boolean;
 }
 
 export type WhenTimeChoice = 'NOW' | 'TODAY' | 'LATER';
@@ -449,11 +551,7 @@ export type VoiceActionType =
 
 export interface ConsequentialConfirmationPrompt {
   readonly actionType:
-    | 'PLACE_BOOKING'
-    | 'ACCEPT_QUOTE'
-    | 'PAY_BOOKING'
-    | 'CANCEL_BOOKING'
-    | 'SUBMIT_COMPLAINT';
+    'PLACE_BOOKING' | 'ACCEPT_QUOTE' | 'PAY_BOOKING' | 'CANCEL_BOOKING' | 'SUBMIT_COMPLAINT';
   readonly titleKey: MessageKey;
   readonly messageKey: MessageKey;
   readonly params: Record<string, string | number>;
@@ -475,4 +573,3 @@ export interface VoiceAssistantResult {
   readonly searchQuery?: string;
   readonly filterPreference?: string;
 }
-

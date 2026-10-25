@@ -69,7 +69,7 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 | A08 | media | T3.2 Media upload sessions, limits from config, thumbnails, retention job | DONE | t3.2-media | — | T4.3 (with A12) | 2026-10-24 |
 | A09 | payments-ledger | — | IDLE | — | — | T6.1 | — |
 | A10 | comms-notify-reviews | — | IDLE | — | — | T7.1 | — |
-| A11 | customer-app | T3.10 / T3.11 Customer App UI & Voice (C01–C15, C31–C41) | DONE | — | — | T4.6 | 2026-10-25 |
+| A11 | customer-app | T4.6 Customer execution: tracking, charge approval, completion confirm (C17, C19, C20, C37) | IN_PROGRESS | t4.6-customer-execution-tracking | — | T4.6 handoff | 2026-10-25 |
 | A12 | partner-app | T4.5 Job execution: en route, arrived, in progress, extras, completion evidence (P12, P13, P14) | DONE | t4.5-partner-job-execution | — | T4.7 | 2026-10-25 |
 | A13 | admin-portal | T1.3 Admin screen specs A01–A26 + sub-role access matrix (OPS-ADMIN-001…026, ADMIN-ROLE-001…008, ROLE-003, UX-SCREEN-003, SEC-AUTH-005) | DONE | t2.1-monorepo (docs only) | — | T5.1 (T1.3 QA PASS; SEC fixes #1,4,5,6,8,15-18,22,24,25 + QA F-04 done, A15 re-review pending) | 2026-10-23 |
 | A14 | i18n-a11y | T1.4 i18n + RTL + Urdu typography kit; string-lint rule (I18N-001..008, A11Y-001..008) | DONE | work/parallel-t1.4-t3.2 | — | T3.8 / T3.9 | 2026-10-24 |

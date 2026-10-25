@@ -42,7 +42,7 @@ Acceptance criteria and BP refs per task: docs/implementation.md §6 (same task 
 | T4.3 | Incoming requests + job detail with media player; Accept/Quote/Ask/Decline ≤ 2 taps | A12 | T3.5, T3.7, T3.2 | DONE | handoffs/T-4.3.md |
 | T4.4 | Quote builder with BP §58.1 line types + crew size; crew size also asked on Accept for instant bookings | A12 | T3.5 | DONE | handoffs/T-4.4.md |
 | T4.5 | Job execution: en route, arrived, in progress, extras (proposed), completion evidence, navigation hand-off | A12 + A06 | T3.4 | DONE | handoffs/T-4.5.md |
-| T4.6 | Customer side of execution: tracking, charge approval sheet, completion confirm | A11 | T4.5 | TODO | — |
+| T4.6 | Customer side of execution: tracking, charge approval sheet, completion confirm | A11 | T4.5 | IN_PROGRESS | — |
 | T4.7 | QA: provider journey E2E (BP §10) + joint customer/provider E2E | A16 | T4.1–T4.6 | TODO | — |
 | T5.1 | Admin auth (separate path, MFA) + sub-role guards | A13 + A02 | T2.4 | TODO | — |
 | T5.2 | Users, provider verification queue, categories/services, city activation | A13 | T2.6, T3.6 | TODO | — |

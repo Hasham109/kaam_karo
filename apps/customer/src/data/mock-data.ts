@@ -2,7 +2,16 @@
  * Seeded mock catalog and provider data for Customer App (BP §12, §64; D-007, D-019, D-024).
  * Aligns with backend seed categories and Lahore initial launch city.
  */
-import type { ActiveBooking, CategoryItem, CityOption, ProviderItem, ServiceItem } from '../types';
+import type {
+  ActiveBooking,
+  CategoryItem,
+  CityOption,
+  CustomerCompletionDetails,
+  CustomerTrackingBooking,
+  ProposedExtraChargeItem,
+  ProviderItem,
+  ServiceItem,
+} from '../types';
 
 export const MOCK_CITIES: readonly CityOption[] = [
   { id: 'lahore', nameEn: 'Lahore', nameUr: 'لاہور', isActive: true },
@@ -489,3 +498,127 @@ export const MOCK_ACTIVE_BOOKING: ActiveBooking = {
   status: 'PROVIDER_EN_ROUTE',
   scheduledTime: 'Today at 3:00 PM',
 };
+
+export const MOCK_TRACKING_BOOKING: CustomerTrackingBooking = {
+  id: 'book-lahore-1049',
+  bookingNumber: 'KK-1049-LH',
+  serviceTitleEn: 'AC General Master Service',
+  serviceTitleUr: 'اے سی جنرل ماسٹر سروس',
+  providerId: 'prov-1',
+  providerName: 'Muhammad Tariq',
+  providerRating: 4.9,
+  providerReviewCount: 142,
+  isVerified: true,
+  crewSize: 2,
+  status: 'EN_ROUTE',
+  scheduledTime: 'Today at 3:00 PM',
+  address: 'House 14, Street 3, Block H, Gulberg III, Lahore',
+  etaMinutes: 12,
+  isEnRouteLiveTracking: true,
+  pendingChargesCount: 2,
+  pendingCrewChange: { oldSize: 2, newSize: 3 },
+  agreedPricePkr: 2500,
+  events: [
+    {
+      id: 'ev-1',
+      status: 'SCHEDULED',
+      labelEn: 'Booking Confirmed',
+      labelUr: 'بکنگ کی تصدیق ہو گئی',
+      timestamp: '2:15 PM',
+      isCompleted: true,
+    },
+    {
+      id: 'ev-2',
+      status: 'EN_ROUTE',
+      labelEn: 'Provider on the way',
+      labelUr: 'کاریگر راستے میں ہے',
+      timestamp: '2:40 PM',
+      isCompleted: true,
+    },
+    {
+      id: 'ev-3',
+      status: 'ARRIVED',
+      labelEn: 'Provider arrived on site',
+      labelUr: 'کاریگر پہنچ گیا',
+      timestamp: '—',
+      isCompleted: false,
+    },
+    {
+      id: 'ev-4',
+      status: 'IN_PROGRESS',
+      labelEn: 'Work in progress',
+      labelUr: 'کام شروع ہو گیا',
+      timestamp: '—',
+      isCompleted: false,
+    },
+    {
+      id: 'ev-5',
+      status: 'COMPLETED',
+      labelEn: 'Job completed',
+      labelUr: 'کام مکمل ہو گیا',
+      timestamp: '—',
+      isCompleted: false,
+    },
+  ],
+};
+
+export const MOCK_PROPOSED_EXTRAS: readonly ProposedExtraChargeItem[] = [
+  {
+    id: 'extra-1',
+    lineType: 'PARTS_MATERIALS',
+    description: 'Compressor capacitor replacement (45uF)',
+    quantity: 1,
+    unit: 'pc',
+    amountPkr: 1200,
+    materialsClass: 'CHARGED_SEPARATELY',
+    status: 'PROPOSED',
+  },
+  {
+    id: 'extra-2',
+    lineType: 'TOOLS_EQUIPMENT',
+    description: 'High-pressure chemical jet pump wash',
+    amountPkr: 800,
+    toolsReason: 'Heavy coil choking requires deep chemical pressurized wash',
+    status: 'PROPOSED',
+  },
+];
+
+export const MOCK_COMPLETION_DETAILS: CustomerCompletionDetails = {
+  bookingId: 'book-lahore-1049',
+  providerNotes:
+    'Both indoor and outdoor units cleaned thoroughly, capacitor replaced, refrigerant pressure tested at optimal 65 PSI.',
+  beforePhotos: ['https://storage.kaamkaro.pk/evidence/before-1.jpg'],
+  afterPhotos: ['https://storage.kaamkaro.pk/evidence/after-1.jpg'],
+  completionCode: '8492',
+  isCustomerConfirmed: false,
+  labourPkr: 2500,
+  extrasApprovedPkr: 1200,
+  taxPkr: 0, // Tax 0 at launch (D-029)
+  totalPayablePkr: 3700,
+  recordedPaymentMethod: undefined,
+  digitalPaymentStatus: 'WAITING',
+};
+
+export const MOCK_CANCELLATION_REASONS = [
+  { id: 'found_alternate', labelEn: 'Found alternate service', labelUr: 'کسی اور سے کام کروا لیا' },
+  {
+    id: 'provider_delayed',
+    labelEn: 'Provider running very late',
+    labelUr: 'کاریگر بہت دیر کر رہا ہے',
+  },
+  {
+    id: 'change_of_plans',
+    labelEn: 'Plans changed / Not needed now',
+    labelUr: 'پروگرام بدل گیا / اب ضرورت نہیں',
+  },
+  {
+    id: 'safety_concern',
+    labelEn: 'Safety or trust concern',
+    labelUr: 'حفاظتی یا اعتماد کا مسئلہ',
+  },
+  {
+    id: 'wrong_service',
+    labelEn: 'Booked wrong service by mistake',
+    labelUr: 'غلط سروس منتخب ہو گئی تھی',
+  },
+] as const;

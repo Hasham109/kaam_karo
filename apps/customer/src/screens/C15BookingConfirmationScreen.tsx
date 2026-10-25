@@ -61,7 +61,7 @@ export const C15BookingConfirmationScreen: React.FC = () => {
   const handleTrackBooking = () => {
     // Clear draft on successful booking flow
     clearDraft();
-    navigate('C06');
+    navigate('C17', { bookingId: bookingInfo.bookingId });
   };
 
   const handleTurnOnNotifs = () => {

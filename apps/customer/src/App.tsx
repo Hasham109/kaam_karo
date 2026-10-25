@@ -22,12 +22,16 @@ import { C12RequestScreen } from './screens/C12RequestScreen';
 import { C13QuoteDetailScreen } from './screens/C13QuoteDetailScreen';
 import { C14BookingReviewScreen } from './screens/C14BookingReviewScreen';
 import { C15BookingConfirmationScreen } from './screens/C15BookingConfirmationScreen';
+import { C17BookingTrackingScreen } from './screens/C17BookingTrackingScreen';
+import { C19JobInProgressScreen } from './screens/C19JobInProgressScreen';
+import { C20CompletionConfirmScreen } from './screens/C20CompletionConfirmScreen';
 import { C31ComposerScreen } from './screens/C31ComposerScreen';
 import { C32AudioRecorderScreen } from './screens/C32AudioRecorderScreen';
 import { C33VideoRecorderScreen } from './screens/C33VideoRecorderScreen';
 import { C34SummaryScreen } from './screens/C34SummaryScreen';
 import { C35SupplierMatchResultsScreen } from './screens/C35SupplierMatchResultsScreen';
 import { C36OffersComparisonScreen } from './screens/C36OffersComparisonScreen';
+import { C37ExtraChargeApprovalScreen } from './screens/C37ExtraChargeApprovalScreen';
 import { C38VoiceAssistantScreen } from './screens/C38VoiceAssistantScreen';
 import { C39LocationConfirmScreen } from './screens/C39LocationConfirmScreen';
 import { C40SupplyGapScreen } from './screens/C40SupplyGapScreen';
@@ -77,6 +81,12 @@ function CustomerRouter(): React.JSX.Element {
       return <C14BookingReviewScreen />;
     case 'C15':
       return <C15BookingConfirmationScreen />;
+    case 'C17':
+      return <C17BookingTrackingScreen />;
+    case 'C19':
+      return <C19JobInProgressScreen />;
+    case 'C20':
+      return <C20CompletionConfirmScreen />;
     case 'C31':
       return <C31ComposerScreen />;
     case 'C32':
@@ -89,6 +99,8 @@ function CustomerRouter(): React.JSX.Element {
       return <C35SupplierMatchResultsScreen />;
     case 'C36':
       return <C36OffersComparisonScreen />;
+    case 'C37':
+      return <C37ExtraChargeApprovalScreen />;
     case 'C38':
       return <C38VoiceAssistantScreen />;
     case 'C39':

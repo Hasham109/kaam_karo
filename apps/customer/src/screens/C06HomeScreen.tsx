@@ -129,7 +129,13 @@ export function C06HomeScreen(): React.JSX.Element {
 
         {/* Active Booking Card (if present) */}
         {activeBooking && !isGuest ? (
-          <View testID="c06-active-job-card" style={styles.activeJobCard}>
+          <TouchableOpacity
+            testID="c06-active-job-card"
+            style={styles.activeJobCard}
+            onPress={() => navigate('C17', { bookingId: activeBooking.id })}
+            accessibilityRole="button"
+            accessibilityLabel={translate(locale, 'customer.c06.viewJob')}
+          >
             <View style={[styles.activeJobHeaderRow, { flexDirection: mirror.row }]}>
               <Text
                 style={[
@@ -167,7 +173,7 @@ export function C06HomeScreen(): React.JSX.Element {
                 {activeBooking.providerName} · {activeBooking.scheduledTime}
               </Text>
             </View>
-          </View>
+          </TouchableOpacity>
         ) : null}
 
         {/* Categories Grid */}
