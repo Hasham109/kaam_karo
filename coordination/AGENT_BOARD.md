@@ -36,6 +36,17 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 - Verification passes: 36/36 turbo tasks, 112/112 DB tests, 22/22 QA E2E probes, 5/5 guards, format check.
 - Verdict: PASS. Phase 2 closed; Phase 3 unblocked.
 
+## Sync 2026-10-27
+- **Session Sync (T7.4 Badges Computed from Configured Rules Complete):**
+  - **Done since last sync:** T7.4 DONE.
+  - **In progress:** None.
+  - **Blocked:** T0.6 Urdu Nastaliq smoke test (BLOCKED-DEVICE: code done, awaiting owner device/emulator screenshots per `docs/qa/urdu-smoke/README.md`).
+  - **Next 3 tasks in dependency order:**
+    1. **T7.6** Low-rating enforcement (ARCH §6.7): scheduled job, warning 1 → warning 2 → block (A05 + A10 + A13 + A12)
+    2. **T7.5** Support tickets L1–L5, disputes ↔ refunds (A10 + apps)
+    3. **T8.1** Full bug sweep (§7.3 checklist) across all modules (A17)
+- T7.4 DONE: QA PASS (docs/qa/T7.4-qa.md, 11 new unit tests in badges.service.spec.ts, 7 customer tests in customer-badges.spec.ts, 497/497 API tests pass, 165/165 customer tests pass, 143/143 partner tests pass, 80/80 admin tests pass, 51/51 contract tests pass, 14/14 turbo tasks pass, 100% CI guards pass), SEC PASS (docs/security/SEC-REVIEW-T7.4.md). Canonical 14 candidate platform badges implemented (BP §55.2, §66; TRUST-BADGE-001..014, OPS-ADMIN-022, ROLE-003, D-010). 4 Fact badges (VERIFIED, EMERGENCY_AVAILABLE, AVAILABLE_TODAY, AVAILABLE_NOW) evaluated dynamically from live profile and availability states with read-only definitions (editing rejected with 400 Bad Request); 10 Rule badges (HIGHLY_RATED, EXPERIENCED, CUSTOMER_FAVORITE, FAST_RESPONSE, FAST_SERVICE, RELIABLE, REPEAT_CUSTOMER_FAVORITE, TOP_SPECIALIST, RECENTLY_JOINED, LARGE_TEAM) awarded only by configured rules in trust.badge_rules; safe default invariant D-010 verified (if rule is null, nobody gets it and active badges expire); anti-manufacture invariant verified (Customer Favorite rule strictly requires distinct favorites count and completed jobs count, never reads favorite table alone); Super Admin rule editor protected by RequireAdminSubRoleGuard(AdminSubRole.SUPER_ADMIN) on /admin/badges/rules with mandatory min 5-char audit reason (ROLE-003) logged via AuditWriter; atomic badge recalculation emitting outbox domain event badge.recalculated; Customer App badge display across C11, C35, C36 with localized names and "What does this mean?" public explanations (BP §55.2, BP §77.3); OpenAPI 3.1.0 contract in contracts/badges.yaml; and handoff coordination/handoffs/T-7.4.md.
+
 ## Sync 2026-10-26
 - **Session Sync (T7.3 Reviews & Reputation Complete):**
   - **Done since last sync:** T6.1 DONE, T6.2 DONE, T6.6 DONE, T6.7 DONE, T6.3 DONE, T6.4 DONE, T6.5 DONE, T7.1 DONE, T7.2 DONE, T7.3 DONE.
@@ -111,7 +122,7 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 | A02 | identity-profiles | T2.5 Profiles, addresses, location snapshots, favorites (PROF-ADDR-001..004, PROF-FAV-001, LOC-GEO-003..004) | DONE | t2.5-profiles | — | T3.6 | 2026-10-24 |
 | A03 | catalog-config | T2.6 Catalog + Config | DONE | t2.6-catalog-config | — | T6.2 (with A09); controllers after T2.4 | 2026-10-24 |
 | A04 | booking-quotes | T3.5 Quotes + multi-supplier offers + fare lines + crew size (QUOTE-001..009, FARE-001..013, PRICE-001..007) | DONE | t3.5-quotes-fare | — | T3.7 | 2026-10-24 |
-| A05 | matching-trust | T3.7 Matching: hard filters 73–79, configurable scoring, fairness, reasons, ranking_version, supply gap (MATCH-ELIG-073..079, MATCH-SCORE-001..013, MATCH-EXPL-001, MATCH-GAP-001, MATCH-MODE-001) | DONE | t3.7-matching-engine | — | T3.7 handoff | 2026-10-24 |
+| A05 | matching-trust | T7.4 Badges computed from configured rules + display | DONE | main | — | T7.6 | 2026-10-27 |
 | A06 | location-maps | T3.1 GeoService + Pakistan boundary + Location Snapshot + fallback (LOC-GEO-001..006, 008, SCOPE-GEO-001..002) | DONE | t3.1-location-maps | — | T4.5 (with A12) | 2026-10-24 |
 | A07 | ai-intake-voice | T3.3 IntakeAI fake + closed schema + catalog validation + confidence fallback + AI logs (REQ-AI-001..012) | DONE | t3.3-ai-intake | — | T3.11 | 2026-10-24 |
 | A08 | media | T3.2 Media upload sessions, limits from config, thumbnails, retention job | DONE | t3.2-media | — | T4.3 (with A12) | 2026-10-24 |

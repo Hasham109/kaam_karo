@@ -1,0 +1,420 @@
+openapi: 3.1.0
+info:
+  title: Kaam Karo Badges & Reputation Rules API
+  version: 0.1.0
+  description: >
+    Supplier badges and reputation rules API (ARCH §4 M3; BP §55.2, §66; D-010).
+    Computes factual and rule-based badges for service providers, manages badge rule thresholds,
+    and supports customer-facing badge explanation.
+servers:
+  - url: /v1
+paths:
+  /badges:
+    get:
+      summary: Get all platform badge definitions
+      description: >
+        Returns the definitions of all platform candidate badges (BP §55.2; TRUST-BADGE-001..014)
+        including fact badges and rule-based badges with localized labels and descriptions.
+      operationId: getBadgeDefinitions
+      x-requirement-ids:
+        - TRUST-BADGE-001
+        - TRUST-BADGE-002
+        - TRUST-BADGE-003
+        - TRUST-BADGE-004
+        - TRUST-BADGE-005
+        - TRUST-BADGE-006
+        - TRUST-BADGE-007
+        - TRUST-BADGE-008
+        - TRUST-BADGE-009
+        - TRUST-BADGE-010
+        - TRUST-BADGE-011
+        - TRUST-BADGE-012
+        - TRUST-BADGE-013
+        - TRUST-BADGE-014
+      tags:
+        - badges
+      responses:
+        '200':
+          description: List of badge definitions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadgeDefinitionsResponse'
+
+  /providers/{providerId}/badges:
+    get:
+      summary: Get active badges for a provider
+      description: >
+        Returns all active badges awarded to a provider. Fact badges are evaluated dynamically
+        (e.g. Verified standing, live availability toggles), while rule-based badges are awarded
+        based on configured platform rules and source metrics (BP §55.2, §66; TRUST-BADGE-001..014, D-010).
+      operationId: getProviderBadges
+      x-requirement-ids:
+        - TRUST-BADGE-001
+        - TRUST-BADGE-002
+        - TRUST-BADGE-004
+        - TRUST-BADGE-011
+      tags:
+        - badges
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: serviceId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Provider badges list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderBadgesResponse'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+
+  /admin/badges/rules:
+    get:
+      summary: Get admin badge rules and active holder counts
+      description: >
+        Admin view of all 14 candidate badges, indicating whether they are Fact or Rule badges,
+        their active configured thresholds, and count of active providers currently holding each badge
+        (BP §55.2, §66; OPS-ADMIN-022, D-010).
+      operationId: getAdminBadgeRules
+      x-requirement-ids:
+        - OPS-ADMIN-022
+        - TRUST-BADGE-002
+      tags:
+        - admin-badges
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Badge rules list with counts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminBadgeRulesResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+
+  /admin/badges/rules/{badgeType}:
+    put:
+      summary: Update configuration rule for a rule-based badge
+      description: >
+        Updates threshold configuration for a rule-based badge (OPS-ADMIN-022, D-010).
+        Requires a mandatory audit reason (ROLE-003). If threshold is set to null, the badge is not awarded.
+      operationId: updateAdminBadgeRule
+      x-requirement-ids:
+        - OPS-ADMIN-022
+        - ROLE-003
+        - TRUST-BADGE-002
+      tags:
+        - admin-badges
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: badgeType
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/BadgeType'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBadgeRuleRequest'
+      responses:
+        '200':
+          description: Badge rule updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminBadgeRuleItem'
+        '400':
+          $ref: './common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '422':
+          description: Validation error or invalid threshold
+          content:
+            application/json:
+              schema:
+                $ref: './common.yaml#/components/schemas/ErrorEnvelope'
+
+  /admin/badges/recalculate:
+    post:
+      summary: Recalculate provider badges against configured rules
+      description: >
+        Triggers recalculation of rule badges across all providers against current configured thresholds (BP §55.2, §66; OPS-ADMIN-022, D-010).
+        Creates audited SupplierBadge records. Requires mandatory audit reason (ROLE-003).
+      operationId: recalculateBadges
+      x-requirement-ids:
+        - OPS-ADMIN-022
+        - ROLE-003
+        - TRUST-BADGE-002
+      tags:
+        - admin-badges
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecalculateBadgesRequest'
+      responses:
+        '200':
+          description: Recalculation summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecalculateBadgesResponse'
+        '400':
+          $ref: './common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '422':
+          description: Missing audit reason
+          content:
+            application/json:
+              schema:
+                $ref: './common.yaml#/components/schemas/ErrorEnvelope'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    BadgeType:
+      type: string
+      enum:
+        - VERIFIED
+        - HIGHLY_RATED
+        - EXPERIENCED
+        - CUSTOMER_FAVORITE
+        - FAST_RESPONSE
+        - FAST_SERVICE
+        - RELIABLE
+        - REPEAT_CUSTOMER_FAVORITE
+        - TOP_SPECIALIST
+        - RECENTLY_JOINED
+        - EMERGENCY_AVAILABLE
+        - AVAILABLE_TODAY
+        - AVAILABLE_NOW
+        - LARGE_TEAM
+
+    BadgeKind:
+      type: string
+      enum:
+        - FACT
+        - RULE
+
+    BadgeStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - RECALCULATION_PENDING
+        - EXPIRED
+
+    BadgeDefinition:
+      type: object
+      required:
+        - badgeType
+        - kind
+        - nameEn
+        - nameUr
+        - descriptionEn
+        - descriptionUr
+      properties:
+        badgeType:
+          $ref: '#/components/schemas/BadgeType'
+        kind:
+          $ref: '#/components/schemas/BadgeKind'
+        nameEn:
+          type: string
+        nameUr:
+          type: string
+        descriptionEn:
+          type: string
+        descriptionUr:
+          type: string
+        explanationEn:
+          type: string
+        explanationUr:
+          type: string
+        iconName:
+          type: string
+
+    BadgeDefinitionsResponse:
+      type: object
+      required:
+        - badges
+      properties:
+        badges:
+          type: array
+          items:
+            $ref: '#/components/schemas/BadgeDefinition'
+
+    ProviderBadgeItem:
+      type: object
+      required:
+        - id
+        - badgeType
+        - kind
+        - nameEn
+        - nameUr
+        - descriptionEn
+        - descriptionUr
+        - effectiveFrom
+      properties:
+        id:
+          type: string
+        badgeType:
+          $ref: '#/components/schemas/BadgeType'
+        kind:
+          $ref: '#/components/schemas/BadgeKind'
+        nameEn:
+          type: string
+        nameUr:
+          type: string
+        descriptionEn:
+          type: string
+        descriptionUr:
+          type: string
+        serviceId:
+          type: string
+          format: uuid
+          nullable: true
+        effectiveFrom:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        sourceMetrics:
+          type: object
+          additionalProperties: true
+
+    ProviderBadgesResponse:
+      type: object
+      required:
+        - providerProfileId
+        - badges
+      properties:
+        providerProfileId:
+          type: string
+          format: uuid
+        badges:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProviderBadgeItem'
+
+    AdminBadgeRuleItem:
+      type: object
+      required:
+        - badgeType
+        - kind
+        - nameEn
+        - nameUr
+        - isSet
+        - activeHoldersCount
+      properties:
+        badgeType:
+          $ref: '#/components/schemas/BadgeType'
+        kind:
+          $ref: '#/components/schemas/BadgeKind'
+        nameEn:
+          type: string
+        nameUr:
+          type: string
+        ruleMetricEn:
+          type: string
+        ruleMetricUr:
+          type: string
+        threshold:
+          type: object
+          nullable: true
+          additionalProperties: true
+        isSet:
+          type: boolean
+        effectiveFrom:
+          type: string
+          format: date-time
+          nullable: true
+        activeHoldersCount:
+          type: integer
+
+    AdminBadgeRulesResponse:
+      type: object
+      required:
+        - rules
+      properties:
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminBadgeRuleItem'
+
+    UpdateBadgeRuleRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        threshold:
+          type: object
+          nullable: true
+          additionalProperties: true
+        reason:
+          type: string
+          minLength: 5
+          description: Mandatory audit reason (ROLE-003)
+
+    RecalculateBadgesRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        providerProfileId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Specific provider to recalculate, or omit for all providers
+        reason:
+          type: string
+          minLength: 5
+          description: Mandatory audit reason for recalculation (ROLE-003)
+
+    RecalculateBadgesResponse:
+      type: object
+      required:
+        - recalculatedAt
+        - providersEvaluated
+        - badgesAwarded
+        - badgesExpired
+      properties:
+        recalculatedAt:
+          type: string
+          format: date-time
+        providersEvaluated:
+          type: integer
+        badgesAwarded:
+          type: integer
+        badgesExpired:
+          type: integer
