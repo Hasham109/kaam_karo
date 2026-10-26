@@ -4,13 +4,19 @@
  */
 /* eslint-disable @typescript-eslint/no-explicit-any -- loosely typed Prisma mock payloads */
 import { describe, expect, it, beforeEach } from 'vitest';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { LedgerService } from '../ledger.service.js';
 import { CommissionService } from '../commission.service.js';
 import { PaymentsService } from '../payments.service.js';
 import { FakePaymentGateway } from '../fake-payment-gateway.js';
 import {
   BookingStatus,
+  CommissionPaymentStatus,
   LedgerDirection,
   LedgerEntryType,
   PaymentMethod,
@@ -225,6 +231,75 @@ class MockPrismaService {
       return entry;
     },
   };
+
+  public commissionSubmissions: MockCommissionSubmission[] = [];
+
+  commissionPaymentSubmission = {
+    create: async ({ data }: { data: any }) => {
+      const sub: MockCommissionSubmission = {
+        id: `sub-${this.commissionSubmissions.length + 1}`,
+        providerProfileId: data.providerProfileId,
+        amountMinor: BigInt(data.amountMinor),
+        transactionRef: data.transactionRef,
+        submittedByUserId: data.submittedByUserId,
+        screenshotMediaId: data.screenshotMediaId ?? null,
+        status: data.status ?? CommissionPaymentStatus.SUBMITTED,
+        submittedAt: new Date(),
+        decidedByUserId: null,
+        decidedAt: null,
+        decisionReason: null,
+        version: 1,
+      };
+      this.commissionSubmissions.push(sub);
+      return sub;
+    },
+    findUnique: async ({ where }: { where: { id: string } }) => {
+      return this.commissionSubmissions.find((s) => s.id === where.id) ?? null;
+    },
+    findMany: async ({ where, take }: { where?: any; orderBy?: any; take?: number }) => {
+      let results = this.commissionSubmissions.filter((s) => {
+        if (where?.status && s.status !== where.status) return false;
+        if (where?.providerProfileId && s.providerProfileId !== where.providerProfileId)
+          return false;
+        return true;
+      });
+      if (take !== undefined) results = results.slice(0, take);
+      return results;
+    },
+    update: async ({ where, data }: { where: { id: string }; data: any }) => {
+      const sub = this.commissionSubmissions.find((s) => s.id === where.id);
+      if (!sub) throw new Error('Not found');
+      if (data.status) sub.status = data.status;
+      if (data.decidedByUserId) sub.decidedByUserId = data.decidedByUserId;
+      if (data.decidedAt) sub.decidedAt = data.decidedAt;
+      if (data.decisionReason) sub.decisionReason = data.decisionReason;
+      if (data.version?.increment) sub.version += data.version.increment;
+      return sub;
+    },
+  };
+}
+
+interface MockCommissionSubmission {
+  id: string;
+  providerProfileId: string;
+  amountMinor: bigint;
+  transactionRef: string;
+  submittedByUserId: string;
+  screenshotMediaId: string | null;
+  status: CommissionPaymentStatus;
+  submittedAt: Date;
+  decidedByUserId: string | null;
+  decidedAt: Date | null;
+  decisionReason: string | null;
+  version: number;
+}
+
+class MockOutboxWriter {
+  public events: any[] = [];
+  async append(_tx: any, event: any): Promise<string> {
+    this.events.push(event);
+    return `outbox-${this.events.length}`;
+  }
 }
 
 describe('LedgerService (T6.6)', () => {
@@ -511,6 +586,248 @@ describe('LedgerService (T6.6)', () => {
       const balance = await ledgerService.getProviderBalance(providerId);
       expect(balance.balanceMinor).toBe(320_000);
       expect(balance.isNegative).toBe(false);
+    });
+  });
+
+  describe('T6.7: Unpaid Commission Block & Pay Company (ARCH §6.8, D-020, D-021)', () => {
+    let outboxWriter: MockOutboxWriter;
+    let t67LedgerService: LedgerService;
+
+    const mockConfigService = {
+      get: async (key: string, _parser?: (v: unknown) => unknown) => {
+        if (key === 'ledger.max_negative_balance') {
+          return { status: 'configured', value: 0 };
+        }
+        return { status: 'unset', value: undefined };
+      },
+    };
+
+    beforeEach(() => {
+      outboxWriter = new MockOutboxWriter();
+      t67LedgerService = new LedgerService(
+        prisma as unknown as PrismaService,
+        commissionService,
+        mockConfigService as any,
+        outboxWriter as any,
+      );
+    });
+
+    it('LEDGER-NEG-001, D-020: Provider negative balance triggers hiring block', async () => {
+      // Seed a cash debit of Rs. 600
+      await prisma.providerLedgerEntry.create({
+        data: {
+          providerProfileId: providerId,
+          entryType: LedgerEntryType.COMMISSION_DEBIT,
+          direction: LedgerDirection.DEBIT,
+          amountMinor: BigInt(60_000),
+          idempotencyKey: 'test:debit-1',
+        },
+      });
+
+      const blockInfo = await t67LedgerService.isProviderHiringBlocked(providerId);
+
+      expect(blockInfo.isBlocked).toBe(true);
+      expect(blockInfo.balanceMinor).toBe(-60_000);
+      expect(blockInfo.amountOwedMinor).toBe(60_000);
+      expect(blockInfo.blockReasonEn).toContain('You owe Rs. 600');
+      expect(blockInfo.blockReasonUr).toContain('600 روپے');
+    });
+
+    it('LEDGER-PAY-002, D-020: Submitted-but-unverified payment does NOT unblock provider', async () => {
+      // 1. Account is negative Rs. 600
+      await prisma.providerLedgerEntry.create({
+        data: {
+          providerProfileId: providerId,
+          entryType: LedgerEntryType.COMMISSION_DEBIT,
+          direction: LedgerDirection.DEBIT,
+          amountMinor: BigInt(60_000),
+          idempotencyKey: 'test:debit-2',
+        },
+      });
+
+      // 2. Provider submits claim to pay company
+      const submission = await t67LedgerService.submitCommissionPayment(
+        {
+          providerProfileId: providerId,
+          amountMinor: 60_000,
+          transactionRef: 'EP-9823411',
+          screenshotMediaId: 'media-receipt-001',
+        },
+        'provider-user-1',
+      );
+
+      expect(submission.status).toBe(CommissionPaymentStatus.SUBMITTED);
+      expect(submission.transactionRef).toBe('EP-9823411');
+
+      // 3. Invariant: balance is unchanged, provider remains blocked!
+      const balance = await t67LedgerService.getProviderBalance(providerId);
+      expect(balance.balanceMinor).toBe(-60_000);
+
+      const blockInfo = await t67LedgerService.isProviderHiringBlocked(providerId);
+      expect(blockInfo.isBlocked).toBe(true);
+
+      // 4. Verify outbox event emitted
+      const submittedEvent = outboxWriter.events.find(
+        (e) => e.eventType === 'provider.commission_payment_submitted',
+      );
+      expect(submittedEvent).toBeDefined();
+      expect(submittedEvent.payload.transactionRef).toBe('EP-9823411');
+    });
+
+    it('ABUSE-010: Staff cannot decide their own commission payment submission', async () => {
+      const submission = await t67LedgerService.submitCommissionPayment(
+        {
+          providerProfileId: providerId,
+          amountMinor: 60_000,
+          transactionRef: 'EP-9823411',
+        },
+        'user-dual-role-1',
+      );
+
+      // Attempting to self-approve must throw 403 Forbidden
+      await expect(
+        t67LedgerService.decideCommissionPayment(
+          submission.id,
+          { action: 'APPROVE', decisionReason: 'Self-approval test' },
+          'user-dual-role-1', // same user
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('ROLE-003: Decision reason is mandatory for Finance decision', async () => {
+      const submission = await t67LedgerService.submitCommissionPayment(
+        {
+          providerProfileId: providerId,
+          amountMinor: 60_000,
+          transactionRef: 'EP-9823411',
+        },
+        'provider-user-1',
+      );
+
+      await expect(
+        t67LedgerService.decideCommissionPayment(
+          submission.id,
+          { action: 'APPROVE', decisionReason: '   ' },
+          'finance-admin-1',
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('LEDGER-PAY-004: Finance rejection records reason and keeps provider blocked', async () => {
+      await prisma.providerLedgerEntry.create({
+        data: {
+          providerProfileId: providerId,
+          entryType: LedgerEntryType.COMMISSION_DEBIT,
+          direction: LedgerDirection.DEBIT,
+          amountMinor: BigInt(60_000),
+          idempotencyKey: 'test:debit-3',
+        },
+      });
+
+      const submission = await t67LedgerService.submitCommissionPayment(
+        {
+          providerProfileId: providerId,
+          amountMinor: 60_000,
+          transactionRef: 'FAKE-REF-99',
+        },
+        'provider-user-1',
+      );
+
+      const decided = await t67LedgerService.decideCommissionPayment(
+        submission.id,
+        { action: 'REJECT', decisionReason: 'Bank reference not found in statement' },
+        'finance-admin-1',
+      );
+
+      expect(decided.status).toBe(CommissionPaymentStatus.REJECTED);
+      expect(decided.decisionReason).toBe('Bank reference not found in statement');
+
+      // Provider remains blocked
+      const blockInfo = await t67LedgerService.isProviderHiringBlocked(providerId);
+      expect(blockInfo.isBlocked).toBe(true);
+
+      const rejectEvent = outboxWriter.events.find(
+        (e) => e.eventType === 'provider.commission_payment_rejected',
+      );
+      expect(rejectEvent).toBeDefined();
+    });
+
+    it('LEDGER-PAY-005, D-020, D-021: Finance approval writes COMPANY_PAYMENT_CREDIT and auto-unblocks provider', async () => {
+      // 1. Provider is negative Rs. 600
+      await prisma.providerLedgerEntry.create({
+        data: {
+          providerProfileId: providerId,
+          entryType: LedgerEntryType.COMMISSION_DEBIT,
+          direction: LedgerDirection.DEBIT,
+          amountMinor: BigInt(60_000),
+          idempotencyKey: 'test:debit-4',
+        },
+      });
+
+      const submission = await t67LedgerService.submitCommissionPayment(
+        {
+          providerProfileId: providerId,
+          amountMinor: 60_000,
+          transactionRef: 'EP-9823411',
+        },
+        'provider-user-1',
+      );
+
+      // 2. Finance approves
+      const decided = await t67LedgerService.decideCommissionPayment(
+        submission.id,
+        { action: 'APPROVE', decisionReason: 'Matched bank statement #10294' },
+        'finance-admin-1',
+      );
+
+      expect(decided.status).toBe(CommissionPaymentStatus.APPROVED);
+
+      // 3. Verify COMPANY_PAYMENT_CREDIT ledger entry written
+      const creditEntry = prisma.ledgerEntries.find(
+        (e) => e.entryType === LedgerEntryType.COMPANY_PAYMENT_CREDIT,
+      );
+      expect(creditEntry).toBeDefined();
+      expect(creditEntry?.amountMinor).toBe(BigInt(60_000));
+      expect(creditEntry?.commissionPaymentSubmissionId).toBe(submission.id);
+
+      // 4. Provider balance is restored to 0 and auto-unblocked!
+      const balance = await t67LedgerService.getProviderBalance(providerId);
+      expect(balance.balanceMinor).toBe(0);
+
+      const blockInfo = await t67LedgerService.isProviderHiringBlocked(providerId);
+      expect(blockInfo.isBlocked).toBe(false);
+
+      // 5. Verify provider.balance_cleared event
+      const clearedEvent = outboxWriter.events.find(
+        (e) => e.eventType === 'provider.balance_cleared',
+      );
+      expect(clearedEvent).toBeDefined();
+      expect(clearedEvent.payload.newBalanceMinor).toBe(0);
+    });
+
+    it('Second decision fails with 409 Conflict', async () => {
+      const submission = await t67LedgerService.submitCommissionPayment(
+        {
+          providerProfileId: providerId,
+          amountMinor: 60_000,
+          transactionRef: 'EP-9823411',
+        },
+        'provider-user-1',
+      );
+
+      await t67LedgerService.decideCommissionPayment(
+        submission.id,
+        { action: 'APPROVE', decisionReason: 'First approval' },
+        'finance-admin-1',
+      );
+
+      await expect(
+        t67LedgerService.decideCommissionPayment(
+          submission.id,
+          { action: 'REJECT', decisionReason: 'Second attempt' },
+          'finance-admin-2',
+        ),
+      ).rejects.toThrow(ConflictException);
     });
   });
 });

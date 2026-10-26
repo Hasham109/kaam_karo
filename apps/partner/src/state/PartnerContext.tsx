@@ -399,6 +399,7 @@ export function PartnerProvider({ children }: { children: React.ReactNode }) {
     P12: 'empty',
     P13: 'empty',
     P14: 'empty',
+    P15: 'empty',
     P22: 'empty',
     P23: 'empty',
     P24: 'empty',

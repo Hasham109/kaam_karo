@@ -15,6 +15,7 @@ export type ScreenId =
   | 'P12'
   | 'P13'
   | 'P14'
+  | 'P15'
   | 'P22'
   | 'P23'
   | 'P24'

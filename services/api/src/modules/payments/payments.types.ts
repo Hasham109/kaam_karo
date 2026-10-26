@@ -10,9 +10,54 @@ import {
   ActorRole,
   LedgerEntryType,
   LedgerDirection,
+  CommissionPaymentStatus,
 } from '../../generated/prisma/client.js';
 
-export { BookingStatus, PaymentMethod, PaymentStatus, ActorRole, LedgerEntryType, LedgerDirection };
+export {
+  BookingStatus,
+  PaymentMethod,
+  PaymentStatus,
+  ActorRole,
+  LedgerEntryType,
+  LedgerDirection,
+  CommissionPaymentStatus,
+};
+
+export interface SubmitCommissionPaymentDto {
+  providerProfileId: string;
+  amountMinor: number;
+  transactionRef: string;
+  screenshotMediaId?: string;
+}
+
+export interface DecideCommissionPaymentDto {
+  action: 'APPROVE' | 'REJECT';
+  decisionReason: string;
+}
+
+export interface CommissionPaymentSubmissionDto {
+  id: string;
+  providerProfileId: string;
+  amountMinor: number;
+  transactionRef: string;
+  submittedByUserId: string;
+  screenshotMediaId?: string | null;
+  status: CommissionPaymentStatus;
+  submittedAt: string;
+  decidedByUserId?: string | null;
+  decidedAt?: string | null;
+  decisionReason?: string | null;
+  version: number;
+}
+
+export interface ProviderHiringBlockDto {
+  isBlocked: boolean;
+  balanceMinor: number;
+  amountOwedMinor: number;
+  maxNegativeBalanceMinor: number;
+  blockReasonEn?: string | undefined;
+  blockReasonUr?: string | undefined;
+}
 
 export interface InitiatePaymentDto {
   bookingId: string;

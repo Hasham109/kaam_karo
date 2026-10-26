@@ -39,6 +39,8 @@ import {
   type InitiatePaymentDto,
   type ConfirmPaymentDto,
   type RecordCashPaymentDto,
+  type SubmitCommissionPaymentDto,
+  type DecideCommissionPaymentDto,
 } from './payments.types.js';
 
 /** Admin sub-roles allowed to see money data (OQ-052: everything else stays denied). */
@@ -175,5 +177,59 @@ export class PaymentsController {
     const balance = await this.ledgerService.getProviderBalance(providerProfileId);
     const history = await this.ledgerService.getProviderLedgerHistory(providerProfileId, 100);
     return { balance, history };
+  }
+
+  @Post('company/submit')
+  @RequireRole(UserRoleType.PROVIDER)
+  @HttpCode(HttpStatus.CREATED)
+  async submitCommissionPayment(
+    @Body() body: SubmitCommissionPaymentDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    await this.ledgerService.assertProviderOwnsProfile(req.user.id, body.providerProfileId);
+    return this.ledgerService.submitCommissionPayment(body, req.user.id);
+  }
+
+  @Get('company/submissions/provider/:providerProfileId')
+  @RequireRole(UserRoleType.PROVIDER)
+  async getProviderCommissionSubmissions(
+    @Param('providerProfileId') providerProfileId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    await this.ledgerService.assertProviderOwnsProfile(req.user.id, providerProfileId);
+    return this.ledgerService.getProviderCommissionSubmissions(providerProfileId);
+  }
+
+  @Get('company/submissions/pending')
+  @RequireRole(UserRoleType.ADMIN)
+  @RequireAdminSubRole(...FINANCE_SUB_ROLES)
+  async getPendingCommissionSubmissions() {
+    return this.ledgerService.getPendingCommissionSubmissions(100);
+  }
+
+  @Post('company/submissions/:submissionId/decision')
+  @RequireRole(UserRoleType.ADMIN)
+  @RequireAdminSubRole(...FINANCE_SUB_ROLES)
+  @HttpCode(HttpStatus.OK)
+  async decideCommissionPayment(
+    @Param('submissionId') submissionId: string,
+    @Body() body: DecideCommissionPaymentDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.ledgerService.decideCommissionPayment(submissionId, body, req.user.id);
+  }
+
+  @Get('provider/:providerProfileId/unpaid-block')
+  async getProviderHiringBlock(
+    @Param('providerProfileId') providerProfileId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const { userId, role } = resolveCaller(req);
+    if (role === ActorRole.PROVIDER) {
+      await this.ledgerService.assertProviderOwnsProfile(userId, providerProfileId);
+    } else if (role === ActorRole.ADMIN) {
+      assertFinanceStaff(req);
+    }
+    return this.ledgerService.isProviderHiringBlocked(providerProfileId);
   }
 }

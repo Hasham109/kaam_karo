@@ -34,7 +34,7 @@ export function crewSizeGuard(ctx: TransitionGuardContext): {
   return { allowed: true };
 }
 
-/** Guard checking unpaid commission balance (BOOK-STATUS-006, BOOK-STATUS-008, LEDGER-NEG-005, D-021) */
+/** Guard checking unpaid commission balance (BOOK-STATUS-006, BOOK-STATUS-008, LEDGER-NEG-002, LEDGER-NEG-005, D-020, D-021) */
 export function unpaidCommissionGuard(ctx: TransitionGuardContext): {
   allowed: boolean;
   errorCode?: string;
@@ -42,16 +42,29 @@ export function unpaidCommissionGuard(ctx: TransitionGuardContext): {
 } {
   const owed = ctx.providerUnpaidBalanceOwed ?? 0;
   const maxNeg = ctx.providerMaxNegativeBalance ?? 0;
-  // If owed amount is worse than max negative balance limit, block trip/work
-  if (maxNeg > 0 && owed >= maxNeg) {
+  // If owed amount is greater than 0 and exceeds or equals negative balance limit (default limit 0)
+  if (owed > 0 && owed >= maxNeg) {
     return {
       allowed: false,
       errorCode: 'UNPAID_COMMISSION',
       errorMessage:
-        'Cannot proceed: provider account has outstanding unpaid commission exceeding negative balance limit (D-021, LEDGER-NEG-005)',
+        'Cannot proceed: provider account has outstanding unpaid commission exceeding negative balance limit (D-020, D-021, LEDGER-NEG-002, LEDGER-NEG-005)',
     };
   }
   return { allowed: true };
+}
+
+/** Guard for accepting booking: checks unpaid commission first, then crew size (D-004, D-020, LEDGER-NEG-002) */
+export function acceptBookingGuard(ctx: TransitionGuardContext): {
+  allowed: boolean;
+  errorCode?: string;
+  errorMessage?: string;
+} {
+  const unpaidCheck = unpaidCommissionGuard(ctx);
+  if (!unpaidCheck.allowed) {
+    return unpaidCheck;
+  }
+  return crewSizeGuard(ctx);
 }
 
 /** Guard requiring noShowParty (BOOK-STATUS-017, BOOK-CANCEL-005) */
@@ -89,7 +102,7 @@ export const BOOKING_TRANSITIONS: readonly TransitionDefinition[] = [
     labelEn: 'Request quote',
     labelUr: 'کوٹیشن طلب کریں',
   },
-  // 3. REQUESTED -> ACCEPTED (BOOK-STATUS-002, D-004)
+  // 3. REQUESTED -> ACCEPTED (BOOK-STATUS-002, D-004, D-020, LEDGER-NEG-002)
   {
     from: BookingStatus.REQUESTED,
     to: BookingStatus.ACCEPTED,
@@ -97,7 +110,7 @@ export const BOOKING_TRANSITIONS: readonly TransitionDefinition[] = [
     allowedRoles: [ActorRole.PROVIDER, ActorRole.ADMIN],
     labelEn: 'Accept job',
     labelUr: 'کام قبول کریں',
-    guard: crewSizeGuard,
+    guard: acceptBookingGuard,
   },
   // 4. REQUESTED -> REJECTED (BOOK-STATUS-002, BOOK-STATUS-017)
   {
@@ -137,7 +150,7 @@ export const BOOKING_TRANSITIONS: readonly TransitionDefinition[] = [
     labelEn: 'Quote or inspect',
     labelUr: 'کوٹیشن یا معائنہ کریں',
   },
-  // 8. QUOTE_PENDING -> QUOTED (BOOK-STATUS-003)
+  // 8. QUOTE_PENDING -> QUOTED (BOOK-STATUS-003, LEDGER-NEG-002, D-020)
   {
     from: BookingStatus.QUOTE_PENDING,
     to: BookingStatus.QUOTED,
@@ -145,6 +158,7 @@ export const BOOKING_TRANSITIONS: readonly TransitionDefinition[] = [
     allowedRoles: [ActorRole.PROVIDER, ActorRole.ADMIN],
     labelEn: 'Send quote',
     labelUr: 'کوٹیشن بھیجیں',
+    guard: unpaidCommissionGuard,
   },
   // 9. QUOTE_PENDING -> REJECTED (BOOK-STATUS-003, BOOK-STATUS-017)
   {

@@ -500,6 +500,27 @@ export const PARTNER_EN = {
     'Digital recorded. You will be credited when the payment is confirmed.',
   'partner.p14.error': "We couldn't save this. Please try again.",
   'partner.p14.pending': 'Completion or payment record sent. Please wait.',
+  // P15 Earnings, Wallet & Pay company (BP §13 P15; ARCH §6.8, D-020, D-021)
+  'partner.p15.title': 'Earnings & Wallet',
+  'partner.p15.payCompany': 'Pay company',
+  'partner.p15.currentBalance': 'Current Account Balance',
+  'partner.p15.unpaidBlockTitle': 'Unpaid Commission Block',
+  'partner.p15.unpaidBlockDesc':
+    'You owe {amount}. You cannot get new jobs or start accepted jobs until it is paid.',
+  'partner.p15.bankDetails':
+    'Bank Alfalah: 0192-1004829101 (Kaam Karo Pvt Ltd)\nJazzCash / EasyPaisa: 0300-1234567',
+  'partner.p15.amountLabel': 'Amount Paid (PKR)',
+  'partner.p15.amountPlaceholder': '600',
+  'partner.p15.refLabel': 'Transaction ID / Reference Ref',
+  'partner.p15.refPlaceholder': 'TRX-12345',
+  'partner.p15.screenshotAttached': '✓ Proof receipt attached',
+  'partner.p15.attachScreenshot': '+ Attach payment receipt screenshot',
+  'partner.p15.submitBtn': 'Submit Payment for Verification',
+  'partner.p15.submittingBtn': 'Submitting…',
+  'partner.p15.disclaimer':
+    'Submitting a payment reference does not unblock hiring immediately. Finance team must verify funds first (ARCH §6.8, D-020).',
+  'partner.p15.recentSubmissions': 'Recent Payment Submissions',
+  'partner.p15.ledgerHistory': 'Ledger Account History',
 } as const satisfies Readonly<Record<`partner.${string}`, string>>;
 
 export const PARTNER_UR: Readonly<Record<keyof typeof PARTNER_EN, string>> = {
@@ -982,4 +1003,24 @@ export const PARTNER_UR: Readonly<Record<keyof typeof PARTNER_EN, string>> = {
     'ڈیجیٹل درج ہو گیا۔ ادائیگی کی تصدیق پر رقم آپ کے اکاؤنٹ میں آ جائے گی۔',
   'partner.p14.error': 'یہ محفوظ نہیں ہو سکا۔ براہِ کرم دوبارہ کوشش کریں۔',
   'partner.p14.pending': 'تکمیل یا ادائیگی بھیجی جا رہی ہے۔ براہِ کرم انتظار کریں۔',
+  'partner.p15.title': 'آمدنی اور والیٹ',
+  'partner.p15.payCompany': 'کمپنی کو ادائیگی کریں',
+  'partner.p15.currentBalance': 'موجودہ بیلنس',
+  'partner.p15.unpaidBlockTitle': 'کمپنی کمیشن واجب الادا ہے',
+  'partner.p15.unpaidBlockDesc':
+    'آپ پر {amount} واجب الادا ہیں۔ ادائیگی تک آپ نئے کام نہیں لے سکتے اور قبول شدہ کام شروع نہیں کر سکتے۔',
+  'partner.p15.bankDetails':
+    'بینک الفلاح: 0192-1004829101 (کام کرو پرائیویٹ لمیٹڈ)\nجاز کیش / ایزی پیسہ: 0300-1234567',
+  'partner.p15.amountLabel': 'ادا کردہ رقم (روپے)',
+  'partner.p15.amountPlaceholder': '600',
+  'partner.p15.refLabel': 'ٹرانزیکشن آئی ڈی / ریفرنس نمبر',
+  'partner.p15.refPlaceholder': 'مثلاً TRX-12345',
+  'partner.p15.screenshotAttached': '✓ رسید کی تصویر منسلک ہے',
+  'partner.p15.attachScreenshot': '+ ادائیگی کی رسید منسلک کریں (تصویر)',
+  'partner.p15.submitBtn': 'ادائیگی جمع کرائیں',
+  'partner.p15.submittingBtn': 'جمع ہو رہا ہے…',
+  'partner.p15.disclaimer':
+    'صرف ریفرنس جمع کرانے سے فوری طور پر کام نہیں کھلتے۔ فنانس ٹیم کی تصدیق کے بعد اکاؤنٹ چالو ہوگا۔',
+  'partner.p15.recentSubmissions': 'حالیہ جمع کرائی گئی ادائیگیاں',
+  'partner.p15.ledgerHistory': 'کھاتہ کی تاریخ',
 };

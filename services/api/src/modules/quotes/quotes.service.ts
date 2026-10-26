@@ -212,6 +212,34 @@ export class QuotesService {
       }
     }
 
+    // 4b. Guard against unpaid commission (D-020, LEDGER-NEG-002)
+    let maxNegativeBalance = 0;
+    if (this.configService) {
+      const limit = await this.configService.get<number>('ledger.max_negative_balance', (val) =>
+        typeof val === 'number' ? val : undefined,
+      );
+      if (typeof limit === 'number') maxNegativeBalance = limit;
+    }
+    const entries = this.prisma.providerLedgerEntry
+      ? await this.prisma.providerLedgerEntry.findMany({
+          where: { providerProfileId },
+          select: { direction: true, amountMinor: true },
+        })
+      : [];
+    let balance = 0;
+    for (const e of entries) {
+      const amt = Number(e.amountMinor);
+      if (e.direction === 'CREDIT') balance += amt;
+      else if (e.direction === 'DEBIT') balance -= amt;
+    }
+    if (balance < 0 && -balance > maxNegativeBalance) {
+      throw new ConflictException({
+        code: 'UNPAID_COMMISSION',
+        message:
+          'Provider has outstanding unpaid commission and cannot send quotes (D-020, LEDGER-NEG-002)',
+      });
+    }
+
     // 5. Validate fare line items
     const lines = dto.lines ?? [];
     for (const line of lines) {

@@ -53,7 +53,7 @@ Acceptance criteria and BP refs per task: docs/implementation.md §6 (same task 
 | T6.6 | Provider earnings ledger (ARCH §6.8): "How was it paid?" CASH/DIGITAL at billing (P14/P15), cash → debit 30% of labour, digital → credit bill − commission, history in P15 and admin A09, "Paid by" shown on C20 | A09 + A12 + A13 + A11 | T6.2 | DONE | handoffs/T-6.6.md |
 
 
-| T6.7 | Unpaid-commission hiring block (ARCH §6.8, D-020): extra hard filter in matching, guards on accept/quote/favorite-rebook, guards on starting already-accepted jobs (D-021), "Pay company" screen in P15 (transaction ID + screenshot), Finance verification queue in admin A09, auto-unblock on balance ≥ 0, events `provider.balance_negative` / `provider.commission_payment_submitted` / `provider.commission_payment_rejected` / `provider.balance_cleared` | A09 + A05 + A04 + A12 + A13 | T6.6, T3.7 | TODO | — |
+| T6.7 | Unpaid-commission hiring block (ARCH §6.8, D-020): extra hard filter in matching, guards on accept/quote/favorite-rebook, guards on starting already-accepted jobs (D-021), "Pay company" screen in P15 (transaction ID + screenshot), Finance verification queue in admin A09, auto-unblock on balance ≥ 0, events `provider.balance_negative` / `provider.commission_payment_submitted` / `provider.commission_payment_rejected` / `provider.balance_cleared` | A09 + A05 + A04 + A12 + A13 | T6.6, T3.7 | DONE | handoffs/T-6.7.md |
 | T6.3 | Refunds (reversal rows), settlements, reconciliation job | A09 | T6.1 | TODO | — |
 | T6.4 | Payment UI: C16, C24, P15, P16; admin A09, A10, A13 | A11, A12, A13 | T6.1–T6.3 | TODO | — |
 | T6.5 | Real gateway adapter (after D-008) | A09 | D-008 | TODO | — |

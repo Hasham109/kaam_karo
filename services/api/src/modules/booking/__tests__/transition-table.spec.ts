@@ -12,6 +12,7 @@ import {
   getAllowedNextActions,
   crewSizeGuard,
   unpaidCommissionGuard,
+  acceptBookingGuard,
   noShowGuard,
 } from '../transition-table.js';
 import { BookingStatus, ActorRole, NoShowParty } from '../booking.types.js';
@@ -259,6 +260,90 @@ describe('Booking Transition Table (T3.4; ARCH §6.1, BP §15, BOOK-STATUS-001..
         });
         expect(res.allowed).toBe(false);
         expect(res.errorCode).toBe('UNPAID_COMMISSION');
+      });
+
+      it('rejects with UNPAID_COMMISSION when limit is 0 and provider owes any amount (D-020, D-021)', () => {
+        const res = unpaidCommissionGuard({
+          booking: {
+            id: '1',
+            status: BookingStatus.SCHEDULED,
+            providerProfileId: 'prov-1',
+            customerProfileId: 'cust-1',
+            scheduledAt: null,
+            version: 1,
+            crewSize: 1,
+          },
+          callerRole: ActorRole.PROVIDER,
+          requestedAction: 'START_TRIP',
+          providerUnpaidBalanceOwed: 60000,
+          providerMaxNegativeBalance: 0,
+        });
+        expect(res.allowed).toBe(false);
+        expect(res.errorCode).toBe('UNPAID_COMMISSION');
+      });
+    });
+
+    describe('acceptBookingGuard (D-004, D-020, LEDGER-NEG-002)', () => {
+      it('rejects accept when provider has unpaid commission even if crewSize is provided', () => {
+        const res = acceptBookingGuard({
+          booking: {
+            id: '1',
+            status: BookingStatus.REQUESTED,
+            providerProfileId: 'prov-1',
+            customerProfileId: 'cust-1',
+            scheduledAt: null,
+            version: 1,
+            crewSize: null,
+          },
+          callerRole: ActorRole.PROVIDER,
+          requestedAction: 'ACCEPT',
+          crewSize: 2,
+          providerUnpaidBalanceOwed: 60000,
+          providerMaxNegativeBalance: 0,
+        });
+        expect(res.allowed).toBe(false);
+        expect(res.errorCode).toBe('UNPAID_COMMISSION');
+      });
+
+      it('rejects accept when provider has no unpaid commission but misses crewSize', () => {
+        const res = acceptBookingGuard({
+          booking: {
+            id: '1',
+            status: BookingStatus.REQUESTED,
+            providerProfileId: 'prov-1',
+            customerProfileId: 'cust-1',
+            scheduledAt: null,
+            version: 1,
+            crewSize: null,
+          },
+          callerRole: ActorRole.PROVIDER,
+          requestedAction: 'ACCEPT',
+          crewSize: undefined,
+          providerUnpaidBalanceOwed: 0,
+          providerMaxNegativeBalance: 0,
+        });
+        expect(res.allowed).toBe(false);
+        expect(res.errorCode).toBe('CREW_SIZE_REQUIRED');
+      });
+
+      it('allows accept when provider has clear balance and provides crewSize', () => {
+        const res = acceptBookingGuard({
+          booking: {
+            id: '1',
+            status: BookingStatus.REQUESTED,
+            providerProfileId: 'prov-1',
+            customerProfileId: 'cust-1',
+            scheduledAt: null,
+            version: 1,
+            crewSize: null,
+          },
+          callerRole: ActorRole.PROVIDER,
+          requestedAction: 'ACCEPT',
+          crewSize: 2,
+          providerUnpaidBalanceOwed: 0,
+          providerMaxNegativeBalance: 0,
+        });
+        expect(res.allowed).toBe(true);
       });
     });
 

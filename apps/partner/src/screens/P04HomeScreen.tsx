@@ -151,6 +151,20 @@ export function P04HomeScreen() {
               {translate(locale, 'partner.p23.title')}
             </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            {...interactiveProps({
+              testID: 'p04-nav-p15-btn',
+              accessibilityRole: 'button',
+              accessibilityLabel: translate(locale, 'partner.p15.title'),
+            })}
+            style={[styles.menuBtn, minTapTargetStyle()]}
+            onPress={() => navigate('P15')}
+          >
+            <Text style={[styles.menuBtnText, fontStyle]}>
+              {translate(locale, 'partner.p15.title')}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity

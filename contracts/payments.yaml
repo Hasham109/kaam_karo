@@ -269,6 +269,158 @@ paths:
               schema:
                 $ref: '#/components/schemas/AdminProviderLedgerResponse'
 
+  /v1/payments/company/submit:
+    post:
+      summary: Provider submits claim to pay company commission
+      description: >
+        Submits bank/wallet transaction reference and optional screenshot for unpaid commission (D-020, D-021; LEDGER-PAY-002, LEDGER-PAY-003).
+        A submitted-but-unverified payment does not unblock the provider.
+      operationId: submitCommissionPayment
+      x-requirement-ids:
+        - LEDGER-PAY-002
+        - LEDGER-PAY-003
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitCommissionPaymentRequest'
+      responses:
+        '201':
+          description: Submission accepted into Finance queue
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommissionPaymentSubmissionResponse'
+        '400':
+          description: Invalid submission parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/payments/company/submissions/provider/{providerProfileId}:
+    get:
+      summary: List commission payment submissions for a provider
+      description: Retrieves history of company payment claims for Partner wallet P15.
+      operationId: getProviderCommissionSubmissions
+      x-requirement-ids:
+        - LEDGER-PAY-002
+      parameters:
+        - name: providerProfileId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Provider commission payment submissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CommissionPaymentSubmissionResponse'
+
+  /v1/payments/company/submissions/pending:
+    get:
+      summary: Finance verification queue for pending commission payments
+      description: Lists pending commission payment submissions for Admin A09 (Finance / Super Admin only).
+      operationId: getPendingCommissionSubmissions
+      x-requirement-ids:
+        - LEDGER-PAY-004
+      responses:
+        '200':
+          description: List of pending submissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CommissionPaymentSubmissionResponse'
+
+  /v1/payments/company/submissions/{submissionId}/decision:
+    post:
+      summary: Finance decides a commission payment submission
+      description: >
+        Approves or rejects a commission payment claim with mandatory audit reason (ROLE-003, ABUSE-010).
+        Approval writes an audited COMPANY_PAYMENT_CREDIT ledger entry and auto-unblocks if balance >= 0.
+      operationId: decideCommissionPayment
+      x-requirement-ids:
+        - LEDGER-PAY-004
+        - LEDGER-PAY-005
+        - ROLE-003
+        - ABUSE-010
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecideCommissionPaymentRequest'
+      responses:
+        '200':
+          description: Submission decided successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommissionPaymentSubmissionResponse'
+        '400':
+          description: Missing reason or invalid decision
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Separation of duty violation (cannot decide own submission)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Submission not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Submission already decided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/payments/provider/{providerProfileId}/unpaid-block:
+    get:
+      summary: Get provider hiring block status for unpaid commission
+      description: Returns whether provider is blocked, amount owed, and bilingual reason copy (D-020, D-021; LEDGER-NEG-001..005).
+      operationId: getProviderHiringBlock
+      x-requirement-ids:
+        - LEDGER-NEG-001
+        - LEDGER-NEG-002
+        - LEDGER-NEG-003
+      parameters:
+        - name: providerProfileId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Provider hiring block status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderHiringBlockResponse'
+
 components:
   schemas:
     InitiatePaymentRequest:
@@ -516,3 +668,102 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProviderLedgerEntry'
+
+    SubmitCommissionPaymentRequest:
+      type: object
+      required:
+        - providerProfileId
+        - amountMinor
+        - transactionRef
+      properties:
+        providerProfileId:
+          type: string
+          format: uuid
+        amountMinor:
+          type: integer
+          minimum: 1
+        transactionRef:
+          type: string
+        screenshotMediaId:
+          type: string
+          format: uuid
+
+    DecideCommissionPaymentRequest:
+      type: object
+      required:
+        - action
+        - decisionReason
+      properties:
+        action:
+          type: string
+          enum: [APPROVE, REJECT]
+        decisionReason:
+          type: string
+          description: Mandatory audit reason for Finance decision (ROLE-003)
+
+    CommissionPaymentSubmissionResponse:
+      type: object
+      required:
+        - id
+        - providerProfileId
+        - amountMinor
+        - transactionRef
+        - submittedByUserId
+        - status
+        - submittedAt
+        - version
+      properties:
+        id:
+          type: string
+          format: uuid
+        providerProfileId:
+          type: string
+          format: uuid
+        amountMinor:
+          type: integer
+          minimum: 1
+        transactionRef:
+          type: string
+        submittedByUserId:
+          type: string
+          format: uuid
+        screenshotMediaId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [SUBMITTED, APPROVED, REJECTED]
+        submittedAt:
+          type: string
+          format: date-time
+        decidedByUserId:
+          type: string
+          format: uuid
+        decidedAt:
+          type: string
+          format: date-time
+        decisionReason:
+          type: string
+        version:
+          type: integer
+
+    ProviderHiringBlockResponse:
+      type: object
+      required:
+        - isBlocked
+        - balanceMinor
+        - amountOwedMinor
+        - maxNegativeBalanceMinor
+      properties:
+        isBlocked:
+          type: boolean
+        balanceMinor:
+          type: integer
+        amountOwedMinor:
+          type: integer
+        maxNegativeBalanceMinor:
+          type: integer
+        blockReasonEn:
+          type: string
+        blockReasonUr:
+          type: string

@@ -80,6 +80,36 @@ export class BookingService {
       initialStatus = quoteRequired ? BookingStatus.QUOTE_PENDING : BookingStatus.REQUESTED;
     }
 
+    // Check unpaid commission if provider profile is pre-specified (e.g. Favorite rebook) (D-020, LEDGER-NEG-002)
+    if (dto.providerProfileId) {
+      let maxNegativeBalance = 0;
+      if (this.configService) {
+        const limit = await this.configService.get<number>('ledger.max_negative_balance', (val) =>
+          typeof val === 'number' ? val : undefined,
+        );
+        if (typeof limit === 'number') maxNegativeBalance = limit;
+      }
+      const entries = this.prisma.providerLedgerEntry
+        ? await this.prisma.providerLedgerEntry.findMany({
+            where: { providerProfileId: dto.providerProfileId },
+            select: { direction: true, amountMinor: true },
+          })
+        : [];
+      let balance = 0;
+      for (const e of entries) {
+        const amt = Number(e.amountMinor);
+        if (e.direction === 'CREDIT') balance += amt;
+        else if (e.direction === 'DEBIT') balance -= amt;
+      }
+      if (balance < 0 && -balance > maxNegativeBalance) {
+        throw new ConflictException({
+          code: 'UNPAID_COMMISSION',
+          message:
+            'Provider has outstanding unpaid commission and cannot be booked or rebooked (D-020, LEDGER-NEG-002)',
+        });
+      }
+    }
+
     const bookingNumber = generateShortBookingNumber();
     const scheduledAtDate = dto.scheduledAt ? new Date(dto.scheduledAt) : null;
     const inspectionVisitAtDate = dto.inspectionVisitAt ? new Date(dto.inspectionVisitAt) : null;
@@ -180,14 +210,10 @@ export class BookingService {
 
       const transitionDef = getTransitionDefinition(booking.status, dto.toStatus)!;
 
-      // Unpaid commission check for provider transitions (BOOK-STATUS-006, BOOK-STATUS-008, LEDGER-NEG-005, D-021)
-      const providerUnpaidBalance = 0;
+      // Unpaid commission check for provider transitions (BOOK-STATUS-006, BOOK-STATUS-008, LEDGER-NEG-002, LEDGER-NEG-005, D-020, D-021)
+      let providerUnpaidBalance = 0;
       let maxNegativeBalance = 0;
-      if (
-        (dto.toStatus === BookingStatus.PROVIDER_EN_ROUTE ||
-          dto.toStatus === BookingStatus.IN_PROGRESS) &&
-        booking.providerProfileId
-      ) {
+      if (booking.providerProfileId) {
         // Look up provider negative balance or standing if configured
         if (this.configService) {
           const limit = await this.configService.get<number>(
@@ -195,6 +221,21 @@ export class BookingService {
             (val) => (typeof val === 'number' ? val : undefined),
           );
           if (typeof limit === 'number') maxNegativeBalance = limit;
+        }
+        const entries = tx.providerLedgerEntry
+          ? await tx.providerLedgerEntry.findMany({
+              where: { providerProfileId: booking.providerProfileId },
+              select: { direction: true, amountMinor: true },
+            })
+          : [];
+        let balance = 0;
+        for (const e of entries) {
+          const amt = Number(e.amountMinor);
+          if (e.direction === 'CREDIT') balance += amt;
+          else if (e.direction === 'DEBIT') balance -= amt;
+        }
+        if (balance < 0) {
+          providerUnpaidBalance = -balance;
         }
       }
 
