@@ -2,6 +2,13 @@
 
 Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate verdicts above the table.
 
+## Gate G5 (Phase 6): PASS (2026-10-26)
+- Phase 6 (Payments & Settlement — BP §44 Phase 6) exit condition met: "happy path + failure/refund scenarios tested".
+- All 7 tasks T6.1–T6.7 DONE with handoffs, QA PASS, and SEC PASS.
+- Bug sweep `/bug-sweep 6` complete: 0 open S1/S2 bugs (`docs/qa/bug-sweep-phase6.md`).
+- Verification passes: 1,106 tests passed across 14 monorepo packages (419 API, 144 customer, 137 partner, 76 admin, 249 platform, 43 contracts, 21 i18n, 17 ui), 5/5 repository quality guards (0 hardcoded literals across 103 UI files, 289 status pairs validated).
+- Verdict: PASS. Phase 6 closed; Phase 7 (Trust, Notifications, Communication) unblocked.
+
 ## Gate G4 (Phase 5): PASS (2026-10-25)
 - Phase 5 (Admin MVP — BP §44 Phase 5) exit condition met: "admin can run the marketplace without direct database edits".
 - All 4 tasks T5.1–T5.4 DONE with handoffs, QA PASS, and SEC PASS.
@@ -114,4 +121,4 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 | A14 | i18n-a11y | T1.4 i18n + RTL + Urdu typography kit; string-lint rule (I18N-001..008, A11Y-001..008) | DONE | work/parallel-t1.4-t3.2 | — | T3.8 / T3.9 | 2026-10-24 |
 | A15 | security-reviewer | T2.8 Security review of T2.1–T2.6 | DONE | t2.8-security-review | — | Phase 3 security review | 2026-10-24 |
 | A16 | qa-tester | T4.7 Provider journey E2E (BP §10) + joint customer/provider E2E | DONE | main | — | T5.1 | 2026-10-25 |
-| A17 | bug-hunter | Phase 5 bug sweep (docs/qa/bug-sweep-phase5.md, 0 S1/S2) | DONE | — | — | Phase 6 bug sweep | 2026-10-25 |
+| A17 | bug-hunter | Phase 6 bug sweep (docs/qa/bug-sweep-phase6.md, 0 S1/S2) | DONE | — | — | Phase 7 bug sweep | 2026-10-26 |
