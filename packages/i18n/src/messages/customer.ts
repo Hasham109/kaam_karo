@@ -616,6 +616,22 @@ export const CUSTOMER_EN = {
     'No payments yet. Receipts appear here after a completed job is paid.',
   'customer.c24.loading': 'Loading receipts…',
   'customer.c24.error': 'Failed to load receipts. Tap to retry.',
+
+  // C18 Chat / Contact Screen (BP §12, §20; CHAT-001..004)
+  'customer.c18.title': 'Chat / Contact',
+  'customer.c18.typePlaceholder': 'Type a message',
+  'customer.c18.sendBtn': 'Send',
+  'customer.c18.callBtn': 'Call',
+  'customer.c18.attachBtn': 'Attach',
+  'customer.c18.heldMessage': 'This message is being checked.',
+  'customer.c18.empty': 'Send a message about this booking.',
+  'customer.c18.notSentRetry': 'Not sent. Tap to try again.',
+  'customer.c18.fileNotAllowed': "This file type or size isn't allowed.",
+  'customer.c18.reportBtn': 'Report',
+  'customer.c18.blockBtn': 'Block',
+  'customer.c18.callingStarted': 'Connecting via secure relay…',
+  'customer.c18.callRelayNumber': 'Virtual Relay: {number}',
+  'customer.c18.shareBooking': 'Share Request',
 } as const satisfies Readonly<Record<`customer.${string}`, string>>;
 
 export const CUSTOMER_UR: Readonly<Record<keyof typeof CUSTOMER_EN, string>> = {
@@ -1231,4 +1247,20 @@ export const CUSTOMER_UR: Readonly<Record<keyof typeof CUSTOMER_EN, string>> = {
     'ابھی کوئی ادائیگی نہیں۔ مکمل کام کی ادائیگی کے بعد رسیدیں یہاں نظر آئیں گی۔',
   'customer.c24.loading': 'رسیدیں لوڈ ہو رہی ہیں…',
   'customer.c24.error': 'رسیدیں لوڈ نہیں ہو سکیں۔ دوبارہ کوشش کریں۔',
+
+  // C18 Chat / Contact Screen (BP §12, §20; CHAT-001..004)
+  'customer.c18.title': 'پیغام / رابطہ',
+  'customer.c18.typePlaceholder': 'پیغام لکھیں',
+  'customer.c18.sendBtn': 'بھیجیں',
+  'customer.c18.callBtn': 'کال کریں',
+  'customer.c18.attachBtn': 'منسلک کریں',
+  'customer.c18.heldMessage': 'اس پیغام کی جانچ ہو رہی ہے۔',
+  'customer.c18.empty': 'اس بکنگ کے بارے میں پیغام بھیجیں۔',
+  'customer.c18.notSentRetry': 'نہیں بھیجا گیا۔ دوبارہ کوشش کے لیے دبائیں۔',
+  'customer.c18.fileNotAllowed': 'اس قسم یا سائز کی فائل کی اجازت نہیں۔',
+  'customer.c18.reportBtn': 'رپورٹ کریں',
+  'customer.c18.blockBtn': 'بلاک کریں',
+  'customer.c18.callingStarted': 'محفوظ ریلے کے ذریعے رابطہ کیا جا رہا ہے…',
+  'customer.c18.callRelayNumber': 'ورچوئل ریلے: {number}',
+  'customer.c18.shareBooking': 'درخواست شیئر کریں',
 };

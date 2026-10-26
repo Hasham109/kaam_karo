@@ -1,0 +1,364 @@
+openapi: 3.1.0
+info:
+  title: Kaam Karo Chat and Communication API
+  version: 0.1.0
+  description: >
+    Module M13 Communication & Chat API (ARCH §4 M13; BP §20, §25, §74, §82).
+    In-app messaging bound to booking participants, attachment limits and validation,
+    masked calling via CallRelay, and zero-PII share payload builders.
+servers:
+  - url: /v1
+paths:
+  /chat/bookings/{bookingId}/conversation:
+    get:
+      summary: Get or create conversation for a booking
+      description: >
+        Returns the conversation metadata for a booking (BP §20, §25).
+        Only accessible by the booking's customer, provider, or authorized admin.
+      operationId: getBookingConversation
+      x-requirement-ids:
+        - CHAT-001
+      tags:
+        - chat
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Conversation details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+
+  /chat/bookings/{bookingId}/messages:
+    get:
+      summary: List messages for a booking conversation
+      description: >
+        Returns ordered messages for the conversation bound to the booking.
+        Sensitive patterns (such as phone numbers) are masked server-side in audit views.
+      operationId: listMessages
+      x-requirement-ids:
+        - CHAT-001
+      tags:
+        - chat
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: before
+          in: query
+          description: Cursor for backward pagination (message ID)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessagesListResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+
+    post:
+      summary: Send a chat message
+      description: >
+        Sends a new message in the booking conversation (BP §20, §25).
+        Validates attachment type and size limits (CHAT-003, D-011).
+        Emits domain event message.new for notification fan-out.
+      operationId: sendMessage
+      x-requirement-ids:
+        - CHAT-001
+        - CHAT-003
+      tags:
+        - chat
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+      responses:
+        '201':
+          description: Sent message
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: './common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+
+  /chat/bookings/{bookingId}/call-relay:
+    post:
+      summary: Initiate a masked call relay session
+      description: >
+        Requests a temporary virtual relay number through the CallRelay interface (BP §20, §74; CHAT-002; D-009).
+        Personal phone numbers of participants are never returned in payloads.
+        Available only post-match on active bookings.
+      operationId: initiateCallRelay
+      x-requirement-ids:
+        - CHAT-002
+      tags:
+        - chat
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Masked relay session details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CallRelaySessionResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+        '409':
+          $ref: './common.yaml#/components/responses/Conflict'
+
+  /chat/share/booking/{bookingId}:
+    get:
+      summary: Build customer booking/request share payload
+      description: >
+        Builds a safe external share payload (e.g. for WhatsApp) containing booking summary and deep link.
+        Strictly excludes personal phone numbers and exact street addresses (BP §20, §52.2, §82; SHARE-001, SHARE-003).
+      operationId: getBookingSharePayload
+      x-requirement-ids:
+        - SHARE-001
+        - SHARE-003
+      tags:
+        - share
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Share payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharePayloadResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+
+  /chat/share/profile/{providerProfileId}:
+    get:
+      summary: Build provider public profile share payload
+      description: >
+        Builds a safe external share payload for a provider's public service profile (BP §82; SHARE-002, SHARE-003).
+      operationId: getProviderProfileSharePayload
+      x-requirement-ids:
+        - SHARE-002
+        - SHARE-003
+      tags:
+        - share
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: providerProfileId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Share payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharePayloadResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+
+components:
+  schemas:
+    ConversationResponse:
+      type: object
+      required:
+        - id
+        - bookingId
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        bookingId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    MessageResponse:
+      type: object
+      required:
+        - id
+        - conversationId
+        - senderUserId
+        - senderRole
+        - moderationStatus
+        - sentAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        conversationId:
+          type: string
+          format: uuid
+        senderUserId:
+          type: string
+          format: uuid
+        senderRole:
+          type: string
+          enum: [CUSTOMER, PROVIDER, ADMIN, SYSTEM]
+        body:
+          type: string
+          nullable: true
+        attachmentMediaId:
+          type: string
+          format: uuid
+          nullable: true
+        moderationStatus:
+          type: string
+          enum: [PENDING, DELIVERED, BLOCKED]
+        sentAt:
+          type: string
+          format: date-time
+
+    MessagesListResponse:
+      type: object
+      required:
+        - items
+        - conversationId
+      properties:
+        conversationId:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageResponse'
+        hasMore:
+          type: boolean
+          default: false
+
+    SendMessageRequest:
+      type: object
+      properties:
+        body:
+          type: string
+          maxLength: 2000
+        attachmentMediaId:
+          type: string
+          format: uuid
+        clientGeneratedId:
+          type: string
+          description: Idempotency client token
+
+    CallRelaySessionResponse:
+      type: object
+      required:
+        - sessionId
+        - virtualRelayNumber
+        - displayRelayNumber
+        - expiresAt
+        - callerRole
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        virtualRelayNumber:
+          type: string
+          description: Virtual dialer number to call (raw digits/E.164, e.g. +92421115226)
+        displayRelayNumber:
+          type: string
+          description: Formatted number displayed to the user
+        expiresAt:
+          type: string
+          format: date-time
+        callerRole:
+          type: string
+          enum: [CUSTOMER, PROVIDER, ADMIN]
+
+    SharePayloadResponse:
+      type: object
+      required:
+        - title
+        - text
+        - deepLinkUrl
+      properties:
+        title:
+          type: string
+        text:
+          type: string
+          description: WhatsApp or intent share text containing zero personal phone numbers
+        deepLinkUrl:
+          type: string
+          format: uri
+          description: Secure deep link into the Kaam Karo app

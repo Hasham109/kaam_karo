@@ -22,6 +22,7 @@ export type ScreenId =
   | 'C15' // Booking Confirmation
   | 'C16' // Payment (D-003, D-008, D-030)
   | 'C17' // Booking Tracking
+  | 'C18' // Chat / Contact (BP §12, §20; CHAT-001..004)
   | 'C19' // Job in Progress (On-site)
   | 'C20' // Job Completion & Payment
   | 'C24' // Payment Receipts & Transaction History
@@ -83,6 +84,7 @@ export interface ScreenParams {
     | undefined;
   C16?: { bookingId?: string | undefined; returnTo?: ScreenId | undefined } | undefined;
   C17?: { bookingId?: string | undefined; returnTo?: ScreenId | undefined } | undefined;
+  C18?: { bookingId?: string | undefined; returnTo?: ScreenId | undefined } | undefined;
   C19?: { bookingId?: string | undefined; returnTo?: ScreenId | undefined } | undefined;
   C20?: { bookingId?: string | undefined; returnTo?: ScreenId | undefined } | undefined;
   C24?: { bookingId?: string | undefined; returnTo?: ScreenId | undefined } | undefined;

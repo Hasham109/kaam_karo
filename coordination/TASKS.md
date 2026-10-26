@@ -58,7 +58,7 @@ Acceptance criteria and BP refs per task: docs/implementation.md §6 (same task 
 | T6.4 | Payment UI: C16, C24, P15, P16; admin A09, A10, A13 | A11, A12, A13 | T6.1–T6.3 | DONE | handoffs/T-6.4.md |
 | T6.5 | Real gateway adapter (after D-008) | A09 | D-008 | DONE | handoffs/T-6.5.md |
 | T7.1 | Notification fan-out for every ARCH §7 event, en/ur templates, categories, priority, contextual permission | A10 + A11/A12 | T2.2 | DONE | handoffs/T-7.1.md |
-| T7.2 | Chat bound to booking, attachment limits/scanning, `CallRelay` fake, share payloads (WhatsApp via ACTION_SEND) | A10 + A11/A12 | T3.4 | TODO | — |
+| T7.2 | Chat bound to booking, attachment limits/scanning, `CallRelay` fake, share payloads (WhatsApp via ACTION_SEND) | A10 + A11/A12 | T3.4 | DONE | handoffs/T-7.2.md |
 | T7.3 | Reviews (eligible only), provider response, flag/report, moderation queue | A10 + A13 | T3.4 | TODO | — |
 | T7.4 | Badges computed from configured rules + display | A05 + A11 | T7.3 | TODO | — |
 | T7.6 | Low-rating enforcement (ARCH §6.7): scheduled job, warning 1 → warning 2 → block, notifications, admin reinstate with reason, dry-run mode | A05 + A10 + A13 + A12 | T7.3, T5.1 | TODO | — |

@@ -57,7 +57,7 @@ export const C17BookingTrackingScreen: React.FC<C17BookingTrackingScreenProps> =
   };
 
   const handleMessage = () => {
-    navigate('C06'); // Back or to chat
+    navigate('C18');
   };
 
   const handleShare = () => {

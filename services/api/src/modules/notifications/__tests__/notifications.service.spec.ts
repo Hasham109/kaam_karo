@@ -3,13 +3,9 @@
  * Tests all requirement IDs: NOTIF-001..NOTIF-010; ARCH §7 events; BP §24, §80, §84 item 116.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { NotificationsService, CRITICAL_CATEGORIES } from '../notifications.service.js';
+import { NotificationsService } from '../notifications.service.js';
 import { FakePushNotificationGateway } from '../push-notification-gateway.js';
-import {
-  NotificationCategory,
-  NotificationPriority,
-  NotificationStatus,
-} from '../notifications.types.js';
+import { NotificationCategory, NotificationPriority } from '../notifications.types.js';
 import { AppLanguage } from '../../../generated/prisma/client.js';
 
 describe('NotificationsService (T7.1, NOTIF-001..NOTIF-010)', () => {

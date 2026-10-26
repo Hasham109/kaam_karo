@@ -24,6 +24,7 @@ import { C14BookingReviewScreen } from './screens/C14BookingReviewScreen';
 import { C15BookingConfirmationScreen } from './screens/C15BookingConfirmationScreen';
 import { C16PaymentScreen } from './screens/C16PaymentScreen';
 import { C17BookingTrackingScreen } from './screens/C17BookingTrackingScreen';
+import { C18ChatContactScreen } from './screens/C18ChatContactScreen';
 import { C19JobInProgressScreen } from './screens/C19JobInProgressScreen';
 import { C20CompletionConfirmScreen } from './screens/C20CompletionConfirmScreen';
 import { C24PaymentReceiptsScreen } from './screens/C24PaymentReceiptsScreen';
@@ -87,6 +88,8 @@ function CustomerRouter(): React.JSX.Element {
       return <C16PaymentScreen />;
     case 'C17':
       return <C17BookingTrackingScreen />;
+    case 'C18':
+      return <C18ChatContactScreen />;
     case 'C19':
       return <C19JobInProgressScreen />;
     case 'C20':
