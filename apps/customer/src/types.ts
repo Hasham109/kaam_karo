@@ -20,9 +20,11 @@ export type ScreenId =
   | 'C13' // Quote Details
   | 'C14' // Booking Review
   | 'C15' // Booking Confirmation
+  | 'C16' // Payment (D-003, D-008, D-030)
   | 'C17' // Booking Tracking
   | 'C19' // Job in Progress (On-site)
   | 'C20' // Job Completion & Payment
+  | 'C24' // Payment Receipts & Transaction History
   | 'C31' // "What do you need?" Conversational Composer
   | 'C32' // Audio Note Recorder
   | 'C33' // Problem Video Recorder
@@ -79,9 +81,11 @@ export interface ScreenParams {
   C15?:
     | { bookingId: string; status?: BookingStatus | undefined; returnTo?: ScreenId | undefined }
     | undefined;
+  C16?: { bookingId?: string | undefined; returnTo?: ScreenId | undefined } | undefined;
   C17?: { bookingId?: string | undefined; returnTo?: ScreenId | undefined } | undefined;
   C19?: { bookingId?: string | undefined; returnTo?: ScreenId | undefined } | undefined;
   C20?: { bookingId?: string | undefined; returnTo?: ScreenId | undefined } | undefined;
+  C24?: { bookingId?: string | undefined; returnTo?: ScreenId | undefined } | undefined;
   C37?:
     | {
         bookingId?: string | undefined;
@@ -572,4 +576,35 @@ export interface VoiceAssistantResult {
   readonly isUndoRevert?: boolean;
   readonly searchQuery?: string;
   readonly filterPreference?: string;
+}
+
+export interface CustomerPaymentDetails {
+  bookingId: string;
+  bookingRef: string;
+  isJobCompleted: boolean;
+  labourMinor: number;
+  materialsMinor: number;
+  taxMinor: number;
+  totalMinor: number;
+  status: 'NOT_PAID' | 'PROCESSING' | 'PAID' | 'FAILED';
+  paidMethod?: 'CASH' | 'DIGITAL';
+  paidAt?: string;
+  gatewayRef?: string;
+}
+
+export interface CustomerReceiptItem {
+  id: string;
+  bookingId: string;
+  bookingRef: string;
+  serviceTitle: string;
+  amountMinor: number;
+  method: 'CASH' | 'DIGITAL';
+  status: 'PAID' | 'FAILED' | 'REFUNDED' | 'PROCESSING';
+  date: string;
+  billLines: { titleKey: MessageKey; amountMinor: number }[];
+  taxMinor: number;
+  refund?: {
+    amountMinor: number;
+    date: string;
+  };
 }

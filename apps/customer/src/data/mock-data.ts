@@ -7,6 +7,8 @@ import type {
   CategoryItem,
   CityOption,
   CustomerCompletionDetails,
+  CustomerPaymentDetails,
+  CustomerReceiptItem,
   CustomerTrackingBooking,
   ProposedExtraChargeItem,
   ProviderItem,
@@ -622,3 +624,53 @@ export const MOCK_CANCELLATION_REASONS = [
     labelUr: 'غلط سروس منتخب ہو گئی تھی',
   },
 ] as const;
+
+export const MOCK_PAYMENT_DETAILS: CustomerPaymentDetails = {
+  bookingId: 'bk-78912',
+  bookingRef: 'BK-78912',
+  isJobCompleted: true,
+  labourMinor: 250000, // Rs. 2,500
+  materialsMinor: 120000, // Rs. 1,200
+  taxMinor: 0, // Rs. 0 (D-029)
+  totalMinor: 370000, // Rs. 3,700
+  status: 'NOT_PAID',
+};
+
+export const MOCK_CUSTOMER_RECEIPTS: CustomerReceiptItem[] = [
+  {
+    id: 'rcpt-001',
+    bookingId: 'bk-78912',
+    bookingRef: 'BK-78912',
+    serviceTitle: 'Split AC Master Service & Chemical Wash',
+    amountMinor: 370000,
+    method: 'DIGITAL',
+    status: 'PAID',
+    date: '2026-10-25 14:15 PKT',
+    billLines: [
+      { titleKey: 'customer.c16.labour', amountMinor: 250000 },
+      { titleKey: 'customer.c16.materials', amountMinor: 120000 },
+      { titleKey: 'customer.c16.taxZero', amountMinor: 0 },
+    ],
+    taxMinor: 0,
+  },
+  {
+    id: 'rcpt-002',
+    bookingId: 'bk-78401',
+    bookingRef: 'BK-78401',
+    serviceTitle: 'Ceiling Fan Installation & Capacitor Replace',
+    amountMinor: 180000,
+    method: 'CASH',
+    status: 'PAID',
+    date: '2026-10-20 11:30 PKT',
+    billLines: [
+      { titleKey: 'customer.c16.labour', amountMinor: 150000 },
+      { titleKey: 'customer.c16.materials', amountMinor: 30000 },
+      { titleKey: 'customer.c16.taxZero', amountMinor: 0 },
+    ],
+    taxMinor: 0,
+    refund: {
+      amountMinor: 50000,
+      date: '2026-10-21 16:00 PKT',
+    },
+  },
+];

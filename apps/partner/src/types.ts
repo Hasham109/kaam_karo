@@ -16,6 +16,7 @@ export type ScreenId =
   | 'P13'
   | 'P14'
   | 'P15'
+  | 'P16'
   | 'P22'
   | 'P23'
   | 'P24'
@@ -277,4 +278,17 @@ export interface FinalBillTotals {
   commissionPkr: number;
   providerSharePkr: number;
   commissionRatePct: number;
+}
+
+export type PayoutMethodType = 'BANK_ACCOUNT' | 'MOBILE_WALLET';
+export type PayoutMethodStatus = 'NOT_CHECKED' | 'VERIFIED' | 'FAILED';
+
+export interface PayoutMethodItem {
+  id: string;
+  type: PayoutMethodType;
+  accountTitle: string;
+  bankOrWalletName: string;
+  maskedAccountNumber: string;
+  status: PayoutMethodStatus;
+  createdAt: string;
 }

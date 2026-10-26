@@ -22,9 +22,11 @@ import { C12RequestScreen } from './screens/C12RequestScreen';
 import { C13QuoteDetailScreen } from './screens/C13QuoteDetailScreen';
 import { C14BookingReviewScreen } from './screens/C14BookingReviewScreen';
 import { C15BookingConfirmationScreen } from './screens/C15BookingConfirmationScreen';
+import { C16PaymentScreen } from './screens/C16PaymentScreen';
 import { C17BookingTrackingScreen } from './screens/C17BookingTrackingScreen';
 import { C19JobInProgressScreen } from './screens/C19JobInProgressScreen';
 import { C20CompletionConfirmScreen } from './screens/C20CompletionConfirmScreen';
+import { C24PaymentReceiptsScreen } from './screens/C24PaymentReceiptsScreen';
 import { C31ComposerScreen } from './screens/C31ComposerScreen';
 import { C32AudioRecorderScreen } from './screens/C32AudioRecorderScreen';
 import { C33VideoRecorderScreen } from './screens/C33VideoRecorderScreen';
@@ -81,12 +83,16 @@ function CustomerRouter(): React.JSX.Element {
       return <C14BookingReviewScreen />;
     case 'C15':
       return <C15BookingConfirmationScreen />;
+    case 'C16':
+      return <C16PaymentScreen />;
     case 'C17':
       return <C17BookingTrackingScreen />;
     case 'C19':
       return <C19JobInProgressScreen />;
     case 'C20':
       return <C20CompletionConfirmScreen />;
+    case 'C24':
+      return <C24PaymentReceiptsScreen />;
     case 'C31':
       return <C31ComposerScreen />;
     case 'C32':
