@@ -7,6 +7,7 @@ import { type DynamicModule, Module } from '@nestjs/common';
 import type { ServerEnv } from '@kaamkaro/platform';
 import { ServerEnvModule } from './config/server-env.module';
 import { PlatformModule } from './platform';
+import { NotificationsModule } from './modules/notifications';
 import { OutboxRelayService } from './platform/outbox-relay.service';
 import { PrismaOutboxRelayStore } from './platform/outbox-relay.store';
 
@@ -15,7 +16,7 @@ export class WorkerModule {
   static forRoot(env: ServerEnv): DynamicModule {
     return {
       module: WorkerModule,
-      imports: [ServerEnvModule.forRoot(env), PlatformModule],
+      imports: [ServerEnvModule.forRoot(env), PlatformModule, NotificationsModule],
       providers: [PrismaOutboxRelayStore, OutboxRelayService],
     };
   }
