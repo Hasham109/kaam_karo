@@ -88,10 +88,10 @@ describe('PaymentsController route protection (BP §29)', () => {
   const proto = PaymentsController.prototype as unknown as Record<string, () => unknown>;
   const isPublic = (name: string) => Reflect.getMetadata(IS_PUBLIC_KEY, proto[name]!) === true;
 
-  it('keeps only the gateway callback public', () => {
+  it('keeps only the gateway callback and webhook public', () => {
     const handlers = Object.getOwnPropertyNames(proto).filter((n) => n !== 'constructor');
     const publicOnes = handlers.filter(isPublic);
-    expect(publicOnes).toEqual(['confirmPayment']);
+    expect(publicOnes).toEqual(['confirmPayment', 'handleSafepayWebhook']);
   });
 
   it('refuses a session on the wrong client surface', async () => {

@@ -12,7 +12,9 @@ import {
   Injectable,
   NotFoundException,
   Optional,
+  UnauthorizedException,
 } from '@nestjs/common';
+import { SafepayPaymentGateway } from './safepay-payment-gateway.js';
 import { CONFIG_SERVICE, type ConfigService } from '@kaamkaro/platform';
 import { PrismaService } from '../../platform/prisma.service.js';
 import { LedgerService } from './ledger.service.js';
@@ -44,8 +46,11 @@ export class PaymentsService {
     private readonly configService?: ConfigService,
     @Optional()
     private readonly ledgerService?: LedgerService,
+    @Optional()
+    private readonly safepayGateway?: SafepayPaymentGateway,
   ) {
     void this.configService;
+    void this.safepayGateway;
   }
 
   /**
@@ -503,5 +508,107 @@ export class PaymentsService {
       paidByLabel,
       history: payments.map((p) => this.formatPaymentResponse(p)),
     };
+  }
+
+  /**
+   * Processes an incoming Safepay webhook (PAY-001, PAY-008; SEC-BASE-009).
+   * Verifies the cryptographic HMAC-SHA256 signature, resolves payment reference,
+   * and idempotently records state transition and ledger credit.
+   */
+  async handleSafepayWebhook(params: {
+    body: Record<string, unknown>;
+    signature: string | undefined | null;
+    rawPayload?: string | Buffer | undefined;
+  }): Promise<{
+    received: boolean;
+    processed: boolean;
+    paymentRef?: string;
+    status?: PaymentStatus;
+  }> {
+    const gateway = this.safepayGateway ?? new SafepayPaymentGateway();
+    const payloadToVerify = params.rawPayload ?? params.body;
+
+    const isValid = gateway.verifyWebhookSignature(payloadToVerify, params.signature);
+    if (!isValid) {
+      throw new UnauthorizedException({
+        code: 'INVALID_WEBHOOK_SIGNATURE',
+        message: 'Safepay webhook signature verification failed (x-sfpy-signature mismatch)',
+      });
+    }
+
+    const body = params.body;
+    const bodyData = (body.data as Record<string, unknown> | undefined) ?? {};
+    const bodyMetadata = (body.metadata as Record<string, unknown> | undefined) ?? {};
+    const dataMetadata = (bodyData.metadata as Record<string, unknown> | undefined) ?? {};
+
+    const event =
+      typeof body.event === 'string' ? body.event : typeof body.type === 'string' ? body.type : '';
+    const token =
+      typeof bodyData.token === 'string'
+        ? bodyData.token
+        : typeof body.token === 'string'
+          ? body.token
+          : undefined;
+
+    let paymentRef =
+      typeof dataMetadata.paymentRef === 'string'
+        ? dataMetadata.paymentRef
+        : typeof bodyMetadata.paymentRef === 'string'
+          ? bodyMetadata.paymentRef
+          : undefined;
+
+    if (!paymentRef && token) {
+      const existing = await this.prisma.payment.findFirst({
+        where: { gatewayRef: token },
+        orderBy: { occurredAt: 'desc' },
+      });
+      if (existing) {
+        paymentRef = existing.paymentRef;
+      }
+    }
+
+    if (!paymentRef) {
+      throw new NotFoundException({
+        code: 'PAYMENT_NOT_FOUND',
+        message: 'Could not resolve internal paymentRef from Safepay webhook payload',
+      });
+    }
+
+    const statusVal =
+      typeof bodyData.status === 'string'
+        ? bodyData.status
+        : typeof bodyData.state === 'string'
+          ? bodyData.state
+          : typeof body.status === 'string'
+            ? body.status
+            : '';
+    const rawStatus = statusVal.toUpperCase();
+    const isSuccess =
+      event === 'payment.completed' ||
+      event === 'order.completed' ||
+      ['PAID', 'COMPLETED', 'SETTLED'].includes(rawStatus);
+
+    const isFailure =
+      event === 'payment.failed' ||
+      event === 'order.failed' ||
+      ['FAILED', 'CANCELLED', 'EXPIRED'].includes(rawStatus);
+
+    if (isSuccess) {
+      await this.confirmDigitalPayment({
+        paymentRef,
+        ...(token ? { gatewayRef: token } : {}),
+        success: true,
+      });
+      return { received: true, processed: true, paymentRef, status: PaymentStatus.SUCCEEDED };
+    } else if (isFailure) {
+      await this.confirmDigitalPayment({
+        paymentRef,
+        ...(token ? { gatewayRef: token } : {}),
+        success: false,
+      });
+      return { received: true, processed: true, paymentRef, status: PaymentStatus.FAILED };
+    }
+
+    return { received: true, processed: false, paymentRef };
   }
 }

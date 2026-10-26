@@ -56,7 +56,7 @@ Acceptance criteria and BP refs per task: docs/implementation.md §6 (same task 
 | T6.7 | Unpaid-commission hiring block (ARCH §6.8, D-020): extra hard filter in matching, guards on accept/quote/favorite-rebook, guards on starting already-accepted jobs (D-021), "Pay company" screen in P15 (transaction ID + screenshot), Finance verification queue in admin A09, auto-unblock on balance ≥ 0, events `provider.balance_negative` / `provider.commission_payment_submitted` / `provider.commission_payment_rejected` / `provider.balance_cleared` | A09 + A05 + A04 + A12 + A13 | T6.6, T3.7 | DONE | handoffs/T-6.7.md |
 | T6.3 | Refunds (reversal rows), settlements, reconciliation job | A09 | T6.1 | DONE | handoffs/T-6.3.md |
 | T6.4 | Payment UI: C16, C24, P15, P16; admin A09, A10, A13 | A11, A12, A13 | T6.1–T6.3 | DONE | handoffs/T-6.4.md |
-| T6.5 | Real gateway adapter (after D-008) | A09 | D-008 | TODO | — |
+| T6.5 | Real gateway adapter (after D-008) | A09 | D-008 | DONE | handoffs/T-6.5.md |
 | T7.1 | Notification fan-out for every ARCH §7 event, en/ur templates, categories, priority, contextual permission | A10 + A11/A12 | T2.2 | TODO | — |
 | T7.2 | Chat bound to booking, attachment limits/scanning, `CallRelay` fake, share payloads (WhatsApp via ACTION_SEND) | A10 + A11/A12 | T3.4 | TODO | — |
 | T7.3 | Reviews (eligible only), provider response, flag/report, moderation queue | A10 + A13 | T3.4 | TODO | — |

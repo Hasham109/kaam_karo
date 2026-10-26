@@ -73,9 +73,9 @@ export interface InitiatePaymentDto {
 
 export interface ConfirmPaymentDto {
   paymentRef: string;
-  gatewayRef: string;
+  gatewayRef?: string | undefined;
   success: boolean;
-  failureReason?: string;
+  failureReason?: string | undefined;
 }
 
 export interface RecordCashPaymentDto {

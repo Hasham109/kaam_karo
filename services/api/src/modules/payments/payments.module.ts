@@ -8,6 +8,7 @@ import { IdentityModule } from '../identity/index.js';
 import { PaymentsController } from './payments.controller.js';
 import { PaymentsService } from './payments.service.js';
 import { FakePaymentGateway } from './fake-payment-gateway.js';
+import { SafepayPaymentGateway } from './safepay-payment-gateway.js';
 import { FakePayoutProvider } from './fake-payout-provider.js';
 import { CommissionService } from './commission.service.js';
 import { LedgerService } from './ledger.service.js';
@@ -29,9 +30,17 @@ import { PAYMENT_GATEWAY, PAYOUT_PROVIDER } from './payments.types.js';
     SettlementService,
     ReconciliationService,
     FakePaymentGateway,
+    SafepayPaymentGateway,
     {
       provide: PAYMENT_GATEWAY,
-      useExisting: FakePaymentGateway,
+      useFactory: (fakeGateway: FakePaymentGateway, safepayGateway: SafepayPaymentGateway) => {
+        const provider = process.env.PAYMENT_GATEWAY_PROVIDER?.toLowerCase();
+        if (provider === 'safepay') {
+          return safepayGateway;
+        }
+        return fakeGateway;
+      },
+      inject: [FakePaymentGateway, SafepayPaymentGateway],
     },
     FakePayoutProvider,
     {
@@ -49,6 +58,7 @@ import { PAYMENT_GATEWAY, PAYOUT_PROVIDER } from './payments.types.js';
     ReconciliationService,
     PAYMENT_GATEWAY,
     FakePaymentGateway,
+    SafepayPaymentGateway,
     PAYOUT_PROVIDER,
     FakePayoutProvider,
   ],

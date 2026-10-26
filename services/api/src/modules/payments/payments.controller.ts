@@ -14,6 +14,7 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
   Optional,
@@ -117,6 +118,31 @@ export class PaymentsController {
   @HttpCode(HttpStatus.OK)
   async confirmPayment(@Body() body: ConfirmPaymentDto) {
     return this.paymentsService.confirmDigitalPayment(body);
+  }
+
+  /**
+   * Safepay Webhook Endpoint (Module M11, Task T6.5; PAY-001, PAY-008; SEC-BASE-009; D-008).
+   * Verifies cryptographic HMAC-SHA256 signature from `x-sfpy-signature` header before processing event.
+   */
+  @Public()
+  @Post('webhook/safepay')
+  @HttpCode(HttpStatus.OK)
+  async handleSafepayWebhook(
+    @Body() body: Record<string, unknown>,
+    @Headers('x-sfpy-signature') signature: string | undefined,
+    @Req()
+    req: { rawBody?: Buffer | string; headers?: Record<string, string | string[] | undefined> },
+  ) {
+    const rawPayload = req.rawBody ?? (typeof body === 'string' ? body : JSON.stringify(body));
+    return this.paymentsService.handleSafepayWebhook({
+      body,
+      signature:
+        signature ??
+        (typeof req.headers?.['x-sfpy-signature'] === 'string'
+          ? req.headers['x-sfpy-signature']
+          : undefined),
+      rawPayload,
+    });
   }
 
   @Post('cash-record')

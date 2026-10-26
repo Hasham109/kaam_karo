@@ -13,7 +13,7 @@ Status values follow BP §72: **Accepted**, **Proposed** (options on the table, 
 | D-005 | Matching mode default | **Accepted 2026-10-22** | Customer chooses (no auto-assign) | Nothing |
 | D-006 | Commission | **Accepted 2026-10-22** | Fixed 30% to platform, 70% to provider. Config `commission.rate = 0.30` | Nothing (base = labour only, D-015) |
 | D-007 | Launch city | **Accepted 2026-10-22** | Lahore. Pilot area = whole Lahore (D-019) | Nothing |
-| D-008 | Payment gateway(s) & payout provider | **Proposed** (waiting for owner) | Pakistan options (BP §69). Build uses `PaymentGateway` / `PayoutProvider` fakes | M11 real integration (T6.5) |
+| D-008 | Payment gateway(s) & payout provider | **Accepted 2026-10-26** | Safepay chosen as primary digital payment gateway for Pakistan (cards, 1LINK/PayPak, mobile wallets; hosted checkout + HMAC-SHA256 webhooks). Payout provider uses manual transfer or PayoutProvider abstraction | Nothing (unblocked T6.5) |
 | D-009 | SMS/OTP, LLM, STT, masked-calling vendors | **Proposed** (waiting for owner) | BP §33, §77.1. Build uses fakes | Real integrations (fakes allowed until then) |
 | D-010 | Ranking weights, badge thresholds, AI confidence threshold | **Proposed** (waiting for owner) | Admin-configurable (BP §54.2, §55.2). Seeded `null` + `TODO(OWNER)` | Production values |
 | D-011 | Media limits & retention | **Proposed** (waiting for owner) | BP §76 (targets ≈ 2 min audio, ≈ 30 s video; exact max size/duration, bitrate, retention open) | M14 production config |

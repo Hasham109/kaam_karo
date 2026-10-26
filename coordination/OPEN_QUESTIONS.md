@@ -4,7 +4,7 @@ Anything the Blueprint or DECISIONS.md does not answer. Agents add rows; only th
 
 | ID | Question | Raised by | Blocks | Status |
 |---|---|---|---|---|
-| OQ-001 | D-008 Payment gateway(s) & payout provider: Pakistan options (BP §69) | A00 (from ARCH §22) | M11 real integration | OPEN |
+| OQ-001 | D-008 Payment gateway(s) & payout provider: Pakistan options (BP §69) | A00 (from ARCH §22) | M11 real integration | ANSWERED 2026-10-26 → D-008 (Safepay chosen as primary gateway) |
 | OQ-002 | D-009 SMS/OTP, LLM, STT, masked-calling vendors: BP §33, §77.1 | A00 (from ARCH §22) | Real integrations (fakes allowed until then) | OPEN |
 | OQ-003 | D-010 Ranking weights, badge thresholds, AI confidence threshold: Admin-configurable (BP §54.2, §55.2) | A00 (from ARCH §22) | Production values | OPEN |
 | OQ-004 | D-011 Media limits & retention: BP §76 | A00 (from ARCH §22) | M14 production config | OPEN |
