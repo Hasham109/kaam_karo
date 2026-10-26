@@ -632,6 +632,27 @@ export const CUSTOMER_EN = {
   'customer.c18.callingStarted': 'Connecting via secure relay…',
   'customer.c18.callRelayNumber': 'Virtual Relay: {number}',
   'customer.c18.shareBooking': 'Share Request',
+
+  // C21 Review Screen (BP §12, §19; REV-001, REV-002, REV-007, RATING-ENF-001)
+  'customer.c21.title': 'Rate Service',
+  'customer.c21.question': 'How was the service?',
+  'customer.c21.starLabel': '{n} stars',
+  'customer.c21.tagsHeader': 'What went well?',
+  'customer.c21.textPlaceholder': 'Write a review (optional)',
+  'customer.c21.submitBtn': 'Submit',
+  'customer.c21.noRatingError': 'Tap a star to rate.',
+  'customer.c21.success': 'Thanks for your review!',
+  'customer.c21.notCompleted': 'You can review after the job is completed.',
+  'customer.c21.alreadyReviewed': 'You have already reviewed this booking.',
+  'customer.c21.windowClosed': 'The time to review this booking has ended.',
+  'customer.c21.genericError': "You can't review this booking.",
+  'customer.c21.sending': 'Sending…',
+  'customer.c21.pending': 'Submitting review…',
+  'customer.c21.tagPunctual': 'Punctual',
+  'customer.c21.tagProfessional': 'Professional',
+  'customer.c21.tagCleanWork': 'Clean work',
+  'customer.c21.tagFairPrice': 'Fair price',
+  'customer.c21.tagPolite': 'Polite',
 } as const satisfies Readonly<Record<`customer.${string}`, string>>;
 
 export const CUSTOMER_UR: Readonly<Record<keyof typeof CUSTOMER_EN, string>> = {
@@ -1263,4 +1284,25 @@ export const CUSTOMER_UR: Readonly<Record<keyof typeof CUSTOMER_EN, string>> = {
   'customer.c18.callingStarted': 'محفوظ ریلے کے ذریعے رابطہ کیا جا رہا ہے…',
   'customer.c18.callRelayNumber': 'ورچوئل ریلے: {number}',
   'customer.c18.shareBooking': 'درخواست شیئر کریں',
+
+  // C21 Review Screen (BP §12, §19; REV-001, REV-002, REV-007, RATING-ENF-001)
+  'customer.c21.title': 'سروس کی ریٹنگ دیں',
+  'customer.c21.question': 'سروس کیسی رہی؟',
+  'customer.c21.starLabel': '{n} ستارے',
+  'customer.c21.tagsHeader': 'کیا اچھا رہا؟',
+  'customer.c21.textPlaceholder': 'ریویو لکھیں (اختیاری)',
+  'customer.c21.submitBtn': 'جمع کرائیں',
+  'customer.c21.noRatingError': 'ریٹنگ کے لیے ستارہ دبائیں۔',
+  'customer.c21.success': 'آپ کے ریویو کا شکریہ!',
+  'customer.c21.notCompleted': 'کام مکمل ہونے کے بعد آپ ریویو دے سکتے ہیں۔',
+  'customer.c21.alreadyReviewed': 'آپ اس بکنگ کا ریویو پہلے ہی دے چکے ہیں۔',
+  'customer.c21.windowClosed': 'اس بکنگ کا ریویو دینے کا وقت ختم ہو گیا ہے۔',
+  'customer.c21.genericError': 'آپ اس بکنگ کا ریویو نہیں دے سکتے۔',
+  'customer.c21.sending': 'بھیجا جا رہا ہے…',
+  'customer.c21.pending': 'ریویو جمع ہو رہا ہے…',
+  'customer.c21.tagPunctual': 'وقت کے پابند',
+  'customer.c21.tagProfessional': 'پیشہ ورانہ',
+  'customer.c21.tagCleanWork': 'صاف ستھرا کام',
+  'customer.c21.tagFairPrice': 'مناسب قیمت',
+  'customer.c21.tagPolite': 'شائستہ',
 };

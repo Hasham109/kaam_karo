@@ -448,6 +448,27 @@ export const C20CompletionConfirmScreen: React.FC<C20CompletionConfirmScreenProp
 
         {/* Secondary Actions: Problem & Rating */}
         <View style={styles.card} testID="c20-secondary-actions-card">
+          {isJobCompleted ? (
+            <TouchableOpacity
+              style={[styles.rateServiceBtn, minTapTargetStyle()]}
+              onPress={() =>
+                navigate('C21', {
+                  bookingId: details.bookingId,
+                  providerName: details.providerName,
+                })
+              }
+              {...interactiveProps({
+                testID: 'c20-rate-service-button',
+                accessibilityLabel: translate(locale, 'customer.c20.rateServiceBtn'),
+                accessibilityRole: 'button',
+              })}
+            >
+              <Text style={[styles.rateServiceText, textTokens(locale, 'body')]}>
+                ★ {translate(locale, 'customer.c20.rateServiceBtn')}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+
           <TouchableOpacity
             style={[styles.secondaryActionBtn, minTapTargetStyle()]}
             onPress={handleReportProblem}
@@ -645,6 +666,21 @@ const styles = StyleSheet.create({
   },
   reportedNoticeText: {
     color: '#2E7D32',
+  },
+  rateServiceBtn: {
+    backgroundColor: '#FEF3C7',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.sm,
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+  },
+  rateServiceText: {
+    color: '#B45309',
+    fontWeight: '700',
   },
   secondaryActionBtn: {
     paddingVertical: SPACING.xs,

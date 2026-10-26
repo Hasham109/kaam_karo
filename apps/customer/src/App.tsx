@@ -27,6 +27,7 @@ import { C17BookingTrackingScreen } from './screens/C17BookingTrackingScreen';
 import { C18ChatContactScreen } from './screens/C18ChatContactScreen';
 import { C19JobInProgressScreen } from './screens/C19JobInProgressScreen';
 import { C20CompletionConfirmScreen } from './screens/C20CompletionConfirmScreen';
+import { C21ReviewScreen } from './screens/C21ReviewScreen';
 import { C24PaymentReceiptsScreen } from './screens/C24PaymentReceiptsScreen';
 import { C31ComposerScreen } from './screens/C31ComposerScreen';
 import { C32AudioRecorderScreen } from './screens/C32AudioRecorderScreen';
@@ -94,6 +95,8 @@ function CustomerRouter(): React.JSX.Element {
       return <C19JobInProgressScreen />;
     case 'C20':
       return <C20CompletionConfirmScreen />;
+    case 'C21':
+      return <C21ReviewScreen />;
     case 'C24':
       return <C24PaymentReceiptsScreen />;
     case 'C31':

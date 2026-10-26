@@ -1,0 +1,601 @@
+openapi: 3.1.0
+info:
+  title: Kaam Karo Reviews & Reputation API
+  version: 0.1.0
+  description: >
+    Module M12 Reviews & Reputation API (ARCH §4 M12, §6.7; BP §19, §25; D-014).
+    Customer rating submission for completed bookings, provider response under controlled rules,
+    flagging/reporting, moderation queue with audit trail, and shared public rating calculation.
+servers:
+  - url: /v1
+paths:
+  /reviews:
+    post:
+      summary: Submit review for a completed booking
+      description: >
+        Submits customer rating and optional written review for an eligible completed booking (BP §19; REV-001, REV-002, REV-007, RATING-ENF-001, CFG-RULE-009).
+        Only the customer of the booking can submit; exactly one review per booking; booking must be in Completed status.
+      operationId: submitReview
+      x-requirement-ids:
+        - REV-001
+        - REV-002
+        - REV-007
+        - RATING-ENF-001
+        - CFG-RULE-009
+      tags:
+        - reviews
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitReviewRequest'
+      responses:
+        '201':
+          description: Review created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewResponse'
+        '400':
+          $ref: './common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '409':
+          description: Booking not completed, already reviewed, or eligibility window expired
+          content:
+            application/json:
+              schema:
+                $ref: './common.yaml#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Validation failure (e.g. rating outside 1-5)
+          content:
+            application/json:
+              schema:
+                $ref: './common.yaml#/components/schemas/ErrorEnvelope'
+
+  /reviews/booking/{bookingId}:
+    get:
+      summary: Get review for a booking
+      description: >
+        Returns the review associated with a specific booking (BP §19; REV-001).
+      operationId: getBookingReview
+      x-requirement-ids:
+        - REV-001
+      tags:
+        - reviews
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Review details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+
+  /reviews/provider/{providerProfileId}:
+    get:
+      summary: Get visible reviews and aggregated rating for a provider
+      description: >
+        Returns public reviews and rating summary computed using the shared canonical rule (BP §19; REV-006).
+        Excluded reviews that were removed in moderation do not appear and do not count toward rating.
+      operationId: getProviderReviews
+      x-requirement-ids:
+        - REV-006
+      tags:
+        - reviews
+      parameters:
+        - name: providerProfileId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Provider public reviews and rating aggregate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderReviewsResponse'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+
+  /reviews/{reviewId}/response:
+    post:
+      summary: Provider responds to a review
+      description: >
+        Allows the provider of the reviewed booking to respond under controlled rules (BP §19; REV-003).
+      operationId: respondToReview
+      x-requirement-ids:
+        - REV-003
+      tags:
+        - reviews
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProviderReviewResponseRequest'
+      responses:
+        '200':
+          description: Response added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+        '409':
+          description: Provider already responded to this review
+          content:
+            application/json:
+              schema:
+                $ref: './common.yaml#/components/schemas/ErrorEnvelope'
+
+  /reviews/{reviewId}/flag:
+    post:
+      summary: Flag/report a review
+      description: >
+        Allows customer or provider to flag an inappropriate review, moving it into the moderation queue (BP §19; REV-004).
+      operationId: flagReview
+      x-requirement-ids:
+        - REV-004
+      tags:
+        - reviews
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlagReviewRequest'
+      responses:
+        '201':
+          description: Flag created and review queued for moderation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewFlagResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+
+  /admin/reviews/moderation-queue:
+    get:
+      summary: List moderation queue items
+      description: >
+        Returns items in the review moderation queue (BP §19; REV-005, OPS-ADMIN-011, ADMIN-ROLE-006).
+        Restricted to Risk/Trust sub-role.
+      operationId: listModerationQueue
+      x-requirement-ids:
+        - REV-005
+        - OPS-ADMIN-011
+        - ADMIN-ROLE-006
+      tags:
+        - admin-reviews
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [OPEN, UPHELD, DISMISSED]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Moderation queue items
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationQueueResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+
+  /admin/reviews/moderation-queue/{flagId}/decide:
+    post:
+      summary: Decide on a moderation flag (Hide review or Keep visible)
+      description: >
+        Decides an open flag by either hiding the review (excluded from public rating & enforcement)
+        or keeping it visible, recording a mandatory audit reason (BP §19; REV-005, RATING-ENF-002, OPS-ADMIN-011, ADMIN-ROLE-006, ROLE-003).
+      operationId: decideModerationFlag
+      x-requirement-ids:
+        - REV-005
+        - RATING-ENF-002
+        - OPS-ADMIN-011
+        - ADMIN-ROLE-006
+      tags:
+        - admin-reviews
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: flagId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModerationDecisionRequest'
+      responses:
+        '200':
+          description: Decision applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationDecisionResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+        '409':
+          description: Flag already decided
+          content:
+            application/json:
+              schema:
+                $ref: './common.yaml#/components/schemas/ErrorEnvelope'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    SubmitReviewRequest:
+      type: object
+      required:
+        - bookingId
+        - rating
+      properties:
+        bookingId:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: 1-5 star rating (BP §19; REV-001)
+        tags:
+          type: array
+          items:
+            type: string
+          description: Optional structured tags from config (REV-001)
+        text:
+          type: string
+          maxLength: 1000
+          description: Optional written review text (REV-002)
+
+    ProviderReviewResponseRequest:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          maxLength: 1000
+          description: Provider response text (REV-003)
+
+    FlagReviewRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+          description: Reason for reporting/flagging review (REV-004)
+
+    ModerationDecisionRequest:
+      type: object
+      required:
+        - action
+        - reason
+      properties:
+        action:
+          type: string
+          enum: [HIDE, KEEP]
+          description: Moderation action (HIDE excludes from public rating, KEEP dismisses flag)
+        reason:
+          type: string
+          minLength: 5
+          maxLength: 1000
+          description: Mandatory audit reason for moderation decision (ROLE-003)
+
+    ReviewResponse:
+      type: object
+      required:
+        - id
+        - bookingId
+        - providerProfileId
+        - customerProfileId
+        - rating
+        - tags
+        - moderationStatus
+        - submittedAt
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        bookingId:
+          type: string
+          format: uuid
+        providerProfileId:
+          type: string
+          format: uuid
+        customerProfileId:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        tags:
+          type: array
+          items:
+            type: string
+        text:
+          type: string
+          nullable: true
+        moderationStatus:
+          type: string
+          enum: [PENDING_MODERATION, VISIBLE, FLAGGED, REMOVED]
+        providerResponse:
+          type: string
+          nullable: true
+        providerRespondedAt:
+          type: string
+          format: date-time
+          nullable: true
+        submittedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ReviewListItem:
+      type: object
+      required:
+        - id
+        - rating
+        - tags
+        - submittedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        tags:
+          type: array
+          items:
+            type: string
+        text:
+          type: string
+          nullable: true
+        customerName:
+          type: string
+          description: Masked or first name of customer
+        providerResponse:
+          type: string
+          nullable: true
+        providerRespondedAt:
+          type: string
+          format: date-time
+          nullable: true
+        submittedAt:
+          type: string
+          format: date-time
+
+    ProviderReviewsResponse:
+      type: object
+      required:
+        - providerProfileId
+        - ratingAverage
+        - ratingCount
+        - reviews
+        - total
+      properties:
+        providerProfileId:
+          type: string
+          format: uuid
+        ratingAverage:
+          type: number
+          nullable: true
+          description: Public average rating (one shared rule, REV-006)
+        ratingCount:
+          type: integer
+          description: Number of eligible visible ratings
+        reviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewListItem'
+        total:
+          type: integer
+
+    ReviewFlagResponse:
+      type: object
+      required:
+        - id
+        - reviewId
+        - flaggedByUserId
+        - reason
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        reviewId:
+          type: string
+          format: uuid
+        flaggedByUserId:
+          type: string
+          format: uuid
+        reason:
+          type: string
+        status:
+          type: string
+          enum: [OPEN, UPHELD, DISMISSED]
+        createdAt:
+          type: string
+          format: date-time
+
+    ModerationQueueItem:
+      type: object
+      required:
+        - flagId
+        - reviewId
+        - bookingId
+        - rating
+        - reason
+        - status
+        - flaggedAt
+      properties:
+        flagId:
+          type: string
+          format: uuid
+        reviewId:
+          type: string
+          format: uuid
+        bookingId:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+        excerpt:
+          type: string
+          nullable: true
+        authorName:
+          type: string
+          nullable: true
+        authorMaskedPhone:
+          type: string
+          nullable: true
+        reason:
+          type: string
+        status:
+          type: string
+          enum: [OPEN, UPHELD, DISMISSED]
+        flaggedAt:
+          type: string
+          format: date-time
+        providerResponse:
+          type: string
+          nullable: true
+
+    ModerationQueueResponse:
+      type: object
+      required:
+        - items
+        - total
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModerationQueueItem'
+        total:
+          type: integer
+
+    ModerationDecisionResponse:
+      type: object
+      required:
+        - flagId
+        - reviewId
+        - action
+        - status
+        - reviewModerationStatus
+        - decidedAt
+      properties:
+        flagId:
+          type: string
+          format: uuid
+        reviewId:
+          type: string
+          format: uuid
+        action:
+          type: string
+          enum: [HIDE, KEEP]
+        status:
+          type: string
+          enum: [UPHELD, DISMISSED]
+        reviewModerationStatus:
+          type: string
+          enum: [VISIBLE, REMOVED]
+        decidedAt:
+          type: string
+          format: date-time

@@ -25,6 +25,7 @@ export type ScreenId =
   | 'C18' // Chat / Contact (BP §12, §20; CHAT-001..004)
   | 'C19' // Job in Progress (On-site)
   | 'C20' // Job Completion & Payment
+  | 'C21' // Review (BP §12, §19; REV-001, REV-002, REV-007, RATING-ENF-001)
   | 'C24' // Payment Receipts & Transaction History
   | 'C31' // "What do you need?" Conversational Composer
   | 'C32' // Audio Note Recorder
@@ -87,6 +88,13 @@ export interface ScreenParams {
   C18?: { bookingId?: string | undefined; returnTo?: ScreenId | undefined } | undefined;
   C19?: { bookingId?: string | undefined; returnTo?: ScreenId | undefined } | undefined;
   C20?: { bookingId?: string | undefined; returnTo?: ScreenId | undefined } | undefined;
+  C21?:
+    | {
+        bookingId?: string | undefined;
+        providerName?: string | undefined;
+        returnTo?: ScreenId | undefined;
+      }
+    | undefined;
   C24?: { bookingId?: string | undefined; returnTo?: ScreenId | undefined } | undefined;
   C37?:
     | {
