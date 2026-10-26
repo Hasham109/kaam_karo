@@ -421,6 +421,258 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProviderHiringBlockResponse'
 
+  /v1/payments/refunds:
+    post:
+      summary: Issue refund for booking
+      description: Issues a refund against a gateway-confirmed digital payment as an append-only reversal row (PAY-004, PAY-006, SUP-004).
+      operationId: issueRefund
+      x-requirement-ids:
+        - PAY-004
+        - PAY-006
+        - SUP-004
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRefundRequest'
+      responses:
+        '201':
+          description: Refund issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundResponse'
+        '409':
+          description: Nothing refundable or refund exceeds refundable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Validation error or missing reason
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/payments/booking/{bookingId}/refundable:
+    get:
+      summary: Get refundable amount for booking
+      description: Returns the amount of a digital payment still eligible for refund (PAY-006).
+      operationId: getBookingRefundable
+      x-requirement-ids:
+        - PAY-006
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Refundable amount breakdown
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundableAmountResponse'
+
+  /v1/payments/booking/{bookingId}/refunds:
+    get:
+      summary: List refunds for booking
+      description: Returns all refund records linked to the booking (PAY-006).
+      operationId: getBookingRefunds
+      x-requirement-ids:
+        - PAY-006
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of refunds
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RefundResponse'
+
+  /v1/payments/settlements:
+    post:
+      summary: Create provider payout settlement
+      description: Payout of positive provider balance via payout provider or manual bank transfer (PAY-007, LEDGER-005, LEDGER-007).
+      operationId: createSettlement
+      x-requirement-ids:
+        - PAY-007
+        - LEDGER-005
+        - LEDGER-007
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSettlementRequest'
+      responses:
+        '201':
+          description: Settlement created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SettlementResponse'
+        '409':
+          description: Balance not positive or amount exceeds balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    get:
+      summary: List settlements
+      description: Lists payout settlements with optional filtering (PAY-007).
+      operationId: listSettlements
+      x-requirement-ids:
+        - PAY-007
+      parameters:
+        - name: providerProfileId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [PENDING, PAID, FAILED]
+      responses:
+        '200':
+          description: List of settlements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SettlementResponse'
+
+  /v1/payments/settlements/ready:
+    get:
+      summary: List providers ready to settle
+      description: Lists providers with positive ledger balances available for payout (PAY-007, LEDGER-007).
+      operationId: getReadyToSettle
+      x-requirement-ids:
+        - PAY-007
+        - LEDGER-007
+      responses:
+        '200':
+          description: Providers ready for payout
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReadyToSettleResponse'
+
+  /v1/payments/provider/{providerProfileId}/settlements:
+    get:
+      summary: Get provider settlements
+      description: Returns payout history for a provider (PAY-007).
+      operationId: getProviderSettlements
+      x-requirement-ids:
+        - PAY-007
+      parameters:
+        - name: providerProfileId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Provider settlements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SettlementResponse'
+
+  /v1/payments/ledger/corrections:
+    post:
+      summary: Create ledger reversal correction
+      description: Reverses part or all of a single ledger entry without in-place mutation (PAY-004, LEDGER-005).
+      operationId: createLedgerCorrection
+      x-requirement-ids:
+        - PAY-004
+        - LEDGER-005
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLedgerCorrectionRequest'
+      responses:
+        '201':
+          description: Correction reversal entry created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LedgerCorrectionResponse'
+        '404':
+          description: Original ledger entry not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Validation error or amount exceeds unreversed portion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/payments/reconciliation/run:
+    post:
+      summary: Trigger reconciliation job
+      description: Runs gateway vs internal reconciliation job and detects exceptions (PAY-005).
+      operationId: runReconciliation
+      x-requirement-ids:
+        - PAY-005
+      responses:
+        '200':
+          description: Reconciliation report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReconciliationReportResponse'
+
+  /v1/payments/reconciliation/exceptions:
+    get:
+      summary: List reconciliation exceptions
+      description: Returns detected payment reconciliation anomalies and exceptions for A09 Finance screen (PAY-005).
+      operationId: getReconciliationExceptions
+      x-requirement-ids:
+        - PAY-005
+      responses:
+        '200':
+          description: List of exceptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReconciliationException'
+
 components:
   schemas:
     InitiatePaymentRequest:
@@ -767,3 +1019,268 @@ components:
           type: string
         blockReasonUr:
           type: string
+
+    CreateRefundRequest:
+      type: object
+      required:
+        - bookingId
+        - reason
+        - idempotencyKey
+      properties:
+        bookingId:
+          type: string
+          format: uuid
+        amountMinor:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+        disputeId:
+          type: string
+          format: uuid
+        idempotencyKey:
+          type: string
+
+    RefundResponse:
+      type: object
+      required:
+        - refundRef
+        - paymentId
+        - bookingId
+        - amountMinor
+        - status
+        - occurredAt
+      properties:
+        refundRef:
+          type: string
+          format: uuid
+        paymentId:
+          type: string
+          format: uuid
+        bookingId:
+          type: string
+          format: uuid
+        disputeId:
+          type: string
+          format: uuid
+          nullable: true
+        amountMinor:
+          type: integer
+        status:
+          type: string
+          enum: [ISSUED, SUCCEEDED, FAILED]
+        reason:
+          type: string
+          nullable: true
+        gatewayRef:
+          type: string
+          nullable: true
+        occurredAt:
+          type: string
+          format: date-time
+
+    RefundableAmountResponse:
+      type: object
+      required:
+        - bookingId
+        - paidMinor
+        - refundedMinor
+        - pendingMinor
+        - refundableMinor
+      properties:
+        bookingId:
+          type: string
+          format: uuid
+        paidMinor:
+          type: integer
+        refundedMinor:
+          type: integer
+        pendingMinor:
+          type: integer
+        refundableMinor:
+          type: integer
+
+    CreateSettlementRequest:
+      type: object
+      required:
+        - providerProfileId
+        - amountMinor
+        - mode
+        - reason
+        - idempotencyKey
+      properties:
+        providerProfileId:
+          type: string
+          format: uuid
+        amountMinor:
+          type: integer
+          minimum: 1
+        mode:
+          type: string
+          enum: [PAYOUT_PROVIDER, MANUAL]
+        reference:
+          type: string
+        payoutMethodId:
+          type: string
+          format: uuid
+        reason:
+          type: string
+        idempotencyKey:
+          type: string
+
+    SettlementResponse:
+      type: object
+      required:
+        - id
+        - providerProfileId
+        - amountMinor
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        providerProfileId:
+          type: string
+          format: uuid
+        amountMinor:
+          type: integer
+        status:
+          type: string
+          enum: [PENDING, PAID, FAILED]
+        payoutMethodId:
+          type: string
+          format: uuid
+          nullable: true
+        payoutRef:
+          type: string
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+        createdByUserId:
+          type: string
+          format: uuid
+          nullable: true
+        paidAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    ReadyToSettleResponse:
+      type: object
+      required:
+        - providerProfileId
+        - balanceMinor
+      properties:
+        providerProfileId:
+          type: string
+          format: uuid
+        balanceMinor:
+          type: integer
+
+    CreateLedgerCorrectionRequest:
+      type: object
+      required:
+        - originalEntryId
+        - reason
+        - idempotencyKey
+      properties:
+        originalEntryId:
+          type: string
+          format: uuid
+        amountMinor:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+        idempotencyKey:
+          type: string
+
+    LedgerCorrectionResponse:
+      type: object
+      required:
+        - id
+        - providerProfileId
+        - entryType
+        - direction
+        - amountMinor
+      properties:
+        id:
+          type: string
+          format: uuid
+        providerProfileId:
+          type: string
+          format: uuid
+        entryType:
+          type: string
+        direction:
+          type: string
+          enum: [CREDIT, DEBIT]
+        amountMinor:
+          type: integer
+        reversesEntryId:
+          type: string
+          format: uuid
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+
+    ReconciliationException:
+      type: object
+      required:
+        - type
+        - bookingId
+        - detail
+      properties:
+        type:
+          type: string
+          enum:
+            - MISSING_AT_GATEWAY
+            - STATUS_MISMATCH
+            - AMOUNT_MISMATCH
+            - STUCK_PAYMENT
+            - STUCK_REFUND
+            - DIGITAL_UNCONFIRMED
+        bookingId:
+          type: string
+          format: uuid
+        paymentRef:
+          type: string
+          format: uuid
+        refundRef:
+          type: string
+          format: uuid
+        internalStatus:
+          type: string
+        gatewayStatus:
+          type: string
+        internalAmountMinor:
+          type: integer
+        gatewayAmountMinor:
+          type: integer
+        waitingMinutes:
+          type: integer
+        detail:
+          type: string
+
+    ReconciliationReportResponse:
+      type: object
+      required:
+        - ranAt
+        - checkedPayments
+        - exceptions
+      properties:
+        ranAt:
+          type: string
+          format: date-time
+        checkedPayments:
+          type: integer
+        exceptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReconciliationException'

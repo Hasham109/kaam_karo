@@ -8,9 +8,14 @@ import { IdentityModule } from '../identity/index.js';
 import { PaymentsController } from './payments.controller.js';
 import { PaymentsService } from './payments.service.js';
 import { FakePaymentGateway } from './fake-payment-gateway.js';
+import { FakePayoutProvider } from './fake-payout-provider.js';
 import { CommissionService } from './commission.service.js';
 import { LedgerService } from './ledger.service.js';
-import { PAYMENT_GATEWAY } from './payments.types.js';
+import { LedgerAdjustmentService } from './ledger-adjustment.service.js';
+import { RefundService } from './refund.service.js';
+import { SettlementService } from './settlement.service.js';
+import { ReconciliationService } from './reconciliation.service.js';
+import { PAYMENT_GATEWAY, PAYOUT_PROVIDER } from './payments.types.js';
 
 @Module({
   imports: [IdentityModule],
@@ -19,12 +24,33 @@ import { PAYMENT_GATEWAY } from './payments.types.js';
     PaymentsService,
     CommissionService,
     LedgerService,
+    LedgerAdjustmentService,
+    RefundService,
+    SettlementService,
+    ReconciliationService,
     FakePaymentGateway,
     {
       provide: PAYMENT_GATEWAY,
       useExisting: FakePaymentGateway,
     },
+    FakePayoutProvider,
+    {
+      provide: PAYOUT_PROVIDER,
+      useExisting: FakePayoutProvider,
+    },
   ],
-  exports: [PaymentsService, CommissionService, LedgerService, PAYMENT_GATEWAY, FakePaymentGateway],
+  exports: [
+    PaymentsService,
+    CommissionService,
+    LedgerService,
+    LedgerAdjustmentService,
+    RefundService,
+    SettlementService,
+    ReconciliationService,
+    PAYMENT_GATEWAY,
+    FakePaymentGateway,
+    PAYOUT_PROVIDER,
+    FakePayoutProvider,
+  ],
 })
 export class PaymentsModule {}

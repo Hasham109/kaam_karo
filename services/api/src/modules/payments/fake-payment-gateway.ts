@@ -10,7 +10,10 @@ import {
   type GatewayInitiateParams,
   type GatewayInitiateResult,
   type GatewayQueryResult,
+  type GatewayRefundParams,
+  type GatewayRefundResult,
   PaymentStatus,
+  RefundStatus,
 } from './payments.types.js';
 
 @Injectable()
@@ -44,6 +47,7 @@ export class FakePaymentGateway implements PaymentGateway {
         gatewayRef,
         status: PaymentStatus.FAILED,
         amountMinor: 0n,
+        found: false,
       };
     }
 
@@ -51,14 +55,65 @@ export class FakePaymentGateway implements PaymentGateway {
       gatewayRef,
       status: tx.status,
       amountMinor: tx.amountMinor,
+      found: true,
     };
   }
 
+  /** Reverses (part of) a gateway payment. Outcome defaults to SUCCEEDED (T6.3; PAY-006). */
+  async refund(params: GatewayRefundParams): Promise<GatewayRefundResult> {
+    const status = this.nextRefundStatus;
+    this.nextRefundStatus = RefundStatus.SUCCEEDED;
+    if (this.refundShouldThrow) {
+      this.refundShouldThrow = false;
+      throw new Error('fake gateway unreachable');
+    }
+    return { gatewayRef: `fake_rf_${params.refundRef.replace(/-/g, '').slice(0, 16)}`, status };
+  }
+
+  private nextRefundStatus: RefundStatus = RefundStatus.SUCCEEDED;
+  private refundShouldThrow = false;
+
   // Helper for test fixtures to simulate gateway transition
-  simulateGatewayCallback(gatewayRef: string, status: PaymentStatus): void {
+  simulateGatewayCallback(gatewayRef: string, status: PaymentStatus, amountMinor = 50000n): void {
     const tx = this.transactions.get(gatewayRef);
     if (tx) {
       tx.status = status;
+    } else {
+      this.transactions.set(gatewayRef, {
+        status,
+        amountMinor,
+        paymentRef: 'simulated-ref',
+      });
     }
+  }
+
+  /** Test helper: set up a known transaction directly on the gateway */
+  setTransaction(
+    gatewayRef: string,
+    data: { status: PaymentStatus; amountMinor: bigint; paymentRef?: string },
+  ): void {
+    this.transactions.set(gatewayRef, {
+      status: data.status,
+      amountMinor: data.amountMinor,
+      paymentRef: data.paymentRef ?? 'test-pay-ref',
+    });
+  }
+
+  /** Test helper: make the gateway report a different amount than we recorded. */
+  simulateAmountMismatch(gatewayRef: string, amountMinor: bigint): void {
+    const tx = this.transactions.get(gatewayRef);
+    if (tx) {
+      tx.amountMinor = amountMinor;
+    }
+  }
+
+  /** Test helper: the next refund call returns this status (ISSUED = still processing). */
+  setNextRefundStatus(status: RefundStatus): void {
+    this.nextRefundStatus = status;
+  }
+
+  /** Test helper: the next refund call throws (gateway down). */
+  failNextRefundCall(): void {
+    this.refundShouldThrow = true;
   }
 }

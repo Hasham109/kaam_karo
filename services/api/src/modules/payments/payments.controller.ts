@@ -16,12 +16,14 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Optional,
   Param,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { AdminSubRole, UserRoleType } from '../../generated/prisma/client.js';
+import { AdminSubRole, SettlementStatus, UserRoleType } from '../../generated/prisma/client.js';
 import {
   AuthGuard,
   type AuthenticatedRequest,
@@ -34,6 +36,10 @@ import {
 import { PaymentsService } from './payments.service.js';
 import { CommissionService } from './commission.service.js';
 import { LedgerService } from './ledger.service.js';
+import { RefundService } from './refund.service.js';
+import { SettlementService } from './settlement.service.js';
+import { LedgerAdjustmentService } from './ledger-adjustment.service.js';
+import { ReconciliationService } from './reconciliation.service.js';
 import {
   ActorRole,
   type InitiatePaymentDto,
@@ -41,6 +47,9 @@ import {
   type RecordCashPaymentDto,
   type SubmitCommissionPaymentDto,
   type DecideCommissionPaymentDto,
+  type CreateRefundDto,
+  type CreateSettlementDto,
+  type CreateLedgerCorrectionDto,
 } from './payments.types.js';
 
 /** Admin sub-roles allowed to see money data (OQ-052: everything else stays denied). */
@@ -84,6 +93,10 @@ export class PaymentsController {
     private readonly paymentsService: PaymentsService,
     private readonly commissionService: CommissionService,
     private readonly ledgerService: LedgerService,
+    @Optional() private readonly refundService?: RefundService,
+    @Optional() private readonly settlementService?: SettlementService,
+    @Optional() private readonly adjustmentsService?: LedgerAdjustmentService,
+    @Optional() private readonly reconciliationService?: ReconciliationService,
   ) {}
 
   @Post('initiate')
@@ -231,5 +244,137 @@ export class PaymentsController {
       assertFinanceStaff(req);
     }
     return this.ledgerService.isProviderHiringBlocked(providerProfileId);
+  }
+
+  // --- T6.3 Refunds (PAY-004, PAY-006, SUP-004; A09) ---
+
+  @Post('refunds')
+  @RequireRole(UserRoleType.ADMIN)
+  @RequireAdminSubRole(...FINANCE_SUB_ROLES)
+  @HttpCode(HttpStatus.CREATED)
+  async issueRefund(@Body() body: CreateRefundDto, @Req() req: AuthenticatedRequest) {
+    assertFinanceStaff(req);
+    if (!this.refundService) throw new ForbiddenException();
+    return this.refundService.createRefund(body, {
+      userId: req.user.id,
+      subRoles: req.user.subRoles,
+    });
+  }
+
+  @Get('booking/:bookingId/refundable')
+  async getBookingRefundable(
+    @Param('bookingId') bookingId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const { userId, role } = resolveCaller(req);
+    if (role === ActorRole.ADMIN) assertFinanceStaff(req);
+    await this.paymentsService.assertCallerMayAccessBooking(bookingId, userId, role);
+    if (!this.refundService) throw new ForbiddenException();
+    return this.refundService.getRefundableAmount(bookingId);
+  }
+
+  @Get('booking/:bookingId/refunds')
+  async getBookingRefunds(@Param('bookingId') bookingId: string, @Req() req: AuthenticatedRequest) {
+    const { userId, role } = resolveCaller(req);
+    if (role === ActorRole.ADMIN) assertFinanceStaff(req);
+    await this.paymentsService.assertCallerMayAccessBooking(bookingId, userId, role);
+    if (!this.refundService) throw new ForbiddenException();
+    return this.refundService.listBookingRefunds(bookingId);
+  }
+
+  // --- T6.3 Settlements (PAY-007, LEDGER-005, LEDGER-007; A10) ---
+
+  @Post('settlements')
+  @RequireRole(UserRoleType.ADMIN)
+  @RequireAdminSubRole(...FINANCE_SUB_ROLES)
+  @HttpCode(HttpStatus.CREATED)
+  async createSettlement(@Body() body: CreateSettlementDto, @Req() req: AuthenticatedRequest) {
+    assertFinanceStaff(req);
+    if (!this.settlementService) throw new ForbiddenException();
+    return this.settlementService.createSettlement(body, {
+      userId: req.user.id,
+      subRoles: req.user.subRoles,
+    });
+  }
+
+  @Get('settlements/ready')
+  @RequireRole(UserRoleType.ADMIN)
+  @RequireAdminSubRole(...FINANCE_SUB_ROLES)
+  async getReadyToSettle() {
+    if (!this.settlementService) throw new ForbiddenException();
+    return this.settlementService.listReadyToSettle();
+  }
+
+  @Get('settlements')
+  @RequireRole(UserRoleType.ADMIN)
+  @RequireAdminSubRole(...FINANCE_SUB_ROLES)
+  async listSettlements(
+    @Query('providerProfileId') providerProfileId?: string,
+    @Query('status') status?: SettlementStatus,
+  ) {
+    if (!this.settlementService) throw new ForbiddenException();
+    return this.settlementService.listSettlements({ providerProfileId, status });
+  }
+
+  @Get('provider/:providerProfileId/settlements')
+  @RequireRole(UserRoleType.PROVIDER, UserRoleType.ADMIN)
+  async getProviderSettlements(
+    @Param('providerProfileId') providerProfileId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const { userId, role } = resolveCaller(req);
+    if (role === ActorRole.PROVIDER) {
+      await this.ledgerService.assertProviderOwnsProfile(userId, providerProfileId);
+    } else if (role === ActorRole.ADMIN) {
+      assertFinanceStaff(req);
+    }
+    if (!this.settlementService) throw new ForbiddenException();
+    return this.settlementService.listSettlements({ providerProfileId });
+  }
+
+  // --- T6.3 Ledger Corrections (PAY-004, LEDGER-005; A09) ---
+
+  @Post('ledger/corrections')
+  @RequireRole(UserRoleType.ADMIN)
+  @RequireAdminSubRole(...FINANCE_SUB_ROLES)
+  @HttpCode(HttpStatus.CREATED)
+  async createLedgerCorrection(
+    @Body() body: CreateLedgerCorrectionDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    assertFinanceStaff(req);
+    if (!this.adjustmentsService) throw new ForbiddenException();
+    return this.adjustmentsService.createCorrection(body, {
+      userId: req.user.id,
+      subRoles: req.user.subRoles,
+    });
+  }
+
+  // --- T6.3 Reconciliation & Exceptions (PAY-005; A09) ---
+
+  @Post('reconciliation/run')
+  @RequireRole(UserRoleType.ADMIN)
+  @RequireAdminSubRole(...FINANCE_SUB_ROLES)
+  @HttpCode(HttpStatus.OK)
+  async runReconciliation(@Req() req: AuthenticatedRequest) {
+    assertFinanceStaff(req);
+    if (!this.reconciliationService) throw new ForbiddenException();
+    return this.reconciliationService.runReconciliation({
+      userId: req.user.id,
+      subRoles: req.user.subRoles,
+    });
+  }
+
+  @Get('reconciliation/exceptions')
+  @RequireRole(UserRoleType.ADMIN)
+  @RequireAdminSubRole(...FINANCE_SUB_ROLES)
+  async getReconciliationExceptions(@Req() req: AuthenticatedRequest) {
+    assertFinanceStaff(req);
+    if (!this.reconciliationService) throw new ForbiddenException();
+    const report = await this.reconciliationService.runReconciliation({
+      userId: req.user.id,
+      subRoles: req.user.subRoles,
+    });
+    return report.exceptions;
   }
 }
