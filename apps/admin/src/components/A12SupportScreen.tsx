@@ -216,7 +216,7 @@ export const A12SupportScreen: React.FC<A12SupportScreenProps> = ({
   locale = 'en',
   initialTicketsList = INITIAL_TICKETS,
   initialFaqList = INITIAL_FAQS,
-  initialState = 'S',
+  initialState = 'success',
   onAssignSelf,
   onSendUpdate,
   onEscalate,
@@ -263,7 +263,7 @@ export const A12SupportScreen: React.FC<A12SupportScreenProps> = ({
     );
   }
 
-  if (screenState === 'L') {
+  if (screenState === 'loading') {
     return (
       <div className="p-6 text-center text-gray-500" data-testid="a12-loading-state">
         <p className="text-lg">{translate(locale, 'admin.a12.loading')}</p>
@@ -271,18 +271,21 @@ export const A12SupportScreen: React.FC<A12SupportScreenProps> = ({
     );
   }
 
-  if (screenState === 'X') {
+  if (screenState === 'error') {
     return (
       <div className="p-6 text-center text-red-600" data-testid="a12-error-state">
         <p className="text-lg font-semibold">{translate(locale, 'admin.a12.error')}</p>
-        <button className="mt-3 px-4 py-2 bg-gray-200 rounded" onClick={() => setScreenState('S')}>
+        <button
+          className="mt-3 px-4 py-2 bg-gray-200 rounded"
+          onClick={() => setScreenState('success')}
+        >
           {translate(locale, 'common.action.retry')}
         </button>
       </div>
     );
   }
 
-  if (screenState === 'P') {
+  if (screenState === 'pending') {
     return (
       <div className="p-6 text-center text-amber-600" data-testid="a12-pending-state">
         <p className="text-lg">{translate(locale, 'admin.a12.pending')}</p>

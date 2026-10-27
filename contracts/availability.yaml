@@ -356,6 +356,124 @@ paths:
         '404':
           description: Record not found
 
+  /v1/providers/{providerId}/rating-standing:
+    get:
+      summary: Get provider rating standing and warning details
+      operationId: getProviderRatingStanding
+      x-requirement-ids:
+        - RATING-ENF-001
+        - RATING-ENF-002
+        - RATING-ENF-003
+        - RATING-ENF-004
+        - RATING-ENF-007
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Provider rating standing and localized notices
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RatingStandingDetailsResponse'
+        '404':
+          description: Provider not found
+
+  /v1/admin/trust/rating-enforcement/run:
+    post:
+      summary: Trigger low-rating enforcement scheduled job
+      operationId: runRatingEnforcementJob
+      x-requirement-ids:
+        - RATING-ENF-003
+        - RATING-ENF-004
+        - RATING-ENF-005
+        - RATING-ENF-007
+        - RATING-ENF-008
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dryRun:
+                  type: boolean
+      responses:
+        '200':
+          description: Enforcement run report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RatingEnforcementReportResponse'
+        '403':
+          description: Forbidden (requires Super Admin, Operations, or Risk/Trust role)
+
+  /v1/admin/trust/standing/{providerProfileId}:
+    get:
+      summary: Get provider standing details for admin
+      operationId: getAdminProviderStanding
+      x-requirement-ids:
+        - RATING-ENF-003
+        - RATING-ENF-004
+      parameters:
+        - name: providerProfileId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Provider standing details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RatingStandingDetailsResponse'
+        '404':
+          description: Provider not found
+
+  /v1/admin/trust/standing/{providerProfileId}/reinstate:
+    post:
+      summary: Reinstate blocked provider with mandatory audit reason
+      operationId: reinstateProviderStanding
+      x-requirement-ids:
+        - RATING-ENF-006
+        - ROLE-003
+      parameters:
+        - name: providerProfileId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+                  minLength: 5
+      responses:
+        '200':
+          description: Provider reinstated to good standing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderStandingResponse'
+        '400':
+          description: Reason missing or less than 5 characters
+        '404':
+          description: Provider not found
+
 components:
   schemas:
     DaySchedule:
@@ -729,3 +847,112 @@ components:
         decisionReason:
           type: string
           nullable: true
+
+    RatingStandingDetailsResponse:
+      type: object
+      required:
+        - providerProfileId
+        - ratingStanding
+        - ratingWarningCount
+        - maxWarnings
+        - blockThreshold
+        - isEligibleForMatching
+      properties:
+        providerProfileId:
+          type: string
+          format: uuid
+        ratingStanding:
+          type: string
+          enum: [GOOD_STANDING, WARNING, BLOCKED_LOW_RATING]
+        ratingWarningCount:
+          type: integer
+        maxWarnings:
+          type: integer
+        blockThreshold:
+          type: number
+        averageRating:
+          type: number
+          nullable: true
+        ratingCount:
+          type: integer
+        ratingStandingChangedAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastRatingCheckAt:
+          type: string
+          format: date-time
+          nullable: true
+        warningNoticeEn:
+          type: string
+          nullable: true
+        warningNoticeUr:
+          type: string
+          nullable: true
+        isEligibleForMatching:
+          type: boolean
+
+    RatingEnforcementReportResponse:
+      type: object
+      required:
+        - evaluatedAt
+        - isDryRun
+        - providersEvaluated
+        - warningsIssued
+        - providersBlocked
+        - providersRecovered
+        - evaluations
+      properties:
+        evaluatedAt:
+          type: string
+          format: date-time
+        isDryRun:
+          type: boolean
+        dryRunReason:
+          type: string
+        providersEvaluated:
+          type: integer
+        warningsIssued:
+          type: integer
+        providersBlocked:
+          type: integer
+        providersRecovered:
+          type: integer
+        evaluations:
+          type: array
+          items:
+            type: object
+            required:
+              - providerProfileId
+              - currentStanding
+              - currentWarningCount
+              - action
+              - isDryRun
+            properties:
+              providerProfileId:
+                type: string
+                format: uuid
+              userId:
+                type: string
+                format: uuid
+              currentStanding:
+                type: string
+              currentWarningCount:
+                type: integer
+              averageRating:
+                type: number
+                nullable: true
+              ratingCount:
+                type: integer
+              blockThreshold:
+                type: number
+              warningsBeforeBlock:
+                type: integer
+              isBelowThreshold:
+                type: boolean
+              action:
+                type: string
+              reason:
+                type: string
+              isDryRun:
+                type: boolean

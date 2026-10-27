@@ -116,21 +116,21 @@ describe('[T7.5] Admin Support Queue Test Suite (A12)', () => {
 
       const loadingHtml = renderToStaticMarkup(
         <AdminAuthProvider initialUser={supportUser}>
-          <A12SupportScreen initialState="L" />
+          <A12SupportScreen initialState="loading" />
         </AdminAuthProvider>,
       );
       expect(loadingHtml).toContain('data-testid="a12-loading-state"');
 
       const errorHtml = renderToStaticMarkup(
         <AdminAuthProvider initialUser={supportUser}>
-          <A12SupportScreen initialState="X" />
+          <A12SupportScreen initialState="error" />
         </AdminAuthProvider>,
       );
       expect(errorHtml).toContain('data-testid="a12-error-state"');
 
       const pendingHtml = renderToStaticMarkup(
         <AdminAuthProvider initialUser={supportUser}>
-          <A12SupportScreen initialState="P" />
+          <A12SupportScreen initialState="pending" />
         </AdminAuthProvider>,
       );
       expect(pendingHtml).toContain('data-testid="a12-pending-state"');

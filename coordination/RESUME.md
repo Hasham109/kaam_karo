@@ -56,7 +56,14 @@ Parallel agents share one working tree, so give each agent explicit path limits.
 | `372fc48` | **T3.12** Customer journey E2E BP §9 steps 11–20 en/ur (Vitest 30 tests + Maestro suites) | QA PASS, SEC PASS |
 | `0a01acf` | **Bug Sweep Phase 3** (§7.3 A–F, 0 open S1/S2 bugs, docs/qa/bug-sweep-phase3.md) + **Gate G2: PASS** | SWEEP PASS, GATE PASS |
 
-Earlier commits: Phase 0 (T0.1–T0.5) docs and decisions D-001…D-030.
+| `47eb824` | **T7.1** Notifications fan-out, en/ur templates, categories, priority, preferences | QA PASS, SEC PASS |
+| `8049623` | **T7.2** Chat bound to booking, CallRelay fake, WhatsApp share payloads | QA PASS, SEC PASS |
+| `fd6a061` | **T7.3** Reviews & reputation, moderation queue, flag/report, A11 screen | QA PASS, SEC PASS |
+| `c181e2f` | **T7.4** Badges computed from configured rules, Super Admin editor, customer display | QA PASS, SEC PASS |
+| `da39ba4` | **T7.5** Support tickets L1–L5, disputes ↔ refunds, C28/C29, P20, A10/A12 | QA PASS, SEC PASS |
+| (current) | **T7.6** Low-rating enforcement, warning progression, dry-run mode, admin reinstate | QA PASS, SEC PASS |
+
+Earlier commits: Phase 0 (T0.1–T0.5), Phase 2 (T2.1–T2.8), Phase 3 (T3.1–T3.12), Phase 4 (T4.1–T4.7), Phase 5 (T5.1–T5.4), Phase 6 (T6.1–T6.7).
 
 ---
 
@@ -66,20 +73,18 @@ Earlier commits: Phase 0 (T0.1–T0.5) docs and decisions D-001…D-030.
 - Code is committed. The on-device run is pending: this PC has no JDK 17 and no phone/emulator connected.
 - Owner steps (Roman Urdu) and the checklist: `docs/qa/urdu-smoke/README.md`. When the owner sends screenshots, record PASS/FAIL there. If any check C1–C9 fails, D-001 must be reopened.
 
-### Phase 3 formally CLOSED; Gate G2 PASSED. Phase 4 (Provider MVP) unblocked.
+### Phase 7 formally CLOSED; Gate G6 PASSED. Phase 8 (Pre-launch hardening & verification) unblocked.
 
 ---
 
 ## 5. Next steps (agreed order with the owner)
 
-1. **Phase 4 — Provider MVP:**
-   - **T4.1** Partner onboarding + verification upload (document picker) (A12)
-   - **T4.2** Service setup, availability, overrides, status switch, service area (A12)
-   - **T4.3** Incoming requests + job detail with media player; Accept/Quote/Ask/Decline ≤ 2 taps (A12)
-   - **T4.4** Quote builder with line types + crew size (A12)
-   - **T4.5** Job execution: en route, arrived, in progress, extras (proposed), completion evidence, navigation (A12 + A06)
-   - **T4.6** Customer side of execution: tracking, charge approval sheet, completion confirm (A11)
-   - **T4.7** QA: provider journey E2E (BP §10) + joint customer/provider E2E (A16)
+1. **Phase 8 — Launch Hardening & Verification:**
+   - **T8.1** Full bug sweep (§7.3 checklist) across all modules (A17)
+   - **T8.2** Security review + abuse scenarios BP §30 (A15)
+   - **T8.3** Performance budgets for AI/map/media/notifications (values from D-012) (A01 + A16)
+   - **T8.4** Accessibility + Urdu RTL audit of every screen (A14 + A16)
+   - **T8.5** Restore drill + incident owner named (A01)
 
 ---
 

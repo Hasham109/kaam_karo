@@ -83,9 +83,7 @@ export function A11ReviewsModerationScreen(): React.JSX.Element {
   const [reasonError, setReasonError] = useState<string | null>(null);
 
   if (!hasAccess) {
-    return (
-      <Forbidden403View screenId="A11" message={translate('en', 'admin.a11.forbidden_desc')} />
-    );
+    return <Forbidden403View screenId="A11" screenTitle="Reviews Moderation" />;
   }
 
   const handleOpenDecisionModal = (item: ModerationQueueItem, mode: 'HIDE' | 'KEEP') => {
