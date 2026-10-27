@@ -1,0 +1,1075 @@
+openapi: 3.1.0
+info:
+  title: Kaam Karo Support & Disputes API
+  version: 0.1.0
+  description: >
+    Module M16 Support & Disputes API (ARCH §4 M16; BP §12 C28/C29, §13 P20, §14 A10/A12, §16, §40).
+    Support ticket creation, L1–L5 escalation, dispute lifecycle linked to bookings, and refund integration.
+servers:
+  - url: /v1
+paths:
+  /support/faq:
+    get:
+      summary: Get FAQ items for self-help (L1)
+      description: Returns localized FAQ articles for customers and providers (BP §40 L1; SUP-001).
+      operationId: getFaqList
+      x-requirement-ids:
+        - SUP-001
+      tags:
+        - support
+      parameters:
+        - name: audience
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [CUSTOMER, PROVIDER]
+      responses:
+        '200':
+          description: List of FAQ items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FaqItem'
+        '400':
+          $ref: './common.yaml#/components/responses/BadRequest'
+
+  /support/tickets:
+    get:
+      summary: List user's support tickets
+      description: Returns support tickets created by the authenticated user (BP §40; SUP-001, SUP-002).
+      operationId: listMySupportTickets
+      x-requirement-ids:
+        - SUP-001
+        - SUP-002
+      tags:
+        - support
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of tickets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SupportTicketResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+
+    post:
+      summary: Create support ticket
+      description: Creates a customer or provider support ticket (BP §12 C28, §13 P20, §40; SUP-001, SUP-005).
+      operationId: createSupportTicket
+      x-requirement-ids:
+        - SUP-001
+        - SUP-005
+      tags:
+        - support
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSupportTicketRequest'
+      responses:
+        '201':
+          description: Ticket created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportTicketResponse'
+        '400':
+          $ref: './common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '422':
+          $ref: './common.yaml#/components/responses/UnprocessableEntity'
+
+  /support/tickets/{ticketId}:
+    get:
+      summary: Get ticket detail with updates
+      description: Returns ticket details and timeline of case updates (BP §40; SUP-001, SUP-002).
+      operationId: getSupportTicket
+      x-requirement-ids:
+        - SUP-001
+        - SUP-002
+      tags:
+        - support
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Ticket detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportTicketDetailResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+
+  /support/tickets/{ticketId}/updates:
+    post:
+      summary: Add update or message to ticket
+      description: Adds a response message from the ticket requester (BP §8.2, §40; SUP-001, SUP-002).
+      operationId: addTicketUpdate
+      x-requirement-ids:
+        - SUP-001
+        - SUP-002
+      tags:
+        - support
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddCaseUpdateRequest'
+      responses:
+        '201':
+          description: Update added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseUpdateResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+
+  /support/disputes:
+    post:
+      summary: Open dispute for booking
+      description: >
+        Opens a structured complaint/dispute for a booking (BP §12 C29, §15, §40; SUP-003, SUP-005, BOOK-STATUS-012).
+        Transitions booking status to DISPUTED when applicable.
+      operationId: createDispute
+      x-requirement-ids:
+        - SUP-003
+        - SUP-005
+        - BOOK-STATUS-012
+      tags:
+        - disputes
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDisputeRequest'
+      responses:
+        '201':
+          description: Dispute opened successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisputeResponse'
+        '400':
+          $ref: './common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '409':
+          description: Dispute already open for booking
+          content:
+            application/json:
+              schema:
+                $ref: './common.yaml#/components/schemas/ErrorEnvelope'
+        '422':
+          $ref: './common.yaml#/components/responses/UnprocessableEntity'
+
+  /support/disputes/{disputeId}:
+    get:
+      summary: Get dispute detail with updates
+      description: Returns dispute record and case timeline (BP §40; SUP-003).
+      operationId: getDispute
+      x-requirement-ids:
+        - SUP-003
+      tags:
+        - disputes
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: disputeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Dispute detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisputeDetailResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+
+  /support/disputes/{disputeId}/updates:
+    post:
+      summary: Add update to dispute
+      description: Adds message or evidence response from participant (BP §40; SUP-003).
+      operationId: addDisputeUpdate
+      x-requirement-ids:
+        - SUP-003
+      tags:
+        - disputes
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: disputeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddCaseUpdateRequest'
+      responses:
+        '201':
+          description: Update added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseUpdateResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+
+  /admin/support/tickets:
+    get:
+      summary: Admin list support tickets queue
+      description: >
+        Admin ticket queue with level, SLA status, and filters (BP §14, §40; OPS-ADMIN-012, SUP-002, CFG-RULE-012).
+        Allowed for Support, Operations, Risk/Trust, Finance.
+      operationId: adminListTickets
+      x-requirement-ids:
+        - OPS-ADMIN-012
+        - SUP-002
+        - CFG-RULE-012
+      tags:
+        - admin-support
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: level
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [L1, L2, L3, L4, L5]
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [OPEN, CLOSED]
+        - name: isSafety
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: categoryCode
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tickets queue
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminSupportTicketItem'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+
+  /admin/support/tickets/{ticketId}/assign:
+    post:
+      summary: Take/assign ticket
+      description: Assigns ticket to authenticated staff member (BP §40; OPS-ADMIN-012, SUP-002, ROLE-003).
+      operationId: adminAssignTicket
+      x-requirement-ids:
+        - OPS-ADMIN-012
+        - SUP-002
+        - ROLE-003
+      tags:
+        - admin-support
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignTicketRequest'
+      responses:
+        '200':
+          description: Ticket assigned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportTicketResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+
+  /admin/support/tickets/{ticketId}/updates:
+    post:
+      summary: Send staff update to requester
+      description: Adds a staff update and emits notification to requester (BP §24, §40; OPS-ADMIN-012, SUP-002, ROLE-003).
+      operationId: adminAddTicketUpdate
+      x-requirement-ids:
+        - OPS-ADMIN-012
+        - SUP-002
+        - ROLE-003
+      tags:
+        - admin-support
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCaseUpdateRequest'
+      responses:
+        '201':
+          description: Update sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseUpdateResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+
+  /admin/support/tickets/{ticketId}/escalate:
+    post:
+      summary: Escalate ticket level (L2->L3->L4->L5)
+      description: Escalates ticket to a higher support tier with audit reason (BP §40; OPS-ADMIN-012, SUP-002, ROLE-003).
+      operationId: adminEscalateTicket
+      x-requirement-ids:
+        - OPS-ADMIN-012
+        - SUP-002
+        - ROLE-003
+      tags:
+        - admin-support
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EscalateLevelRequest'
+      responses:
+        '200':
+          description: Ticket escalated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportTicketResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: './common.yaml#/components/responses/UnprocessableEntity'
+
+  /admin/support/tickets/{ticketId}/category:
+    post:
+      summary: Confirm or change ticket category
+      description: Sets or confirms ticket category code with audit reason (BP §40; OPS-ADMIN-012, CFG-RULE-012, ROLE-003).
+      operationId: adminSetTicketCategory
+      x-requirement-ids:
+        - OPS-ADMIN-012
+        - CFG-RULE-012
+        - ROLE-003
+      tags:
+        - admin-support
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetCategoryRequest'
+      responses:
+        '200':
+          description: Category updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportTicketResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+
+  /admin/support/tickets/{ticketId}/close:
+    post:
+      summary: Close ticket
+      description: Closes ticket with resolution note and audit reason (BP §40; OPS-ADMIN-012, SUP-002, ROLE-003).
+      operationId: adminCloseTicket
+      x-requirement-ids:
+        - OPS-ADMIN-012
+        - SUP-002
+        - ROLE-003
+      tags:
+        - admin-support
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloseTicketRequest'
+      responses:
+        '200':
+          description: Ticket closed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportTicketResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+
+  /admin/disputes:
+    get:
+      summary: Admin list disputes
+      description: >
+        Admin list disputes queue with filters (BP §14 A10, §40; OPS-ADMIN-010, SUP-003).
+        Allowed for Operations, Support, Risk/Trust, Finance.
+      operationId: adminListDisputes
+      x-requirement-ids:
+        - OPS-ADMIN-010
+        - SUP-003
+      tags:
+        - admin-disputes
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: level
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [L2, L3, L4, L5]
+        - name: outcome
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [OPEN, RESOLVED, REFUNDED, REWORK, CLOSED]
+        - name: isSafety
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Disputes queue
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminDisputeItem'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+
+  /admin/disputes/{disputeId}/updates:
+    post:
+      summary: Send staff update to dispute
+      description: Adds staff update and notifies parties (BP §24, §40; OPS-ADMIN-010, SUP-003, ROLE-003).
+      operationId: adminAddDisputeUpdate
+      x-requirement-ids:
+        - OPS-ADMIN-010
+        - SUP-003
+        - ROLE-003
+      tags:
+        - admin-disputes
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: disputeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCaseUpdateRequest'
+      responses:
+        '201':
+          description: Update sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseUpdateResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+
+  /admin/disputes/{disputeId}/escalate:
+    post:
+      summary: Escalate dispute level (L2->L3->L4->L5)
+      description: Escalates dispute to higher tier with audit reason (BP §40; OPS-ADMIN-010, SUP-002, ROLE-003).
+      operationId: adminEscalateDispute
+      x-requirement-ids:
+        - OPS-ADMIN-010
+        - SUP-002
+        - ROLE-003
+      tags:
+        - admin-disputes
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: disputeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EscalateLevelRequest'
+      responses:
+        '200':
+          description: Dispute escalated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisputeResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: './common.yaml#/components/responses/UnprocessableEntity'
+
+  /admin/disputes/{disputeId}/decide:
+    post:
+      summary: Record outcome of dispute
+      description: >
+        Records formal dispute decision (RESOLVED, REFUNDED, REWORK, CLOSED) with mandatory audit reason (BP §15, §40; OPS-ADMIN-010, SUP-003, SUP-004, BOOK-STATUS-012, ROLE-003).
+        REWORK transitions booking back to IN_PROGRESS. REFUNDED marks outcome for Finance refund.
+      operationId: adminDecideDispute
+      x-requirement-ids:
+        - OPS-ADMIN-010
+        - SUP-003
+        - SUP-004
+        - BOOK-STATUS-012
+        - ROLE-003
+      tags:
+        - admin-disputes
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: disputeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecideDisputeRequest'
+      responses:
+        '200':
+          description: Dispute decided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisputeResponse'
+        '401':
+          $ref: './common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: './common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: './common.yaml#/components/responses/NotFound'
+        '409':
+          description: Outcome already decided
+          content:
+            application/json:
+              schema:
+                $ref: './common.yaml#/components/schemas/ErrorEnvelope'
+        '422':
+          $ref: './common.yaml#/components/responses/UnprocessableEntity'
+
+components:
+  schemas:
+    FaqItem:
+      type: object
+      required:
+        - id
+        - questionEn
+        - questionUr
+        - answerEn
+        - answerUr
+        - audience
+      properties:
+        id:
+          type: string
+        categoryCode:
+          type: string
+          nullable: true
+        questionEn:
+          type: string
+        questionUr:
+          type: string
+        answerEn:
+          type: string
+        answerUr:
+          type: string
+        audience:
+          type: string
+          enum: [CUSTOMER, PROVIDER]
+
+    SupportTicketResponse:
+      type: object
+      required:
+        - id
+        - requesterUserId
+        - requesterRole
+        - level
+        - source
+        - isSafety
+        - description
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        requesterUserId:
+          type: string
+          format: uuid
+        requesterRole:
+          type: string
+          enum: [CUSTOMER, PROVIDER]
+        bookingId:
+          type: string
+          format: uuid
+          nullable: true
+        categoryCode:
+          type: string
+          nullable: true
+        level:
+          type: string
+          enum: [L1, L2, L3, L4, L5]
+        assignedToUserId:
+          type: string
+          format: uuid
+          nullable: true
+        source:
+          type: string
+          enum: [APP_TICKET, COMPLAINT, SAFETY_STOP, NO_SUPPLY_CALLBACK]
+        isSafety:
+          type: boolean
+        description:
+          type: string
+        evidenceMediaIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        status:
+          type: string
+          enum: [OPEN, CLOSED]
+        closedAt:
+          type: string
+          format: date-time
+          nullable: true
+        resolutionNote:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    SupportTicketDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/SupportTicketResponse'
+        - type: object
+          properties:
+            updates:
+              type: array
+              items:
+                $ref: '#/components/schemas/CaseUpdateResponse'
+
+    AdminSupportTicketItem:
+      allOf:
+        - $ref: '#/components/schemas/SupportTicketResponse'
+        - type: object
+          required:
+            - slaStatus
+            - requesterMaskedPhone
+          properties:
+            slaStatus:
+              type: string
+              enum: [ON_TRACK, BREACHED, NOT_SET]
+            requesterName:
+              type: string
+            requesterMaskedPhone:
+              type: string
+
+    CreateSupportTicketRequest:
+      type: object
+      required:
+        - description
+      properties:
+        bookingId:
+          type: string
+          format: uuid
+        categoryCode:
+          type: string
+        description:
+          type: string
+        evidenceMediaIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        source:
+          type: string
+          enum: [APP_TICKET, COMPLAINT, SAFETY_STOP, NO_SUPPLY_CALLBACK]
+        isSafety:
+          type: boolean
+
+    CreateDisputeRequest:
+      type: object
+      required:
+        - bookingId
+        - description
+      properties:
+        bookingId:
+          type: string
+          format: uuid
+        issueType:
+          type: string
+        description:
+          type: string
+        evidenceMediaIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        isSafety:
+          type: boolean
+
+    DisputeResponse:
+      type: object
+      required:
+        - id
+        - bookingId
+        - openedByUserId
+        - openedByRole
+        - level
+        - description
+        - isSafety
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        bookingId:
+          type: string
+          format: uuid
+        openedByUserId:
+          type: string
+          format: uuid
+        openedByRole:
+          type: string
+          enum: [CUSTOMER, PROVIDER]
+        level:
+          type: string
+          enum: [L2, L3, L4, L5]
+        issueType:
+          type: string
+          nullable: true
+        description:
+          type: string
+        evidenceMediaIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        isSafety:
+          type: boolean
+        outcome:
+          type: string
+          enum: [RESOLVED, REFUNDED, REWORK, CLOSED]
+          nullable: true
+        outcomeReason:
+          type: string
+          nullable: true
+        decidedByUserId:
+          type: string
+          format: uuid
+          nullable: true
+        decidedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    DisputeDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/DisputeResponse'
+        - type: object
+          properties:
+            updates:
+              type: array
+              items:
+                $ref: '#/components/schemas/CaseUpdateResponse'
+
+    AdminDisputeItem:
+      allOf:
+        - $ref: '#/components/schemas/DisputeResponse'
+        - type: object
+          required:
+            - bookingRef
+            - openedByMaskedPhone
+          properties:
+            bookingRef:
+              type: string
+            openedByName:
+              type: string
+            openedByMaskedPhone:
+              type: string
+            paidAmountMinor:
+              type: integer
+            refundableAmountMinor:
+              type: integer
+            method:
+              type: string
+              enum: [CASH, DIGITAL]
+
+    AddCaseUpdateRequest:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+
+    AdminCaseUpdateRequest:
+      type: object
+      required:
+        - text
+        - reason
+      properties:
+        text:
+          type: string
+        reason:
+          type: string
+          minLength: 5
+
+    CaseUpdateResponse:
+      type: object
+      required:
+        - id
+        - authorUserId
+        - authorRole
+        - text
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        supportTicketId:
+          type: string
+          format: uuid
+          nullable: true
+        disputeId:
+          type: string
+          format: uuid
+          nullable: true
+        authorUserId:
+          type: string
+          format: uuid
+        authorRole:
+          type: string
+          enum: [CUSTOMER, PROVIDER, ADMIN]
+        authorName:
+          type: string
+        text:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    AssignTicketRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 5
+
+    EscalateLevelRequest:
+      type: object
+      required:
+        - level
+        - reason
+      properties:
+        level:
+          type: string
+          enum: [L2, L3, L4, L5]
+        reason:
+          type: string
+          minLength: 5
+
+    SetCategoryRequest:
+      type: object
+      required:
+        - categoryCode
+        - reason
+      properties:
+        categoryCode:
+          type: string
+        reason:
+          type: string
+          minLength: 5
+
+    CloseTicketRequest:
+      type: object
+      required:
+        - resolutionNote
+        - reason
+      properties:
+        resolutionNote:
+          type: string
+        reason:
+          type: string
+          minLength: 5
+
+    DecideDisputeRequest:
+      type: object
+      required:
+        - outcome
+        - reason
+      properties:
+        outcome:
+          type: string
+          enum: [RESOLVED, REFUNDED, REWORK, CLOSED]
+        reason:
+          type: string
+          minLength: 5

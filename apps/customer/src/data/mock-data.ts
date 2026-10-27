@@ -7,8 +7,10 @@ import type {
   CategoryItem,
   CityOption,
   CustomerCompletionDetails,
+  CustomerDispute,
   CustomerPaymentDetails,
   CustomerReceiptItem,
+  CustomerSupportTicket,
   CustomerTrackingBooking,
   ProposedExtraChargeItem,
   ProviderItem,
@@ -672,5 +674,46 @@ export const MOCK_CUSTOMER_RECEIPTS: CustomerReceiptItem[] = [
       amountMinor: 50000,
       date: '2026-10-21 16:00 PKT',
     },
+  },
+];
+
+export const MOCK_CUSTOMER_TICKETS: CustomerSupportTicket[] = [
+  {
+    id: 'tkt-001',
+    ticketNumber: 'TKT-1001',
+    category: 'BOOKING',
+    subject: 'Provider was delayed by 30 mins',
+    description: 'The technician arrived later than the scheduled slot.',
+    status: 'IN_PROGRESS',
+    level: 2,
+    bookingId: 'bk-78912',
+    createdAt: '2026-10-25 15:00 PKT',
+    slaDeadline: '2026-10-26 15:00 PKT',
+  },
+  {
+    id: 'tkt-002',
+    ticketNumber: 'TKT-1002',
+    category: 'PAYMENT',
+    subject: 'Receipt clarification',
+    description: 'Needed formal breakdown of materials for office reimbursement.',
+    status: 'RESOLVED',
+    level: 2,
+    bookingId: 'bk-78401',
+    createdAt: '2026-10-21 10:00 PKT',
+    slaDeadline: '2026-10-22 10:00 PKT',
+  },
+];
+
+export const MOCK_CUSTOMER_DISPUTES: CustomerDispute[] = [
+  {
+    id: 'dsp-001',
+    disputeNumber: 'DSP-2001',
+    bookingId: 'bk-78912',
+    issueType: 'POOR_WORKMANSHIP',
+    description: 'The AC cooling stopped again 2 hours after service.',
+    status: 'OPEN',
+    level: 3,
+    evidenceUrls: ['https://storage.kaamkaro.pk/evidence/ac-leak.jpg'],
+    createdAt: '2026-10-25 18:30 PKT',
   },
 ];

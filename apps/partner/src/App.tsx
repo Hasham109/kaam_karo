@@ -19,6 +19,7 @@ import { P14CompletionEvidenceScreen } from './screens/P14CompletionEvidenceScre
 import { P15EarningsWalletScreen } from './screens/P15EarningsWalletScreen';
 import { P16PayoutMethodsScreen } from './screens/P16PayoutMethodsScreen';
 import { P17ReviewsScreen } from './screens/P17ReviewsScreen';
+import { P20SupportScreen } from './screens/P20SupportScreen';
 import { P22LiveStatusScreen } from './screens/P22LiveStatusScreen';
 import { P23DateOverridesScreen } from './screens/P23DateOverridesScreen';
 import { P24QuoteBuilderScreen } from './screens/P24QuoteBuilderScreen';
@@ -48,6 +49,7 @@ function PartnerAppContent() {
         {currentScreen === 'P15' && <P15EarningsWalletScreen />}
         {currentScreen === 'P16' && <P16PayoutMethodsScreen />}
         {currentScreen === 'P17' && <P17ReviewsScreen />}
+        {currentScreen === 'P20' && <P20SupportScreen />}
         {currentScreen === 'P22' && <P22LiveStatusScreen />}
         {currentScreen === 'P23' && <P23DateOverridesScreen />}
         {currentScreen === 'P24' && <P24QuoteBuilderScreen />}

@@ -62,7 +62,7 @@ Acceptance criteria and BP refs per task: docs/implementation.md §6 (same task 
 | T7.3 | Reviews (eligible only), provider response, flag/report, moderation queue | A10 + A13 | T3.4 | DONE | handoffs/T-7.3.md |
 | T7.4 | Badges computed from configured rules + display | A05 + A11 | T7.3 | DONE | handoffs/T-7.4.md |
 | T7.6 | Low-rating enforcement (ARCH §6.7): scheduled job, warning 1 → warning 2 → block, notifications, admin reinstate with reason, dry-run mode | A05 + A10 + A13 + A12 | T7.3, T5.1 | TODO | — |
-| T7.5 | Support tickets L1–L5, disputes ↔ refunds, C28/C29, P20, A10/A12 | A10 + apps | T6.3 | TODO | — |
+| T7.5 | Support tickets L1–L5, disputes ↔ refunds, C28/C29, P20, A10/A12 | A10 + apps | T6.3 | DONE | handoffs/T-7.5.md |
 | T8.1 | Full bug sweep (§7.3 checklist) across all modules | A17 | all above | TODO | — |
 | T8.2 | Security review + abuse scenarios BP §30 | A15 | all above | TODO | — |
 | T8.3 | Performance budgets for AI/map/media/notifications (values from D-012) | A01 + A16 | D-012 | TODO | — |

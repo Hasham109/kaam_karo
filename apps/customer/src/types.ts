@@ -27,6 +27,8 @@ export type ScreenId =
   | 'C20' // Job Completion & Payment
   | 'C21' // Review (BP §12, §19; REV-001, REV-002, REV-007, RATING-ENF-001)
   | 'C24' // Payment Receipts & Transaction History
+  | 'C28' // Help & Support (SUP-001, SUP-002; C28)
+  | 'C29' // Report an Issue / Dispute (SUP-003..005; C29)
   | 'C31' // "What do you need?" Conversational Composer
   | 'C32' // Audio Note Recorder
   | 'C33' // Problem Video Recorder
@@ -96,6 +98,8 @@ export interface ScreenParams {
       }
     | undefined;
   C24?: { bookingId?: string | undefined; returnTo?: ScreenId | undefined } | undefined;
+  C28?: { returnTo?: ScreenId | undefined; bookingId?: string | undefined } | undefined;
+  C29?: { bookingId?: string | undefined; returnTo?: ScreenId | undefined } | undefined;
   C37?:
     | {
         bookingId?: string | undefined;
@@ -617,4 +621,30 @@ export interface CustomerReceiptItem {
     amountMinor: number;
     date: string;
   };
+}
+
+export interface CustomerSupportTicket {
+  id: string;
+  ticketNumber: string;
+  category: string;
+  subject: string;
+  description: string;
+  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+  level: number;
+  bookingId?: string;
+  createdAt: string;
+  slaDeadline?: string;
+}
+
+export interface CustomerDispute {
+  id: string;
+  disputeNumber: string;
+  bookingId: string;
+  issueType: string;
+  description: string;
+  status: 'OPEN' | 'UNDER_REVIEW' | 'RESOLVED' | 'CLOSED';
+  level: number;
+  outcome?: 'RESOLVED' | 'REFUNDED' | 'REWORK' | 'CLOSED';
+  evidenceUrls: string[];
+  createdAt: string;
 }

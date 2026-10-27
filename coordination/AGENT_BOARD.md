@@ -37,14 +37,15 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 - Verdict: PASS. Phase 2 closed; Phase 3 unblocked.
 
 ## Sync 2026-10-27
-- **Session Sync (T7.4 Badges Computed from Configured Rules Complete):**
-  - **Done since last sync:** T7.4 DONE.
+- **Session Sync (T7.5 Support Tickets L1-L5, Disputes & Refunds Complete):**
+  - **Done since last sync:** T7.4 DONE, T7.5 DONE.
   - **In progress:** None.
   - **Blocked:** T0.6 Urdu Nastaliq smoke test (BLOCKED-DEVICE: code done, awaiting owner device/emulator screenshots per `docs/qa/urdu-smoke/README.md`).
   - **Next 3 tasks in dependency order:**
     1. **T7.6** Low-rating enforcement (ARCH §6.7): scheduled job, warning 1 → warning 2 → block (A05 + A10 + A13 + A12)
-    2. **T7.5** Support tickets L1–L5, disputes ↔ refunds (A10 + apps)
-    3. **T8.1** Full bug sweep (§7.3 checklist) across all modules (A17)
+    2. **T8.1** Full bug sweep (§7.3 checklist) across all modules (A17)
+    3. **T8.2** Security re-review across all Phase 7 surfaces (A15)
+- T7.5 DONE: QA PASS (docs/qa/T7.5-qa.md, 18 new unit tests in support.service.spec.ts, 6 customer tests in customer-support.spec.ts, 3 partner tests in partner-support.spec.ts, 9 admin tests in a12-support.spec.tsx, 515/515 API tests pass, 171/171 customer tests pass, 146/146 partner tests pass, 89/89 admin tests pass, 53/53 contract tests pass, 14/14 turbo tasks pass, 100% CI guards pass), SEC PASS (docs/security/SEC-REVIEW-T7.5.md). Support tickets L1–L5, disputes and refunds workflow complete (BP §12 C28, C29; BP §13 P20; BP §14 A10, A12; BP §15, §16, §40, §61.3; SUP-001..005, OPS-ADMIN-010, OPS-ADMIN-012, CFG-RULE-012, ROLE-003, BOOK-STATUS-012, BOOK-CANCEL-006). L1 FAQ self-help and ticket creation for customers (C28) and providers (P20); ticket escalation L1–L5 (L1 self-help, L2 Support, L3 Operations, L4 Risk/Finance, L5 Executive/Incident); dispute as formal record linked to booking with outcomes RESOLVED, REFUNDED, REWORK, CLOSED, transitioning booking to DISPUTED (BOOK-STATUS-012); refunded dispute outcome creating linked refund request/reversal for Finance (PAY-006, SUP-004); C29 structured complaint flow with booking, issue type, description, and optional evidence upload (SUP-005); configurable support categories and SLAs via support.sla_hours (CFG-RULE-012); A10 Refunds/disputes case workflow with mandatory audit reason (ROLE-003, OPS-ADMIN-010); A12 Support ticket queue, take ticket, send update with strict payment instruction / IBAN prohibition (SEC-REVIEW #25), escalate, set category, close ticket, and FAQ management (OPS-ADMIN-012); emergency fast-track to L3 Operations (BOOK-CANCEL-006); OpenAPI 3.1.0 contract in contracts/support.yaml; and handoff coordination/handoffs/T-7.5.md.
 - T7.4 DONE: QA PASS (docs/qa/T7.4-qa.md, 11 new unit tests in badges.service.spec.ts, 7 customer tests in customer-badges.spec.ts, 497/497 API tests pass, 165/165 customer tests pass, 143/143 partner tests pass, 80/80 admin tests pass, 51/51 contract tests pass, 14/14 turbo tasks pass, 100% CI guards pass), SEC PASS (docs/security/SEC-REVIEW-T7.4.md). Canonical 14 candidate platform badges implemented (BP §55.2, §66; TRUST-BADGE-001..014, OPS-ADMIN-022, ROLE-003, D-010). 4 Fact badges (VERIFIED, EMERGENCY_AVAILABLE, AVAILABLE_TODAY, AVAILABLE_NOW) evaluated dynamically from live profile and availability states with read-only definitions (editing rejected with 400 Bad Request); 10 Rule badges (HIGHLY_RATED, EXPERIENCED, CUSTOMER_FAVORITE, FAST_RESPONSE, FAST_SERVICE, RELIABLE, REPEAT_CUSTOMER_FAVORITE, TOP_SPECIALIST, RECENTLY_JOINED, LARGE_TEAM) awarded only by configured rules in trust.badge_rules; safe default invariant D-010 verified (if rule is null, nobody gets it and active badges expire); anti-manufacture invariant verified (Customer Favorite rule strictly requires distinct favorites count and completed jobs count, never reads favorite table alone); Super Admin rule editor protected by RequireAdminSubRoleGuard(AdminSubRole.SUPER_ADMIN) on /admin/badges/rules with mandatory min 5-char audit reason (ROLE-003) logged via AuditWriter; atomic badge recalculation emitting outbox domain event badge.recalculated; Customer App badge display across C11, C35, C36 with localized names and "What does this mean?" public explanations (BP §55.2, BP §77.3); OpenAPI 3.1.0 contract in contracts/badges.yaml; and handoff coordination/handoffs/T-7.4.md.
 
 ## Sync 2026-10-26
@@ -127,7 +128,7 @@ Each agent edits only its own row. A00 writes `## Sync <date>` notes and gate ve
 | A07 | ai-intake-voice | T3.3 IntakeAI fake + closed schema + catalog validation + confidence fallback + AI logs (REQ-AI-001..012) | DONE | t3.3-ai-intake | — | T3.11 | 2026-10-24 |
 | A08 | media | T3.2 Media upload sessions, limits from config, thumbnails, retention job | DONE | t3.2-media | — | T4.3 (with A12) | 2026-10-24 |
 | A09 | payments-ledger | T6.5 Real gateway adapter (Safepay) | DONE | t6.5-real-gateway-adapter | — | Phase 6 completion / Phase 7 | 2026-10-26 |
-| A10 | comms-notify-reviews | T7.3 Reviews (eligible only), provider response, flag/report, moderation queue | DONE | t7.3-reviews-reputation | — | T7.4 | 2026-10-26 |
+| A10 | comms-notify-reviews | T7.5 Support tickets L1–L5, disputes ↔ refunds | DONE | main | — | T7.6 | 2026-10-27 |
 
 | A11 | customer-app | T6.4 Payment UI (C16, C24) | DONE | t6.4-payment-ui | — | T7.1 / T7.2 | 2026-10-26 |
 | A12 | partner-app | T6.4 Earnings & Payout Methods UI (P15, P16) | DONE | t6.4-payment-ui | — | T7.1 / T7.2 | 2026-10-26 |

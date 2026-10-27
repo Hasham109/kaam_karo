@@ -29,6 +29,8 @@ import { C19JobInProgressScreen } from './screens/C19JobInProgressScreen';
 import { C20CompletionConfirmScreen } from './screens/C20CompletionConfirmScreen';
 import { C21ReviewScreen } from './screens/C21ReviewScreen';
 import { C24PaymentReceiptsScreen } from './screens/C24PaymentReceiptsScreen';
+import { C28SupportScreen } from './screens/C28SupportScreen';
+import { C29DisputeScreen } from './screens/C29DisputeScreen';
 import { C31ComposerScreen } from './screens/C31ComposerScreen';
 import { C32AudioRecorderScreen } from './screens/C32AudioRecorderScreen';
 import { C33VideoRecorderScreen } from './screens/C33VideoRecorderScreen';
@@ -99,6 +101,10 @@ function CustomerRouter(): React.JSX.Element {
       return <C21ReviewScreen />;
     case 'C24':
       return <C24PaymentReceiptsScreen />;
+    case 'C28':
+      return <C28SupportScreen />;
+    case 'C29':
+      return <C29DisputeScreen />;
     case 'C31':
       return <C31ComposerScreen />;
     case 'C32':

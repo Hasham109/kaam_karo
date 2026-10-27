@@ -24,6 +24,7 @@ import { NotificationsModule } from './modules/notifications';
 import { ChatModule } from './modules/chat';
 import { ReviewsModule } from './modules/reviews';
 import { TrustModule } from './modules/trust';
+import { SupportModule } from './modules/support';
 import { PlatformModule } from './platform';
 
 @Module({})
@@ -57,6 +58,7 @@ export class AppModule {
         ChatModule,
         ReviewsModule,
         TrustModule,
+        SupportModule,
       ],
       // RQ-008 item 5: refuse to start in staging/production without the security limits.
       providers: [FailClosedStartupCheck],

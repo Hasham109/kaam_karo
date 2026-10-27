@@ -18,6 +18,7 @@ export type ScreenId =
   | 'P15'
   | 'P16'
   | 'P17'
+  | 'P20'
   | 'P22'
   | 'P23'
   | 'P24'
@@ -292,4 +293,24 @@ export interface PayoutMethodItem {
   maskedAccountNumber: string;
   status: PayoutMethodStatus;
   createdAt: string;
+}
+
+export interface PartnerSupportCaseUpdate {
+  id: string;
+  authorRole: 'CUSTOMER' | 'PROVIDER' | 'SUPPORT' | 'SYSTEM';
+  message: string;
+  createdAt: string;
+}
+
+export interface PartnerSupportCase {
+  id: string;
+  caseNumber: string;
+  category: string;
+  subject: string;
+  description: string;
+  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+  level: number;
+  bookingId?: string;
+  createdAt: string;
+  updates: PartnerSupportCaseUpdate[];
 }
