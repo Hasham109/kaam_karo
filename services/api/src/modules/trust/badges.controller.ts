@@ -16,13 +16,14 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { type AuthenticatedRequest, AuthGuard } from '../identity/guards/auth.guard';
 import {
+  type AuthenticatedRequest,
+  AuthGuard,
   RequireRoleGuard,
   RequireAdminSubRoleGuard,
   RequireRole,
   RequireAdminSubRole,
-} from '../identity/guards/require-role.guard';
+} from '../identity/index.js';
 import { UserRoleType, AdminSubRole } from '../../generated/prisma/client.js';
 import { BadgesService } from './badges.service';
 import type {
@@ -94,7 +95,7 @@ export class AdminBadgesController {
     @Param('badgeType') badgeType: BadgeType,
     @Body() dto: UpdateBadgeRuleDto,
   ): Promise<AdminBadgeRuleItem> {
-    return this.badgesService.updateAdminBadgeRule(badgeType, dto, req.user.userId);
+    return this.badgesService.updateAdminBadgeRule(badgeType, dto, req.user.id);
   }
 
   /**
@@ -106,6 +107,6 @@ export class AdminBadgesController {
     @Req() req: AuthenticatedRequest,
     @Body() dto: RecalculateBadgesDto,
   ): Promise<RecalculationSummary> {
-    return this.badgesService.recalculateBadges(dto, req.user.userId);
+    return this.badgesService.recalculateBadges(dto, req.user.id);
   }
 }

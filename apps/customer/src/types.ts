@@ -334,6 +334,7 @@ export interface CustomerCompletionDetails {
   readonly totalPayablePkr: number;
   readonly recordedPaymentMethod?: 'CASH' | 'DIGITAL' | undefined;
   readonly digitalPaymentStatus?: 'WAITING' | 'PAID' | 'NOT_RECEIVED' | undefined;
+  readonly providerName?: string | undefined;
 }
 
 export interface CancellationDisputeSubmission {
@@ -631,9 +632,9 @@ export interface CustomerSupportTicket {
   description: string;
   status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
   level: number;
-  bookingId?: string;
+  bookingId?: string | undefined;
   createdAt: string;
-  slaDeadline?: string;
+  slaDeadline?: string | undefined;
 }
 
 export interface CustomerDispute {
@@ -644,7 +645,7 @@ export interface CustomerDispute {
   description: string;
   status: 'OPEN' | 'UNDER_REVIEW' | 'RESOLVED' | 'CLOSED';
   level: number;
-  outcome?: 'RESOLVED' | 'REFUNDED' | 'REWORK' | 'CLOSED';
+  outcome?: 'RESOLVED' | 'REFUNDED' | 'REWORK' | 'CLOSED' | undefined;
   evidenceUrls: string[];
   createdAt: string;
 }

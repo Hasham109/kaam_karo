@@ -121,7 +121,7 @@ export class NotificationsService {
       });
 
       // 6. Dispatch Push Notification via Gateway (D-001 FCM abstraction)
-      let pushToken: string | null = null;
+      let pushToken: string | null;
       try {
         const activeSession = await this.prisma.deviceSession.findFirst({
           where: { userId: recipientUserId, revokedAt: null, pushToken: { not: null } },

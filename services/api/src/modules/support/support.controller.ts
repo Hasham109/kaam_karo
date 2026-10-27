@@ -15,12 +15,12 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { type AuthenticatedRequest, AuthGuard } from '../identity/guards/auth.guard.js';
 import {
-  RequireRoleGuard,
+  type AuthenticatedRequest,
+  AuthGuard,
   RequireAdminSubRoleGuard,
   RequireAdminSubRole,
-} from '../identity/guards/require-role.guard.js';
+} from '../identity/index.js';
 import { AdminSubRole } from '../../generated/prisma/client.js';
 import { SupportService } from './support.service.js';
 import {
@@ -58,7 +58,7 @@ export class SupportController {
   @Get('tickets')
   @UseGuards(AuthGuard)
   async listMyTickets(@Req() req: AuthenticatedRequest): Promise<SupportTicketResponseDto[]> {
-    return this.supportService.listMyTickets(req.user.userId);
+    return this.supportService.listMyTickets(req.user.id);
   }
 
   @Post('tickets')
@@ -68,8 +68,8 @@ export class SupportController {
     @Req() req: AuthenticatedRequest,
     @Body() dto: CreateSupportTicketDto,
   ): Promise<SupportTicketResponseDto> {
-    const role = (req.user.role as 'CUSTOMER' | 'PROVIDER') ?? 'CUSTOMER';
-    return this.supportService.createTicket(req.user.userId, role, dto);
+    const role = (req.user.roles?.[0] as 'CUSTOMER' | 'PROVIDER') ?? 'CUSTOMER';
+    return this.supportService.createTicket(req.user.id, role, dto);
   }
 
   @Get('tickets/:ticketId')
@@ -78,8 +78,8 @@ export class SupportController {
     @Req() req: AuthenticatedRequest,
     @Param('ticketId') ticketId: string,
   ): Promise<SupportTicketDetailDto> {
-    const isStaff = Boolean(req.user.adminSubRoles && req.user.adminSubRoles.length > 0);
-    return this.supportService.getTicket(req.user.userId, isStaff, ticketId);
+    const isStaff = Boolean(req.user.subRoles && req.user.subRoles.length > 0);
+    return this.supportService.getTicket(req.user.id, isStaff, ticketId);
   }
 
   @Post('tickets/:ticketId/updates')
@@ -90,8 +90,8 @@ export class SupportController {
     @Param('ticketId') ticketId: string,
     @Body() dto: AddCaseUpdateDto,
   ): Promise<CaseUpdateResponseDto> {
-    const role = (req.user.role as 'CUSTOMER' | 'PROVIDER') ?? 'CUSTOMER';
-    return this.supportService.addTicketUpdate(req.user.userId, role, ticketId, dto);
+    const role = (req.user.roles?.[0] as 'CUSTOMER' | 'PROVIDER') ?? 'CUSTOMER';
+    return this.supportService.addTicketUpdate(req.user.id, role, ticketId, dto);
   }
 
   @Post('disputes')
@@ -101,8 +101,8 @@ export class SupportController {
     @Req() req: AuthenticatedRequest,
     @Body() dto: CreateDisputeDto,
   ): Promise<DisputeResponseDto> {
-    const role = (req.user.role as 'CUSTOMER' | 'PROVIDER') ?? 'CUSTOMER';
-    return this.supportService.createDispute(req.user.userId, role, dto);
+    const role = (req.user.roles?.[0] as 'CUSTOMER' | 'PROVIDER') ?? 'CUSTOMER';
+    return this.supportService.createDispute(req.user.id, role, dto);
   }
 
   @Get('disputes/:disputeId')
@@ -111,8 +111,8 @@ export class SupportController {
     @Req() req: AuthenticatedRequest,
     @Param('disputeId') disputeId: string,
   ): Promise<DisputeDetailDto> {
-    const isStaff = Boolean(req.user.adminSubRoles && req.user.adminSubRoles.length > 0);
-    return this.supportService.getDispute(req.user.userId, isStaff, disputeId);
+    const isStaff = Boolean(req.user.subRoles && req.user.subRoles.length > 0);
+    return this.supportService.getDispute(req.user.id, isStaff, disputeId);
   }
 
   @Post('disputes/:disputeId/updates')
@@ -123,8 +123,8 @@ export class SupportController {
     @Param('disputeId') disputeId: string,
     @Body() dto: AddCaseUpdateDto,
   ): Promise<CaseUpdateResponseDto> {
-    const role = (req.user.role as 'CUSTOMER' | 'PROVIDER') ?? 'CUSTOMER';
-    return this.supportService.addDisputeUpdate(req.user.userId, role, disputeId, dto);
+    const role = (req.user.roles?.[0] as 'CUSTOMER' | 'PROVIDER') ?? 'CUSTOMER';
+    return this.supportService.addDisputeUpdate(req.user.id, role, disputeId, dto);
   }
 }
 
@@ -147,12 +147,17 @@ export class AdminSupportController {
     @Query('isSafety') isSafety?: string,
     @Query('categoryCode') categoryCode?: string,
   ): Promise<AdminSupportTicketItemDto[]> {
-    return this.supportService.adminListTickets({
-      level,
-      status,
-      isSafety: isSafety !== undefined ? isSafety === 'true' : undefined,
-      categoryCode,
-    });
+    const filters: {
+      level?: SupportLevel;
+      status?: TicketStatus;
+      isSafety?: boolean;
+      categoryCode?: string;
+    } = {};
+    if (level !== undefined) filters.level = level;
+    if (status !== undefined) filters.status = status;
+    if (isSafety !== undefined) filters.isSafety = isSafety === 'true';
+    if (categoryCode !== undefined) filters.categoryCode = categoryCode;
+    return this.supportService.adminListTickets(filters);
   }
 
   @Post('tickets/:ticketId/assign')
@@ -161,7 +166,7 @@ export class AdminSupportController {
     @Param('ticketId') ticketId: string,
     @Body() dto: AssignTicketDto,
   ): Promise<SupportTicketResponseDto> {
-    return this.supportService.adminAssignTicket(ticketId, req.user.userId, dto);
+    return this.supportService.adminAssignTicket(ticketId, req.user.id, dto);
   }
 
   @Post('tickets/:ticketId/updates')
@@ -171,7 +176,7 @@ export class AdminSupportController {
     @Param('ticketId') ticketId: string,
     @Body() dto: AdminCaseUpdateDto,
   ): Promise<CaseUpdateResponseDto> {
-    return this.supportService.adminAddTicketUpdate(ticketId, req.user.userId, dto);
+    return this.supportService.adminAddTicketUpdate(ticketId, req.user.id, dto);
   }
 
   @Post('tickets/:ticketId/escalate')
@@ -180,7 +185,7 @@ export class AdminSupportController {
     @Param('ticketId') ticketId: string,
     @Body() dto: EscalateLevelDto,
   ): Promise<SupportTicketResponseDto> {
-    return this.supportService.adminEscalateTicket(ticketId, req.user.userId, dto);
+    return this.supportService.adminEscalateTicket(ticketId, req.user.id, dto);
   }
 
   @Post('tickets/:ticketId/category')
@@ -189,7 +194,7 @@ export class AdminSupportController {
     @Param('ticketId') ticketId: string,
     @Body() dto: SetCategoryDto,
   ): Promise<SupportTicketResponseDto> {
-    return this.supportService.adminSetTicketCategory(ticketId, req.user.userId, dto);
+    return this.supportService.adminSetTicketCategory(ticketId, req.user.id, dto);
   }
 
   @Post('tickets/:ticketId/close')
@@ -198,7 +203,7 @@ export class AdminSupportController {
     @Param('ticketId') ticketId: string,
     @Body() dto: CloseTicketDto,
   ): Promise<SupportTicketResponseDto> {
-    return this.supportService.adminCloseTicket(ticketId, req.user.userId, dto);
+    return this.supportService.adminCloseTicket(ticketId, req.user.id, dto);
   }
 }
 
@@ -220,11 +225,15 @@ export class AdminDisputesController {
     @Query('outcome') outcome?: DisputeOutcome,
     @Query('isSafety') isSafety?: string,
   ): Promise<AdminDisputeItemDto[]> {
-    return this.supportService.adminListDisputes({
-      level,
-      outcome,
-      isSafety: isSafety !== undefined ? isSafety === 'true' : undefined,
-    });
+    const filters: {
+      level?: SupportLevel;
+      outcome?: DisputeOutcome;
+      isSafety?: boolean;
+    } = {};
+    if (level !== undefined) filters.level = level;
+    if (outcome !== undefined) filters.outcome = outcome;
+    if (isSafety !== undefined) filters.isSafety = isSafety === 'true';
+    return this.supportService.adminListDisputes(filters);
   }
 
   @Post(':disputeId/updates')
@@ -234,7 +243,7 @@ export class AdminDisputesController {
     @Param('disputeId') disputeId: string,
     @Body() dto: AdminCaseUpdateDto,
   ): Promise<CaseUpdateResponseDto> {
-    return this.supportService.adminAddDisputeUpdate(disputeId, req.user.userId, dto);
+    return this.supportService.adminAddDisputeUpdate(disputeId, req.user.id, dto);
   }
 
   @Post(':disputeId/escalate')
@@ -243,7 +252,7 @@ export class AdminDisputesController {
     @Param('disputeId') disputeId: string,
     @Body() dto: EscalateLevelDto,
   ): Promise<DisputeResponseDto> {
-    return this.supportService.adminEscalateDispute(disputeId, req.user.userId, dto);
+    return this.supportService.adminEscalateDispute(disputeId, req.user.id, dto);
   }
 
   @Post(':disputeId/decide')
@@ -252,6 +261,6 @@ export class AdminDisputesController {
     @Param('disputeId') disputeId: string,
     @Body() dto: DecideDisputeDto,
   ): Promise<DisputeResponseDto> {
-    return this.supportService.adminDecideDispute(disputeId, req.user.userId, dto);
+    return this.supportService.adminDecideDispute(disputeId, req.user.id, dto);
   }
 }

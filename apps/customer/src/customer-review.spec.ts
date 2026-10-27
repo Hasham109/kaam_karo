@@ -13,7 +13,6 @@
 import { describe, expect, it } from 'vitest';
 import { translate } from '@kaamkaro/i18n';
 import { MIN_TAP_TARGET_DP, minTapTargetStyle } from '@kaamkaro/ui';
-import type { ReviewTagOption } from './types';
 import { getAppMirroring } from './utils/rtl';
 
 const ARABIC_SCRIPT = /\p{Script=Arabic}/u;
@@ -46,13 +45,6 @@ describe('[T7.3] Customer Reviews UI Test Suite (C21)', () => {
     });
 
     it('verifies standard structured tags match REV-001 specification', () => {
-      const expectedTags: ReviewTagOption[] = [
-        'Punctual',
-        'Professional',
-        'Clean work',
-        'Fair price',
-        'Polite',
-      ];
 
       expect(translate('en', 'customer.c21.tagPunctual')).toBe('Punctual');
       expect(translate('en', 'customer.c21.tagProfessional')).toBe('Professional');

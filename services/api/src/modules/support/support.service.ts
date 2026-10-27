@@ -17,6 +17,7 @@ import { CONFIG_SERVICE, type ConfigService } from '@kaamkaro/platform';
 import { PrismaService } from '../../platform/prisma.service.js';
 import { AuditWriter } from '../../platform/audit.writer.js';
 import { OutboxWriter } from '../../platform/outbox.writer.js';
+import { ActorRole } from '../../generated/prisma/client.js';
 import { SEED_FAQ_ITEMS } from './faq.data.js';
 import {
   DisputeOutcome,
@@ -51,6 +52,75 @@ export class SupportService {
     private readonly outboxWriter: OutboxWriter,
     @Inject(CONFIG_SERVICE) private readonly configService: ConfigService,
   ) {}
+
+  private async safeAuditLog(
+    tx: Parameters<AuditWriter['write']>[1],
+    entry: {
+      actorId: string;
+      actorRole?: 'CUSTOMER' | 'PROVIDER' | 'ADMIN' | 'SYSTEM';
+      targetType: string;
+      targetId: string;
+      action: string;
+      reason: string;
+      before: unknown;
+      after: unknown;
+    },
+  ): Promise<void> {
+    const flexAudit = this.auditWriter as unknown as {
+      log?: (tx: unknown, entry: unknown) => Promise<unknown>;
+      write?: (entry: unknown, tx?: unknown) => Promise<unknown>;
+    };
+    if (typeof flexAudit.log === 'function') {
+      await flexAudit.log(tx, entry);
+    }
+    if (typeof this.auditWriter.write === 'function') {
+      await this.auditWriter.write(
+        {
+          actor: {
+            userId: entry.actorId,
+            role: entry.actorRole ?? 'ADMIN',
+          },
+          action: entry.action,
+          object: {
+            type: entry.targetType,
+            id: entry.targetId,
+          },
+          reason: entry.reason,
+          before: entry.before,
+          after: entry.after,
+        },
+        tx,
+      );
+    }
+  }
+
+  private async safeOutboxWrite(
+    tx: Parameters<OutboxWriter['append']>[0],
+    event: {
+      topic?: string;
+      eventType: string;
+      aggregateType?: string;
+      aggregateId?: string;
+      payload: Record<string, unknown>;
+    },
+  ): Promise<void> {
+    const flexOutbox = this.outboxWriter as unknown as {
+      write?: (tx: unknown, event: unknown) => Promise<unknown>;
+      append?: (tx: unknown, event: unknown) => Promise<unknown>;
+    };
+    if (typeof flexOutbox.write === 'function') {
+      await flexOutbox.write(tx, event);
+    }
+    if (typeof this.outboxWriter.append === 'function') {
+      await this.outboxWriter.append(tx, {
+        eventType: event.eventType.includes('.') ? event.eventType : `support.${event.eventType}`,
+        schemaVersion: 1,
+        aggregateType: event.aggregateType ?? 'support',
+        aggregateId: (event.aggregateId ?? (event.payload['ticketId'] || event.payload['disputeId'] || 'unknown')) as string,
+        payload: event.payload,
+      });
+    }
+  }
 
   // ---------------------------------------------------------------------------
   // 1. FAQ (L1 Self-Help, BP §40 L1; SUP-001)
@@ -106,7 +176,7 @@ export class SupportService {
         },
       });
 
-      await this.outboxWriter.write(tx, {
+      await this.safeOutboxWrite(tx, {
         topic: 'support.ticket',
         eventType: 'ticket.created',
         payload: {
@@ -185,7 +255,7 @@ export class SupportService {
         },
       });
 
-      await this.outboxWriter.write(tx, {
+      await this.safeOutboxWrite(tx, {
         topic: 'support.ticket',
         eventType: 'ticket.updated',
         payload: {
@@ -221,18 +291,25 @@ export class SupportService {
     // Verify booking and participant membership
     const booking = await this.prisma.booking.findUnique({
       where: { id: dto.bookingId },
-      include: {
-        customerProfile: true,
-        providerProfile: true,
-      },
     });
 
     if (!booking) {
       throw new NotFoundException(`Booking not found: ${dto.bookingId}`);
     }
 
-    const isCustomer = booking.customerProfile.userId === userId;
-    const isProvider = booking.providerProfile?.userId === userId;
+    const bookingWithRelations = booking as unknown as {
+      customerProfile?: { userId: string };
+      providerProfile?: { userId: string };
+    };
+    const customer = bookingWithRelations.customerProfile ?? (booking.customerProfileId
+      ? await this.prisma.customerProfile.findUnique({ where: { id: booking.customerProfileId } })
+      : null);
+    const provider = bookingWithRelations.providerProfile ?? (booking.providerProfileId
+      ? await this.prisma.providerProfile.findUnique({ where: { id: booking.providerProfileId } })
+      : null);
+
+    const isCustomer = customer?.userId === userId;
+    const isProvider = provider?.userId === userId;
 
     if (!isCustomer && !isProvider) {
       throw new ForbiddenException('You are not a participant of this booking.');
@@ -270,8 +347,9 @@ export class SupportService {
         await tx.jobEvent.create({
           data: {
             bookingId: booking.id,
-            actorId: userId,
-            actorRole: role,
+            actorUserId: userId,
+            actorRole: role as ActorRole,
+            action: 'TRANSITION',
             fromStatus: booking.status,
             toStatus: 'DISPUTED',
             reason: dto.description.trim(),
@@ -292,8 +370,9 @@ export class SupportService {
         },
       });
 
-      await this.auditWriter.log(tx, {
+      await this.safeAuditLog(tx, {
         actorId: userId,
+        actorRole: role,
         targetType: 'DISPUTE',
         targetId: created.id,
         action: 'OPEN_DISPUTE',
@@ -307,7 +386,7 @@ export class SupportService {
         },
       });
 
-      await this.outboxWriter.write(tx, {
+      await this.safeOutboxWrite(tx, {
         topic: 'support.dispute',
         eventType: 'dispute.opened',
         payload: {
@@ -344,10 +423,19 @@ export class SupportService {
       // Also allow if user is the other participant on the booking
       const booking = await this.prisma.booking.findUnique({
         where: { id: dispute.bookingId },
-        include: { customerProfile: true, providerProfile: true },
       });
+      const bookingWithRelations = booking as unknown as {
+        customerProfile?: { userId: string };
+        providerProfile?: { userId: string };
+      } | null;
+      const customer = bookingWithRelations?.customerProfile ?? (booking?.customerProfileId
+        ? await this.prisma.customerProfile.findUnique({ where: { id: booking.customerProfileId } })
+        : null);
+      const provider = bookingWithRelations?.providerProfile ?? (booking?.providerProfileId
+        ? await this.prisma.providerProfile.findUnique({ where: { id: booking.providerProfileId } })
+        : null);
       const isParticipant =
-        booking?.customerProfile.userId === userId || booking?.providerProfile?.userId === userId;
+        customer?.userId === userId || provider?.userId === userId;
 
       if (!isParticipant) {
         throw new ForbiddenException('You do not have permission to view this dispute.');
@@ -388,7 +476,7 @@ export class SupportService {
         },
       });
 
-      await this.outboxWriter.write(tx, {
+      await this.safeOutboxWrite(tx, {
         topic: 'support.dispute',
         eventType: 'dispute.updated',
         payload: {
@@ -427,7 +515,20 @@ export class SupportService {
     });
 
     // Read SLA config target hours
-    const slaHoursConfig = (await this.configService.get<number>('support.sla_hours')) ?? null;
+    const slaConfigResult = await this.configService.get<number>(
+      'support.sla_hours',
+      (v) => (typeof v === 'number' ? v : undefined),
+    );
+    let slaHoursConfig: number | null = null;
+    if (slaConfigResult) {
+      if (typeof slaConfigResult === 'object' && slaConfigResult !== null && 'status' in slaConfigResult) {
+        const cfgObj = slaConfigResult as { status: string; value?: unknown };
+        slaHoursConfig =
+          cfgObj.status === 'configured' && typeof cfgObj.value === 'number' ? cfgObj.value : null;
+      } else if (typeof slaConfigResult === 'number') {
+        slaHoursConfig = slaConfigResult;
+      }
+    }
     const now = new Date();
     const MS_PER_HOUR = 3600000; // kk-allow-literal: technical — ms per hour
 
@@ -475,7 +576,7 @@ export class SupportService {
         },
       });
 
-      await this.auditWriter.log(tx, {
+      await this.safeAuditLog(tx, {
         actorId: staffUserId,
         targetType: 'SUPPORT_TICKET',
         targetId: ticketId,
@@ -537,7 +638,7 @@ export class SupportService {
         },
       });
 
-      await this.auditWriter.log(tx, {
+      await this.safeAuditLog(tx, {
         actorId: staffUserId,
         targetType: 'SUPPORT_TICKET',
         targetId: ticketId,
@@ -547,7 +648,7 @@ export class SupportService {
         after: { updateId: created.id, text: dto.text.trim() },
       });
 
-      await this.outboxWriter.write(tx, {
+      await this.safeOutboxWrite(tx, {
         topic: 'support.ticket',
         eventType: 'ticket.updated',
         payload: {
@@ -594,7 +695,7 @@ export class SupportService {
         },
       });
 
-      await this.auditWriter.log(tx, {
+      await this.safeAuditLog(tx, {
         actorId: staffUserId,
         targetType: 'SUPPORT_TICKET',
         targetId: ticketId,
@@ -639,7 +740,7 @@ export class SupportService {
         },
       });
 
-      await this.auditWriter.log(tx, {
+      await this.safeAuditLog(tx, {
         actorId: staffUserId,
         targetType: 'SUPPORT_TICKET',
         targetId: ticketId,
@@ -689,7 +790,7 @@ export class SupportService {
         },
       });
 
-      await this.auditWriter.log(tx, {
+      await this.safeAuditLog(tx, {
         actorId: staffUserId,
         targetType: 'SUPPORT_TICKET',
         targetId: ticketId,
@@ -699,7 +800,7 @@ export class SupportService {
         after: { status: TicketStatus.CLOSED, resolutionNote: dto.resolutionNote.trim() },
       });
 
-      await this.outboxWriter.write(tx, {
+      await this.safeOutboxWrite(tx, {
         topic: 'support.ticket',
         eventType: 'ticket.closed',
         payload: {
@@ -789,7 +890,7 @@ export class SupportService {
         },
       });
 
-      await this.auditWriter.log(tx, {
+      await this.safeAuditLog(tx, {
         actorId: staffUserId,
         targetType: 'DISPUTE',
         targetId: disputeId,
@@ -799,7 +900,7 @@ export class SupportService {
         after: { updateId: created.id, text: dto.text.trim() },
       });
 
-      await this.outboxWriter.write(tx, {
+      await this.safeOutboxWrite(tx, {
         topic: 'support.dispute',
         eventType: 'dispute.updated',
         payload: {
@@ -846,7 +947,7 @@ export class SupportService {
         },
       });
 
-      await this.auditWriter.log(tx, {
+      await this.safeAuditLog(tx, {
         actorId: staffUserId,
         targetType: 'DISPUTE',
         targetId: disputeId,
@@ -918,8 +1019,9 @@ export class SupportService {
           await tx.jobEvent.create({
             data: {
               bookingId: booking.id,
-              actorId: staffUserId,
+              actorUserId: staffUserId,
               actorRole: 'ADMIN',
+              action: 'TRANSITION',
               fromStatus: 'DISPUTED',
               toStatus: 'IN_PROGRESS',
               reason: `Dispute rework decision: ${dto.reason.trim()}`,
@@ -938,8 +1040,9 @@ export class SupportService {
           await tx.jobEvent.create({
             data: {
               bookingId: booking.id,
-              actorId: staffUserId,
+              actorUserId: staffUserId,
               actorRole: 'ADMIN',
+              action: 'TRANSITION',
               fromStatus: 'DISPUTED',
               toStatus: 'CLOSED',
               reason: `Dispute outcome ${dto.outcome}: ${dto.reason.trim()}`,
@@ -949,7 +1052,7 @@ export class SupportService {
       }
 
       // 3. Log audit entry
-      await this.auditWriter.log(tx, {
+      await this.safeAuditLog(tx, {
         actorId: staffUserId,
         targetType: 'DISPUTE',
         targetId: disputeId,
@@ -960,7 +1063,7 @@ export class SupportService {
       });
 
       // 4. Emit outbox event
-      await this.outboxWriter.write(tx, {
+      await this.safeOutboxWrite(tx, {
         topic: 'support.dispute',
         eventType: 'dispute.decided',
         payload: {

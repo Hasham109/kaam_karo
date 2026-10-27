@@ -310,7 +310,7 @@ export interface PartnerSupportCase {
   description: string;
   status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
   level: number;
-  bookingId?: string;
+  bookingId?: string | undefined;
   createdAt: string;
   updates: PartnerSupportCaseUpdate[];
 }

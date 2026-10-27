@@ -1,7 +1,7 @@
 /**
  * Reviews & Reputation Types and DTOs (BP §19, §25; REV-001..007, OPS-ADMIN-011).
  */
-import { ReviewFlagStatus, ReviewModerationStatus } from '../../generated/prisma/client.js';
+import type { ReviewFlagStatus, ReviewModerationStatus } from '../../generated/prisma/client.js';
 
 export const CONFIG_KEY_REVIEW_ELIGIBILITY_WINDOW_DAYS = 'reviews.eligibility_window_days';
 export const CONFIG_KEY_REVIEW_MAX_TEXT_LENGTH = 'reviews.max_text_length';

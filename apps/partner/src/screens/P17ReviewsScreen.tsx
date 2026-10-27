@@ -14,7 +14,7 @@ import {
   View,
 } from 'react-native';
 import { translate } from '@kaamkaro/i18n';
-import { COLOR, RADIUS, SPACING, minTapTargetStyle, textTokens } from '@kaamkaro/ui';
+import { COLOR, RADIUS, SPACING, STATUS_THEME, minTapTargetStyle, textTokens } from '@kaamkaro/ui';
 import { usePartner } from '../state/PartnerContext';
 import { getAppMirroring } from '../utils/rtl';
 
@@ -29,7 +29,7 @@ export interface PartnerReviewItem {
 }
 
 export function P17ReviewsScreen(): React.JSX.Element {
-  const { locale, setScreen } = usePartner();
+  const { locale, navigate } = usePartner();
   const mirror = getAppMirroring(locale);
 
   // Initial mock review items
@@ -126,7 +126,7 @@ export function P17ReviewsScreen(): React.JSX.Element {
           {translate(locale, 'partner.p17.title')}
         </Text>
         <TouchableOpacity
-          onPress={() => setScreen('P04')}
+          onPress={() => navigate('P04')}
           style={[styles.backBtn, minTapTargetStyle()]}
           accessibilityRole="button"
           accessibilityLabel={translate(locale, 'partner.p17.cancelBtn')}
@@ -212,7 +212,7 @@ export function P17ReviewsScreen(): React.JSX.Element {
           <Text
             style={[
               styles.thresholdText,
-              textTokens(locale, 'caption'),
+              textTokens(locale, 'label'),
               { textAlign: mirror.textAlign },
             ]}
           >
@@ -253,7 +253,7 @@ export function P17ReviewsScreen(): React.JSX.Element {
               <View style={[styles.tagsRow, { flexDirection: mirror.row }]}>
                 {rev.tags.map((tag, idx) => (
                   <View key={idx} style={styles.tagBadge}>
-                    <Text style={[styles.tagBadgeText, textTokens(locale, 'caption')]}>{tag}</Text>
+                    <Text style={[styles.tagBadgeText, textTokens(locale, 'label')]}>{tag}</Text>
                   </View>
                 ))}
               </View>
@@ -346,7 +346,7 @@ export function P17ReviewsScreen(): React.JSX.Element {
               value={replyText}
               onChangeText={setReplyText}
               placeholder={translate(locale, 'partner.p17.replyPlaceholder')}
-              placeholderTextColor={COLOR.neutral400}
+              placeholderTextColor={COLOR.textMuted}
               multiline
               numberOfLines={4}
               maxLength={1000}
@@ -399,7 +399,7 @@ export function P17ReviewsScreen(): React.JSX.Element {
               value={reportReason}
               onChangeText={setReportReason}
               placeholder={translate(locale, 'partner.p17.reportPlaceholder')}
-              placeholderTextColor={COLOR.neutral400}
+              placeholderTextColor={COLOR.textMuted}
               multiline
               numberOfLines={3}
               maxLength={500}
@@ -440,7 +440,7 @@ export function P17ReviewsScreen(): React.JSX.Element {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLOR.neutral50,
+    backgroundColor: COLOR.background,
   },
   content: {
     padding: SPACING.md,
@@ -452,96 +452,96 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   titleText: {
-    color: COLOR.neutral900,
+    color: COLOR.text,
   },
   backBtn: {
     justifyContent: 'center',
     paddingHorizontal: SPACING.sm,
   },
   backBtnText: {
-    color: COLOR.primary600,
+    color: COLOR.primary,
   },
   feedbackBanner: {
-    backgroundColor: '#E8F5E9',
+    backgroundColor: STATUS_THEME.success.background,
     padding: SPACING.sm,
     borderRadius: RADIUS.sm,
     borderWidth: 1,
-    borderColor: '#A5D6A7',
+    borderColor: STATUS_THEME.success.border,
   },
   feedbackText: {
-    color: '#2E7D32',
+    color: STATUS_THEME.success.text,
   },
   summaryCard: {
-    backgroundColor: COLOR.neutral0,
-    borderRadius: RADIUS.md,
+    backgroundColor: COLOR.surface,
+    borderRadius: RADIUS.sm,
     padding: SPACING.md,
     borderWidth: 1,
-    borderColor: COLOR.neutral200,
+    borderColor: COLOR.border,
   },
   summaryTopRow: {
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   summaryText: {
-    color: '#F59E0B',
+    color: STATUS_THEME.warning.text,
     fontSize: 28,
     fontWeight: '700',
   },
   summarySubtext: {
-    color: COLOR.neutral600,
+    color: COLOR.textMuted,
     marginTop: SPACING.xs,
   },
   standingChip: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.full,
+    borderRadius: RADIUS.sheet,
   },
   standingGood: {
-    backgroundColor: '#E8F5E9',
+    backgroundColor: STATUS_THEME.success.background,
   },
   standingWarning: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: STATUS_THEME.warning.background,
   },
   standingBlocked: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: STATUS_THEME.danger.background,
   },
   standingText: {
     fontWeight: '600',
   },
   standingTextGood: {
-    color: '#2E7D32',
+    color: STATUS_THEME.success.text,
   },
   standingTextWarning: {
-    color: '#B45309',
+    color: STATUS_THEME.warning.text,
   },
   standingTextBlocked: {
-    color: '#B91C1C',
+    color: STATUS_THEME.danger.text,
   },
   thresholdBox: {
     marginTop: SPACING.md,
     paddingTop: SPACING.sm,
     borderTopWidth: 1,
-    borderTopColor: COLOR.neutral100,
+    borderTopColor: COLOR.border,
   },
   thresholdText: {
-    color: COLOR.neutral600,
+    color: COLOR.textMuted,
   },
   emptyContainer: {
     padding: SPACING.xl,
-    backgroundColor: COLOR.neutral0,
-    borderRadius: RADIUS.md,
+    backgroundColor: COLOR.surface,
+    borderRadius: RADIUS.sm,
     borderWidth: 1,
-    borderColor: COLOR.neutral200,
+    borderColor: COLOR.border,
   },
   emptyText: {
-    color: COLOR.neutral500,
+    color: COLOR.textMuted,
   },
   reviewCard: {
-    backgroundColor: COLOR.neutral0,
-    borderRadius: RADIUS.md,
+    backgroundColor: COLOR.surface,
+    borderRadius: RADIUS.sm,
     padding: SPACING.md,
     borderWidth: 1,
-    borderColor: COLOR.neutral200,
+    borderColor: COLOR.border,
   },
   reviewTopRow: {
     justifyContent: 'space-between',
@@ -549,10 +549,10 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   bookingRef: {
-    color: COLOR.neutral500,
+    color: COLOR.textMuted,
   },
   starsText: {
-    color: '#F59E0B',
+    color: STATUS_THEME.warning.text,
     fontSize: 16,
   },
   tagsRow: {
@@ -561,33 +561,33 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   tagBadge: {
-    backgroundColor: COLOR.neutral100,
+    backgroundColor: COLOR.background,
     paddingHorizontal: SPACING.xs,
     paddingVertical: 2,
     borderRadius: RADIUS.sm,
   },
   tagBadgeText: {
-    color: COLOR.neutral700,
+    color: COLOR.text,
   },
   reviewBodyText: {
-    color: COLOR.neutral800,
+    color: COLOR.text,
     marginBottom: SPACING.sm,
   },
   replyBox: {
-    backgroundColor: COLOR.neutral50,
+    backgroundColor: COLOR.background,
     borderRadius: RADIUS.sm,
     padding: SPACING.sm,
     borderLeftWidth: 3,
-    borderLeftColor: COLOR.primary600,
+    borderLeftColor: COLOR.primary,
     marginBottom: SPACING.sm,
   },
   replyHeader: {
-    color: COLOR.primary700,
+    color: COLOR.primary,
     fontWeight: '600',
     marginBottom: 2,
   },
   replyText: {
-    color: COLOR.neutral800,
+    color: COLOR.text,
   },
   actionRow: {
     justifyContent: 'flex-end',
@@ -599,41 +599,41 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.sm,
   },
   replyBtnText: {
-    color: COLOR.primary600,
+    color: COLOR.primary,
   },
   reportBtn: {
     paddingVertical: SPACING.xs,
     paddingHorizontal: SPACING.sm,
   },
   reportBtnText: {
-    color: COLOR.neutral600,
+    color: COLOR.textMuted,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: COLOR.backdrop,
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.md,
   },
   modalCard: {
-    backgroundColor: COLOR.neutral0,
-    borderRadius: RADIUS.md,
+    backgroundColor: COLOR.surface,
+    borderRadius: RADIUS.sheet,
     padding: SPACING.md,
     width: '100%',
     maxWidth: 400,
   },
   modalTitle: {
-    color: COLOR.neutral900,
+    color: COLOR.text,
     marginBottom: SPACING.sm,
   },
   modalInput: {
     borderWidth: 1,
-    borderColor: COLOR.neutral300,
+    borderColor: COLOR.border,
     borderRadius: RADIUS.sm,
     padding: SPACING.sm,
     minHeight: 80,
     textAlignVertical: 'top',
-    color: COLOR.neutral900,
+    color: COLOR.text,
     marginBottom: SPACING.md,
   },
   modalBtnRow: {
@@ -645,17 +645,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   modalCancelText: {
-    color: COLOR.neutral600,
+    color: COLOR.textMuted,
   },
   modalConfirmBtn: {
-    backgroundColor: COLOR.primary600,
+    backgroundColor: COLOR.primary,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs,
     borderRadius: RADIUS.sm,
     justifyContent: 'center',
   },
   modalConfirmText: {
-    color: COLOR.neutral0,
+    color: COLOR.onPrimary,
     fontWeight: '600',
   },
 });
+

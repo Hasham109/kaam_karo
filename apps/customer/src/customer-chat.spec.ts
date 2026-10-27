@@ -3,7 +3,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { translate } from '@kaamkaro/i18n';
-import { MIN_TAP_TARGET_DP, minTapTargetStyle, textTokens } from '@kaamkaro/ui';
+import { MIN_TAP_TARGET_DP, minTapTargetStyle } from '@kaamkaro/ui';
 import { getAppMirroring } from './utils/rtl';
 
 const ARABIC_SCRIPT = /\p{Script=Arabic}/u;

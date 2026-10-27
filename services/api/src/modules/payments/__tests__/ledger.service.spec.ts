@@ -2,7 +2,6 @@
  * Unit tests for LedgerService (Module M11, T6.6; owner A09 + A12 + A13 + A11).
  * Requirement IDs: LEDGER-001..007, PAY-003..004, D-016, D-020, D-021, D-030; ARCH §6.8; BP §17, §25, §26.
  */
-/* eslint-disable @typescript-eslint/no-explicit-any -- loosely typed Prisma mock payloads */
 import { describe, expect, it, beforeEach } from 'vitest';
 import {
   BadRequestException,

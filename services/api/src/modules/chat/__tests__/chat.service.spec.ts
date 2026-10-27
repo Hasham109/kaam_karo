@@ -317,7 +317,7 @@ describe('ChatService (T7.2, CHAT-001..004, SHARE-001..003)', () => {
 
       // Verify outbox domain event for notification fan-out (NOTIF-007)
       expect(outboxEventsDb.length).toBe(1);
-      const outboxEvt = outboxEventsDb[0];
+      const outboxEvt = outboxEventsDb[0]!;
       expect(outboxEvt.eventType).toBe('message.new');
       expect(outboxEvt.payload.customerUserId).toBe('user-customer-1');
       expect(outboxEvt.payload.providerUserId).toBe('user-provider-1');
@@ -331,7 +331,7 @@ describe('ChatService (T7.2, CHAT-001..004, SHARE-001..003)', () => {
 
       expect(msg.senderRole).toBe(ActorRole.PROVIDER);
       expect(outboxEventsDb.length).toBe(1);
-      const outboxEvt = outboxEventsDb[0];
+      const outboxEvt = outboxEventsDb[0]!;
       expect(outboxEvt.payload.providerUserId).toBe('user-provider-1');
       expect(outboxEvt.payload.customerUserId).toBe('user-customer-1');
     });
@@ -348,8 +348,8 @@ describe('ChatService (T7.2, CHAT-001..004, SHARE-001..003)', () => {
 
       const result = await chatService.listMessages('booking-1', customerUser, { limit: 10 });
       expect(result.items.length).toBe(2);
-      expect(result.items[0].body).toBe('First');
-      expect(result.items[1].body).toBe('Second');
+      expect(result.items[0]!.body).toBe('First');
+      expect(result.items[1]!.body).toBe('Second');
     });
   });
 
@@ -416,7 +416,7 @@ describe('ChatService (T7.2, CHAT-001..004, SHARE-001..003)', () => {
         body: 'Please contact me at 03001234567 for gate access',
       });
 
-      const outboxEvt = outboxEventsDb[0];
+      const outboxEvt = outboxEventsDb[0]!;
       expect(outboxEvt.payload.messagePreview).not.toContain('03001234567');
       expect(outboxEvt.payload.messagePreview).toContain('+92 ••• •••••••');
     });
@@ -427,8 +427,8 @@ describe('ChatService (T7.2, CHAT-001..004, SHARE-001..003)', () => {
       });
 
       const adminView = await chatService.listMessages('booking-1', adminUser, {});
-      expect(adminView.items[0].body).not.toContain('03009876543');
-      expect(adminView.items[0].body).toContain('+92 ••• •••••••');
+      expect(adminView.items[0]!.body).not.toContain('03009876543');
+      expect(adminView.items[0]!.body).toContain('+92 ••• •••••••');
     });
   });
 
@@ -473,7 +473,7 @@ describe('ChatService (T7.2, CHAT-001..004, SHARE-001..003)', () => {
     });
 
     it('refuses call relay when booking is in non-active status (e.g. COMPLETED)', async () => {
-      bookingsDb[0].status = BookingStatus.COMPLETED;
+      bookingsDb[0]!.status = BookingStatus.COMPLETED;
       await expect(chatService.initiateCallRelay('booking-1', customerUser)).rejects.toThrow(
         ConflictException,
       );

@@ -25,7 +25,6 @@ import {
   URDU_FONT_FAMILY,
   interactiveProps,
   minTapTargetStyle,
-  textTokens,
 } from '@kaamkaro/ui';
 import { translate } from '@kaamkaro/i18n';
 import { getAppMirroring } from '../utils/rtl';
@@ -48,7 +47,7 @@ export interface C18ChatContactScreenProps {
 }
 
 export const C18ChatContactScreen: React.FC<C18ChatContactScreenProps> = ({
-  bookingId = 'booking-default-1',
+  bookingId: _bookingId = 'booking-default-1',
   initialMessages = [
     {
       id: 'msg-1',
@@ -67,19 +66,16 @@ export const C18ChatContactScreen: React.FC<C18ChatContactScreenProps> = ({
   ],
   initialState = 'S',
 }) => {
-  const { locale, navigate } = useCustomerApp();
+  const { locale, navigate: _navigate } = useCustomerApp();
   const mirror = getAppMirroring(locale);
   const isUrdu = locale === 'ur';
 
-  const [screenState, setScreenState] = useState<ScreenState>(initialState);
+  const [screenState, _setScreenState] = useState<ScreenState>(initialState);
   const [messages, setMessages] = useState<readonly ChatMessage[]>(initialMessages);
   const [inputText, setInputText] = useState('');
   const [callingRelay, setCallingRelay] = useState(false);
   const [relayNumber, setRelayNumber] = useState<string | null>(null);
 
-  const titleTokens = textTokens(locale, 'headline');
-  const bodyTokens = textTokens(locale, 'body');
-  const captionTokens = textTokens(locale, 'caption');
   const fontStyle = isUrdu ? { fontFamily: URDU_FONT_FAMILY } : undefined;
 
   const handleSend = () => {
@@ -142,25 +138,22 @@ export const C18ChatContactScreen: React.FC<C18ChatContactScreenProps> = ({
     <ScreenContainer
       testID="c18-chat-contact-screen"
       title={translate(locale, 'customer.c18.title')}
-      onBack={() => navigate('C17')}
-      rightAction={{
-        label: translate(locale, 'customer.c18.shareBooking'),
-        onPress: handleShareBooking,
-        testID: 'c18-share-btn',
-      }}
     >
       <View style={[styles.container, { direction: mirror.direction }]}>
         {/* Top Relay Action Bar */}
         <View style={styles.topBar}>
           <TouchableOpacity
-            testID="c18-call-btn"
             style={[styles.callButton, minTapTargetStyle()]}
             onPress={handleMaskedCall}
             disabled={callingRelay}
-            {...interactiveProps(translate(locale, 'customer.c18.callBtn'), 'button')}
+            {...interactiveProps({
+              testID: 'c18-call-btn',
+              accessibilityLabel: translate(locale, 'customer.c18.callBtn'),
+              accessibilityRole: 'button',
+            })}
           >
             {callingRelay ? (
-              <ActivityIndicator size="small" color={COLOR.textInverse} />
+              <ActivityIndicator size="small" color={COLOR.onPrimary} />
             ) : (
               <Text style={[styles.callButtonText, fontStyle]}>
                 {translate(locale, 'customer.c18.callBtn')}
@@ -170,10 +163,27 @@ export const C18ChatContactScreen: React.FC<C18ChatContactScreenProps> = ({
 
           <View style={styles.safetyActions}>
             <TouchableOpacity
-              testID="c18-report-btn"
+              style={[styles.secondaryActionBtn, minTapTargetStyle()]}
+              onPress={handleShareBooking}
+              {...interactiveProps({
+                testID: 'c18-share-btn',
+                accessibilityLabel: translate(locale, 'customer.c18.shareBooking'),
+                accessibilityRole: 'button',
+              })}
+            >
+              <Text style={[styles.secondaryActionText, fontStyle]}>
+                {translate(locale, 'customer.c18.shareBooking')}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
               style={[styles.secondaryActionBtn, minTapTargetStyle()]}
               onPress={handleReport}
-              {...interactiveProps(translate(locale, 'customer.c18.reportBtn'), 'button')}
+              {...interactiveProps({
+                testID: 'c18-report-btn',
+                accessibilityLabel: translate(locale, 'customer.c18.reportBtn'),
+                accessibilityRole: 'button',
+              })}
             >
               <Text style={[styles.secondaryActionText, fontStyle]}>
                 {translate(locale, 'customer.c18.reportBtn')}
@@ -181,10 +191,13 @@ export const C18ChatContactScreen: React.FC<C18ChatContactScreenProps> = ({
             </TouchableOpacity>
 
             <TouchableOpacity
-              testID="c18-block-btn"
               style={[styles.secondaryActionBtn, minTapTargetStyle()]}
               onPress={handleBlock}
-              {...interactiveProps(translate(locale, 'customer.c18.blockBtn'), 'button')}
+              {...interactiveProps({
+                testID: 'c18-block-btn',
+                accessibilityLabel: translate(locale, 'customer.c18.blockBtn'),
+                accessibilityRole: 'button',
+              })}
             >
               <Text style={[styles.secondaryActionText, fontStyle]}>
                 {translate(locale, 'customer.c18.blockBtn')}
@@ -275,12 +288,15 @@ export const C18ChatContactScreen: React.FC<C18ChatContactScreenProps> = ({
         {/* Input Bar */}
         <View style={styles.inputBar}>
           <TouchableOpacity
-            testID="c18-attach-btn"
             style={[styles.attachButton, minTapTargetStyle()]}
             onPress={() => {
               // Attachment picker (CHAT-003, D-011)
             }}
-            {...interactiveProps(translate(locale, 'customer.c18.attachBtn'), 'button')}
+            {...interactiveProps({
+              testID: 'c18-attach-btn',
+              accessibilityLabel: translate(locale, 'customer.c18.attachBtn'),
+              accessibilityRole: 'button',
+            })}
           >
             <Text style={[styles.attachButtonText, fontStyle]}>
               {translate(locale, 'customer.c18.attachBtn')}
@@ -291,16 +307,19 @@ export const C18ChatContactScreen: React.FC<C18ChatContactScreenProps> = ({
             testID="c18-message-input"
             style={[styles.textInput, fontStyle]}
             placeholder={translate(locale, 'customer.c18.typePlaceholder')}
-            placeholderTextColor={COLOR.textSecondary}
+            placeholderTextColor={COLOR.textMuted}
             value={inputText}
             onChangeText={setInputText}
           />
 
           <TouchableOpacity
-            testID="c18-send-btn"
             style={[styles.sendButton, minTapTargetStyle()]}
             onPress={handleSend}
-            {...interactiveProps(translate(locale, 'customer.c18.sendBtn'), 'button')}
+            {...interactiveProps({
+              testID: 'c18-send-btn',
+              accessibilityLabel: translate(locale, 'customer.c18.sendBtn'),
+              accessibilityRole: 'button',
+            })}
           >
             <Text style={[styles.sendButtonText, fontStyle]}>
               {translate(locale, 'customer.c18.sendBtn')}
@@ -325,7 +344,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
     borderBottomWidth: 1,
     borderBottomColor: COLOR.border,
-    backgroundColor: COLOR.surfaceVariant,
+    backgroundColor: COLOR.surface,
   },
   callButton: {
     backgroundColor: COLOR.primary,
@@ -336,7 +355,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   callButtonText: {
-    color: COLOR.textInverse,
+    color: COLOR.onPrimary,
     fontWeight: 'bold',
     fontSize: 14,
   },
@@ -354,7 +373,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   secondaryActionText: {
-    color: COLOR.textSecondary,
+    color: COLOR.textMuted,
     fontSize: 12,
   },
   relayBanner: {
@@ -363,7 +382,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   relayBannerText: {
-    color: STATUS_THEME.info.color,
+    color: STATUS_THEME.info.text,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -374,14 +393,14 @@ const styles = StyleSheet.create({
   messageBubble: {
     maxWidth: '80%',
     padding: SPACING.sm,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.sm,
   },
   ownBubble: {
     backgroundColor: COLOR.primary,
     borderBottomRightRadius: 2,
   },
   otherBubble: {
-    backgroundColor: COLOR.surfaceVariant,
+    backgroundColor: COLOR.surface,
     borderBottomLeftRadius: 2,
   },
   messageText: {
@@ -389,7 +408,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   ownMessageText: {
-    color: COLOR.textInverse,
+    color: COLOR.onPrimary,
   },
   otherMessageText: {
     color: COLOR.text,
@@ -400,11 +419,11 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   ownMeta: {
-    color: COLOR.textInverse,
+    color: COLOR.onPrimary,
     opacity: 0.8,
   },
   otherMeta: {
-    color: COLOR.textSecondary,
+    color: COLOR.textMuted,
   },
   centerState: {
     flex: 1,
@@ -413,17 +432,17 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
   },
   emptyText: {
-    color: COLOR.textSecondary,
+    color: COLOR.textMuted,
     fontSize: 14,
     textAlign: 'center',
   },
   errorText: {
-    color: STATUS_THEME.danger.color,
+    color: STATUS_THEME.danger.text,
     fontSize: 14,
     textAlign: 'center',
   },
   pendingText: {
-    color: STATUS_THEME.warning.color,
+    color: STATUS_THEME.warning.text,
     fontSize: 14,
     textAlign: 'center',
   },
@@ -446,7 +465,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   attachButtonText: {
-    color: COLOR.textSecondary,
+    color: COLOR.textMuted,
     fontSize: 12,
   },
   textInput: {
@@ -469,7 +488,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sendButtonText: {
-    color: COLOR.textInverse,
+    color: COLOR.onPrimary,
     fontWeight: 'bold',
     fontSize: 14,
   },

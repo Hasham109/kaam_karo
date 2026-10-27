@@ -14,13 +14,14 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { type AuthenticatedRequest, AuthGuard } from '../identity/guards/auth.guard.js';
 import {
+  type AuthenticatedRequest,
+  AuthGuard,
   RequireAdminSubRole,
   RequireAdminSubRoleGuard,
   RequireRole,
   RequireRoleGuard,
-} from '../identity/guards/require-role.guard.js';
+} from '../identity/index.js';
 import { AdminSubRole, UserRoleType } from '../../generated/prisma/client.js';
 import { RatingEnforcementService } from './rating-enforcement.service.js';
 import type {

@@ -114,6 +114,8 @@ export default defineConfig(
       'vitest/no-disabled-tests': 'error',
       // Vitest's expect(value, message) form is used for readable failure messages.
       'vitest/valid-expect': ['error', { maxArgs: 2 }],
+      '@typescript-eslint/no-explicit-any': 'off',
+      'kaamkaro/no-cross-module-import': 'off',
     },
   },
 

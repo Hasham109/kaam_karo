@@ -9,7 +9,7 @@
  */
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { COLOR, RADIUS, SPACING, textTokens } from '@kaamkaro/ui';
+import { COLOR, RADIUS, SPACING, STATUS_THEME } from '@kaamkaro/ui';
 import { translate } from '@kaamkaro/i18n';
 import { getAppMirroring } from '../utils/rtl';
 import { ScreenContainer } from '../components/ScreenContainer';
@@ -17,7 +17,7 @@ import { StateView } from '../components/StateView';
 import { UiButton } from '../components/UiButton';
 import { useCustomerApp } from '../state/CustomerContext';
 import { MOCK_CUSTOMER_TICKETS } from '../data/mock-data';
-import type { CustomerSupportTicket, ScreenState } from '../types';
+import type { CustomerSupportTicket, ScreenId, ScreenState } from '../types';
 
 export interface C28SupportScreenProps {
   readonly initialTickets?: CustomerSupportTicket[];
@@ -80,7 +80,8 @@ export const C28SupportScreen: React.FC<C28SupportScreenProps> = ({
   const { locale, navigate, screenParams } = useCustomerApp();
   const mirror = getAppMirroring(locale);
 
-  const initialBookingId = screenParams?.C28?.bookingId ?? '';
+  const c28Params = screenParams as { returnTo?: ScreenId; bookingId?: string } | undefined;
+  const initialBookingId = c28Params?.bookingId ?? '';
 
   const [tickets, setTickets] = useState<CustomerSupportTicket[]>(initialTickets);
   const [screenState, setScreenState] = useState<ScreenState>(initialState);
@@ -150,7 +151,7 @@ export const C28SupportScreen: React.FC<C28SupportScreenProps> = ({
         <StateView
           state="X"
           locale={locale}
-          message={translate(locale, 'common.errorGeneric')}
+          message={translate(locale, 'common.error.server')}
           onRetry={() => setScreenState('S')}
         />
       </ScreenContainer>
@@ -161,8 +162,8 @@ export const C28SupportScreen: React.FC<C28SupportScreenProps> = ({
     <ScreenContainer testID="c28-support-screen">
       <ScrollView contentContainerStyle={styles.container}>
         {/* Header */}
-        <View style={[styles.headerRow, mirror.flexRow]}>
-          <Text style={[styles.title, mirror.textAlign]}>
+        <View style={[styles.headerRow, { flexDirection: mirror.row }]}>
+          <Text style={[styles.title, { textAlign: mirror.textAlign }]}>
             {translate(locale, 'customer.c28.title')}
           </Text>
         </View>
@@ -172,21 +173,22 @@ export const C28SupportScreen: React.FC<C28SupportScreenProps> = ({
           <UiButton
             testID="c28-report-problem-btn"
             variant="secondary"
-            label={translate(locale, 'customer.c28.reportProblemBtn')}
+            title={translate(locale, 'customer.c28.reportProblemBtn')}
             onPress={handleReportProblem}
+            locale={locale}
           />
         </View>
 
         {/* Success Notice */}
         {successNotice ? (
           <View style={styles.noticeBox} testID="c28-success-notice">
-            <Text style={[styles.noticeText, mirror.textAlign]}>{successNotice}</Text>
+            <Text style={[styles.noticeText, { textAlign: mirror.textAlign }]}>{successNotice}</Text>
           </View>
         ) : null}
 
         {/* Section 1: FAQ Self-Help (L1, SUP-001) */}
         <View style={styles.section} testID="c28-faq-section">
-          <Text style={[styles.sectionTitle, mirror.textAlign]}>
+          <Text style={[styles.sectionTitle, { textAlign: mirror.textAlign }]}>
             {translate(locale, 'customer.c28.faqHeader')}
           </Text>
           {FAQ_ITEMS.map((faq) => {
@@ -202,11 +204,11 @@ export const C28SupportScreen: React.FC<C28SupportScreenProps> = ({
                 accessible={true}
                 accessibilityRole="button"
               >
-                <View style={[styles.faqHeader, mirror.flexRow]}>
-                  <Text style={[styles.faqQuestion, mirror.textAlign]}>{q}</Text>
+                <View style={[styles.faqHeader, { flexDirection: mirror.row }]}>
+                  <Text style={[styles.faqQuestion, { textAlign: mirror.textAlign }]}>{q}</Text>
                   <Text style={styles.faqChevron}>{isExpanded ? '▲' : '▼'}</Text>
                 </View>
-                {isExpanded ? <Text style={[styles.faqAnswer, mirror.textAlign]}>{a}</Text> : null}
+                {isExpanded ? <Text style={[styles.faqAnswer, { textAlign: mirror.textAlign }]}>{a}</Text> : null}
               </TouchableOpacity>
             );
           })}
@@ -214,19 +216,19 @@ export const C28SupportScreen: React.FC<C28SupportScreenProps> = ({
 
         {/* Section 2: My Tickets */}
         <View style={styles.section} testID="c28-tickets-section">
-          <Text style={[styles.sectionTitle, mirror.textAlign]}>
+          <Text style={[styles.sectionTitle, { textAlign: mirror.textAlign }]}>
             {translate(locale, 'customer.c28.myTicketsHeader')}
           </Text>
           {tickets.length === 0 ? (
             <View style={styles.emptyCard} testID="c28-empty-tickets">
-              <Text style={[styles.emptyText, mirror.textAlign]}>
+              <Text style={[styles.emptyText, { textAlign: mirror.textAlign }]}>
                 {translate(locale, 'customer.c28.emptyTickets')}
               </Text>
             </View>
           ) : (
             tickets.map((t) => (
               <View key={t.id} style={styles.ticketCard} testID={`c28-ticket-item-${t.id}`}>
-                <View style={[styles.ticketHeader, mirror.flexRow]}>
+                <View style={[styles.ticketHeader, { flexDirection: mirror.row }]}>
                   <Text style={styles.ticketNumber}>
                     {translate(locale, 'customer.c28.ticketNumber', {
                       number: t.ticketNumber,
@@ -248,7 +250,7 @@ export const C28SupportScreen: React.FC<C28SupportScreenProps> = ({
                   </View>
                 </View>
 
-                <View style={[styles.ticketMetaRow, mirror.flexRow]}>
+                <View style={[styles.ticketMetaRow, { flexDirection: mirror.row }]}>
                   <Text style={styles.levelBadge}>
                     {translate(locale, 'customer.c28.levelPrefix', {
                       level: t.level,
@@ -257,8 +259,8 @@ export const C28SupportScreen: React.FC<C28SupportScreenProps> = ({
                   <Text style={styles.categoryBadge}>{t.category}</Text>
                 </View>
 
-                <Text style={[styles.ticketSubject, mirror.textAlign]}>{t.subject}</Text>
-                <Text style={[styles.ticketDescription, mirror.textAlign]}>{t.description}</Text>
+                <Text style={[styles.ticketSubject, { textAlign: mirror.textAlign }]}>{t.subject}</Text>
+                <Text style={[styles.ticketDescription, { textAlign: mirror.textAlign }]}>{t.description}</Text>
               </View>
             ))
           )}
@@ -266,21 +268,21 @@ export const C28SupportScreen: React.FC<C28SupportScreenProps> = ({
 
         {/* Section 3: Create Support Ticket */}
         <View style={styles.section} testID="c28-create-ticket-section">
-          <Text style={[styles.sectionTitle, mirror.textAlign]}>
+          <Text style={[styles.sectionTitle, { textAlign: mirror.textAlign }]}>
             {translate(locale, 'customer.c28.title')}
           </Text>
 
           {validationError ? (
             <View style={styles.errorBanner} testID="c28-validation-error">
-              <Text style={[styles.errorText, mirror.textAlign]}>{validationError}</Text>
+              <Text style={[styles.errorText, { textAlign: mirror.textAlign }]}>{validationError}</Text>
             </View>
           ) : null}
 
           {/* Category Picker */}
-          <Text style={[styles.inputLabel, mirror.textAlign]}>
+          <Text style={[styles.inputLabel, { textAlign: mirror.textAlign }]}>
             {translate(locale, 'customer.c28.categoryLabel')}
           </Text>
-          <View style={[styles.categoryPillsRow, mirror.flexRow]}>
+          <View style={[styles.categoryPillsRow, { flexDirection: mirror.row }]}>
             {CATEGORY_KEYS.map((catKey) => {
               const isSelected = category === catKey;
               return (
@@ -311,29 +313,29 @@ export const C28SupportScreen: React.FC<C28SupportScreenProps> = ({
           </View>
 
           {/* Optional Booking ID Input */}
-          <Text style={[styles.inputLabel, mirror.textAlign]}>
+          <Text style={[styles.inputLabel, { textAlign: mirror.textAlign }]}>
             {translate(locale, 'customer.c28.bookingLabel')}
           </Text>
           <TextInput
             testID="c28-booking-input"
-            style={[styles.textInput, mirror.textAlign]}
+            style={[styles.textInput, { textAlign: mirror.textAlign }]}
             value={bookingId}
             onChangeText={setBookingId}
             placeholder={translate(locale, 'customer.c28.bookingLabel')}
-            placeholderTextColor={COLOR.mutedText}
+            placeholderTextColor={COLOR.textMuted}
           />
 
           {/* Description Input */}
-          <Text style={[styles.inputLabel, mirror.textAlign]}>
+          <Text style={[styles.inputLabel, { textAlign: mirror.textAlign }]}>
             {translate(locale, 'customer.c28.descriptionLabel')}
           </Text>
           <TextInput
             testID="c28-description-input"
-            style={[styles.textArea, mirror.textAlign]}
+            style={[styles.textArea, { textAlign: mirror.textAlign }]}
             value={description}
             onChangeText={setDescription}
             placeholder={translate(locale, 'customer.c28.descriptionPlaceholder')}
-            placeholderTextColor={COLOR.mutedText}
+            placeholderTextColor={COLOR.textMuted}
             multiline
             numberOfLines={4}
           />
@@ -342,13 +344,14 @@ export const C28SupportScreen: React.FC<C28SupportScreenProps> = ({
             <UiButton
               testID="c28-submit-btn"
               variant="primary"
-              label={
+              title={
                 screenState === 'P'
                   ? translate(locale, 'customer.c28.sending')
                   : translate(locale, 'customer.c28.submitBtn')
               }
               onPress={handleSubmitTicket}
               disabled={screenState === 'P'}
+              locale={locale}
             />
           </View>
         </View>
@@ -366,20 +369,21 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   title: {
-    ...textTokens.title,
+    fontSize: 22,
+    fontWeight: 'bold',
     color: COLOR.primary,
   },
   disputeCtaCard: {
     marginBottom: SPACING.md,
   },
   noticeBox: {
-    backgroundColor: COLOR.primaryLight,
+    backgroundColor: COLOR.surface,
     padding: SPACING.md,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.sm,
     marginBottom: SPACING.md,
   },
   noticeText: {
-    ...textTokens.body,
+    fontSize: 16,
     color: COLOR.primary,
     fontWeight: '600',
   },
@@ -387,13 +391,14 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   sectionTitle: {
-    ...textTokens.h2,
+    fontSize: 20,
+    fontWeight: '700',
     color: COLOR.text,
     marginBottom: SPACING.sm,
   },
   faqCard: {
-    backgroundColor: COLOR.card,
-    borderRadius: RADIUS.md,
+    backgroundColor: COLOR.surface,
+    borderRadius: RADIUS.sm,
     padding: SPACING.md,
     marginBottom: SPACING.xs,
     borderWidth: 1,
@@ -405,37 +410,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   faqQuestion: {
-    ...textTokens.body,
+    fontSize: 16,
     fontWeight: '600',
     color: COLOR.text,
     flex: 1,
   },
   faqChevron: {
-    ...textTokens.body,
-    color: COLOR.mutedText,
+    fontSize: 16,
+    color: COLOR.textMuted,
     marginLeft: SPACING.sm,
   },
   faqAnswer: {
-    ...textTokens.body,
-    color: COLOR.mutedText,
+    fontSize: 16,
+    color: COLOR.textMuted,
     marginTop: SPACING.sm,
     lineHeight: 20,
   },
   emptyCard: {
-    backgroundColor: COLOR.card,
-    borderRadius: RADIUS.md,
+    backgroundColor: COLOR.surface,
+    borderRadius: RADIUS.sm,
     padding: SPACING.lg,
     borderWidth: 1,
     borderColor: COLOR.border,
     alignItems: 'center',
   },
   emptyText: {
-    ...textTokens.body,
-    color: COLOR.mutedText,
+    fontSize: 16,
+    color: COLOR.textMuted,
   },
   ticketCard: {
-    backgroundColor: COLOR.card,
-    borderRadius: RADIUS.md,
+    backgroundColor: COLOR.surface,
+    borderRadius: RADIUS.sm,
     padding: SPACING.md,
     marginBottom: SPACING.sm,
     borderWidth: 1,
@@ -447,7 +452,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   ticketNumber: {
-    ...textTokens.caption,
+    fontSize: 14,
     fontWeight: '700',
     color: COLOR.text,
   },
@@ -457,13 +462,13 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.sm,
   },
   statusOpen: {
-    backgroundColor: COLOR.primaryLight,
+    backgroundColor: COLOR.surface,
   },
   statusClosed: {
-    backgroundColor: COLOR.mutedBg,
+    backgroundColor: COLOR.surface,
   },
   statusBadgeText: {
-    ...textTokens.caption,
+    fontSize: 14,
     fontWeight: '600',
     color: COLOR.text,
   },
@@ -472,42 +477,42 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   levelBadge: {
-    ...textTokens.caption,
-    backgroundColor: COLOR.mutedBg,
+    fontSize: 14,
+    backgroundColor: COLOR.surface,
     paddingHorizontal: SPACING.xs,
     borderRadius: RADIUS.sm,
-    color: COLOR.mutedText,
+    color: COLOR.textMuted,
   },
   categoryBadge: {
-    ...textTokens.caption,
-    backgroundColor: COLOR.mutedBg,
+    fontSize: 14,
+    backgroundColor: COLOR.surface,
     paddingHorizontal: SPACING.xs,
     borderRadius: RADIUS.sm,
-    color: COLOR.mutedText,
+    color: COLOR.textMuted,
   },
   ticketSubject: {
-    ...textTokens.body,
+    fontSize: 16,
     fontWeight: '600',
     color: COLOR.text,
     marginBottom: 2,
   },
   ticketDescription: {
-    ...textTokens.caption,
-    color: COLOR.mutedText,
+    fontSize: 14,
+    color: COLOR.textMuted,
   },
   errorBanner: {
-    backgroundColor: COLOR.dangerLight,
+    backgroundColor: STATUS_THEME.danger.background,
     padding: SPACING.sm,
     borderRadius: RADIUS.sm,
     marginBottom: SPACING.sm,
   },
   errorText: {
-    ...textTokens.caption,
-    color: COLOR.danger,
+    fontSize: 14,
+    color: STATUS_THEME.danger.text,
     fontWeight: '600',
   },
   inputLabel: {
-    ...textTokens.caption,
+    fontSize: 14,
     fontWeight: '600',
     color: COLOR.text,
     marginTop: SPACING.sm,
@@ -521,7 +526,7 @@ const styles = StyleSheet.create({
   categoryPill: {
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.sm,
     borderWidth: 1,
     minHeight: 48,
   },
@@ -530,36 +535,36 @@ const styles = StyleSheet.create({
     borderColor: COLOR.primary,
   },
   categoryPillUnselected: {
-    backgroundColor: COLOR.card,
+    backgroundColor: COLOR.surface,
     borderColor: COLOR.border,
   },
   categoryPillText: {
-    ...textTokens.caption,
+    fontSize: 14,
     fontWeight: '600',
   },
   categoryPillTextSelected: {
-    color: COLOR.white,
+    color: COLOR.onPrimary,
   },
   categoryPillTextUnselected: {
     color: COLOR.text,
   },
   textInput: {
-    backgroundColor: COLOR.card,
+    backgroundColor: COLOR.surface,
     borderWidth: 1,
     borderColor: COLOR.border,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.sm,
     padding: SPACING.sm,
-    ...textTokens.body,
+    fontSize: 16,
     color: COLOR.text,
     minHeight: 48,
   },
   textArea: {
-    backgroundColor: COLOR.card,
+    backgroundColor: COLOR.surface,
     borderWidth: 1,
     borderColor: COLOR.border,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.sm,
     padding: SPACING.sm,
-    ...textTokens.body,
+    fontSize: 16,
     color: COLOR.text,
     minHeight: 80,
     textAlignVertical: 'top',

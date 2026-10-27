@@ -401,6 +401,8 @@ export function PartnerProvider({ children }: { children: React.ReactNode }) {
     P14: 'empty',
     P15: 'empty',
     P16: 'empty',
+    P17: 'empty',
+    P20: 'empty',
     P22: 'empty',
     P23: 'empty',
     P24: 'empty',

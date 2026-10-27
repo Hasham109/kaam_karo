@@ -3,7 +3,6 @@
  * Requirement IDs: PAY-004..007, LEDGER-005, LEDGER-007, SUP-004, ROLE-003, ADMIN-ROLE-004, REL-003.
  * ARCH §6.8; BP §13, §17, §25, §26; D-008, D-016, D-020, D-021.
  */
-/* eslint-disable @typescript-eslint/no-explicit-any -- loosely typed Prisma mock payloads */
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { ConflictException, UnprocessableEntityException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';

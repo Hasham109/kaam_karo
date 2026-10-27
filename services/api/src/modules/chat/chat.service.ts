@@ -29,7 +29,7 @@ function parsePositiveInt(val: unknown): number | undefined {
   }
   return undefined;
 }
-import type { RequestUser } from '../identity/guards/auth.guard';
+import type { RequestUser } from '../identity/index.js';
 import {
   type CallRelayService,
   CALL_RELAY_SERVICE,

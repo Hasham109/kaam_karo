@@ -45,10 +45,12 @@ describe('[T7.4] Customer Badges UI Test Suite', () => {
       ] as const;
 
       for (const badgeKey of allBadgeKeys) {
-        const nameEn = translate('en', `common.badge.${badgeKey}.name` as any);
-        const nameUr = translate('ur', `common.badge.${badgeKey}.name` as any);
-        const descEn = translate('en', `common.badge.${badgeKey}.desc` as any);
-        const descUr = translate('ur', `common.badge.${badgeKey}.desc` as any);
+        const nameKey = `common.badge.${badgeKey}.name` as const;
+        const descKey = `common.badge.${badgeKey}.desc` as const;
+        const nameEn = translate('en', nameKey);
+        const nameUr = translate('ur', nameKey);
+        const descEn = translate('en', descKey);
+        const descUr = translate('ur', descKey);
 
         expect(nameEn.length).toBeGreaterThan(0);
         expect(nameUr).toMatch(ARABIC_SCRIPT);

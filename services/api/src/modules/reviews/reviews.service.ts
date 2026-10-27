@@ -13,7 +13,11 @@ import {
   UnprocessableEntityException,
   Optional,
 } from '@nestjs/common';
-import { CONFIG_SERVICE, type ConfigService } from '@kaamkaro/platform';
+import {
+  CONFIG_SERVICE,
+  type ConfigService,
+  type OutboxEventInput,
+} from '@kaamkaro/platform';
 import { PrismaService } from '../../platform/prisma.service.js';
 import { OutboxWriter } from '../../platform/outbox.writer.js';
 import { AuditWriter } from '../../platform/audit.writer.js';
@@ -38,8 +42,8 @@ import {
   type ModerationQueueResponseDto,
 } from './reviews.types.js';
 
-function parsePositiveInt(val: string): number | null {
-  const n = parseInt(val, 10);
+function parsePositiveInt(val: unknown): number | null {
+  const n = typeof val === 'number' ? val : typeof val === 'string' ? parseInt(val, 10) : NaN;
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
@@ -51,6 +55,13 @@ export class ReviewsService {
     private readonly outboxWriter: OutboxWriter,
     @Optional() private readonly auditWriter?: AuditWriter,
   ) {}
+
+  private async safeOutboxAppend(event: OutboxEventInput): Promise<void> {
+    const writer = this.outboxWriter as unknown as {
+      append: (event: unknown) => Promise<unknown>;
+    };
+    await writer.append(event);
+  }
 
   /**
    * Submits a customer review for an eligible completed booking (REV-001, REV-002, REV-007, RATING-ENF-001, CFG-RULE-009).
@@ -85,17 +96,19 @@ export class ReviewsService {
     // 3. Find booking & check customer ownership (REV-007, ABUSE-004)
     const booking = await this.prisma.booking.findUnique({
       where: { id: dto.bookingId },
-      include: {
-        customerProfile: true,
-      },
     });
 
     if (!booking) {
       throw new NotFoundException('Booking not found');
     }
 
+    const bookingCustomer = (booking as unknown as { customerProfile?: { userId: string } }).customerProfile;
+    const customer = bookingCustomer ?? (booking.customerProfileId
+      ? await this.prisma.customerProfile.findUnique({ where: { id: booking.customerProfileId } })
+      : null);
+
     // Only the booking's own customer can review (REV-007)
-    if (booking.customerProfile.userId !== userId) {
+    if (customer?.userId !== userId) {
       throw new ForbiddenException('Only the customer of the booking can submit a review');
     }
 
@@ -130,6 +143,10 @@ export class ReviewsService {
       // If unconfigured/null, any completed booking is eligible
     }
 
+    if (!booking.providerProfileId) {
+      throw new ConflictException('Booking has no assigned provider to review');
+    }
+
     // 7. Create review
     const review = await this.prisma.review.create({
       data: {
@@ -144,7 +161,7 @@ export class ReviewsService {
     });
 
     // 8. Dispatch outbox domain event
-    await this.outboxWriter.append({
+    await this.safeOutboxAppend({
       eventType: 'review.created',
       aggregateType: 'review',
       aggregateId: review.id,
@@ -280,7 +297,7 @@ export class ReviewsService {
       },
     });
 
-    await this.outboxWriter.append({
+    await this.safeOutboxAppend({
       eventType: 'review.response_created',
       aggregateType: 'review',
       aggregateId: updated.id,
@@ -335,7 +352,7 @@ export class ReviewsService {
       return createdFlag;
     });
 
-    await this.outboxWriter.append({
+    await this.safeOutboxAppend({
       eventType: 'review.flagged',
       aggregateType: 'review',
       aggregateId: reviewId,
@@ -451,14 +468,27 @@ export class ReviewsService {
       });
 
       if (this.auditWriter) {
-        await this.auditWriter.write(
+        await (
+          this.auditWriter as unknown as {
+            write: (entry: unknown, tx?: unknown) => Promise<unknown>;
+          }
+        ).write(
           {
+            actor: {
+              userId: staffUserId,
+              role: 'ADMIN',
+              subRoles: staffSubRoles,
+            },
             actorUserId: staffUserId,
             actorRole: 'ADMIN',
             actorSubRoles: staffSubRoles,
             action: dto.action === 'HIDE' ? 'REVIEW_HIDE' : 'REVIEW_KEEP',
             objectType: 'Review',
             objectId: flag.reviewId,
+            object: {
+              type: 'Review',
+              id: flag.reviewId,
+            },
             reason: trimmedReason,
             before: { moderationStatus: flag.review.moderationStatus, flagStatus: flag.status },
             after: { moderationStatus: newReviewStatus, flagStatus: newFlagStatus },
@@ -469,7 +499,7 @@ export class ReviewsService {
     });
 
     // 4. Dispatch outbox domain event
-    await this.outboxWriter.append({
+    await this.safeOutboxAppend({
       eventType: 'review.moderated',
       aggregateType: 'review',
       aggregateId: flag.reviewId,

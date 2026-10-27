@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PlatformModule } from '../../platform/platform.module.js';
-import { IdentityModule } from '../identity/identity.module.js';
+import { IdentityModule } from '../identity/index.js';
 import {
   AdminDisputesController,
   AdminSupportController,

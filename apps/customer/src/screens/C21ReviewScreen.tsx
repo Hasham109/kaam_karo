@@ -12,7 +12,7 @@ import { StateView } from '../components/StateView';
 import { UiButton } from '../components/UiButton';
 import { useCustomerApp } from '../state/CustomerContext';
 import { getAppMirroring } from '../utils/rtl';
-import type { ScreenState } from '../types';
+import type { ScreenId, ScreenState } from '../types';
 
 interface TagOption {
   key: string;
@@ -36,9 +36,10 @@ export function C21ReviewScreen(): React.JSX.Element {
   const { locale, navigate, screenParams } = useCustomerApp();
   const mirror = getAppMirroring(locale);
 
-  const bookingId = screenParams?.C21?.bookingId ?? 'b-100';
-  const providerName = screenParams?.C21?.providerName ?? 'Muhammad Tariq';
-  const returnTo = screenParams?.C21?.returnTo ?? 'C20';
+  const c21Params = screenParams as { bookingId?: string; providerName?: string; returnTo?: ScreenId } | undefined;
+  const bookingId = c21Params?.bookingId ?? 'b-100';
+  const providerName = c21Params?.providerName ?? 'Muhammad Tariq';
+  const returnTo = c21Params?.returnTo ?? 'C20';
 
   const [rating, setRating] = useState<number>(0);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -68,8 +69,9 @@ export function C21ReviewScreen(): React.JSX.Element {
     setScreenState('L');
 
     try {
-      // Simulate API submit review
-      // Real API maps: POST /v1/reviews
+      // Simulate API submit review: POST /v1/reviews
+      void bookingId;
+      void returnTo;
       setScreenState('S');
     } catch {
       setErrorCode('GENERIC');
@@ -231,7 +233,7 @@ export function C21ReviewScreen(): React.JSX.Element {
             value={reviewText}
             onChangeText={setReviewText}
             placeholder={translate(locale, 'customer.c21.textPlaceholder')}
-            placeholderTextColor={COLOR.neutral400}
+            placeholderTextColor={COLOR.textMuted}
             multiline
             numberOfLines={4}
             maxLength={1000}
@@ -259,19 +261,19 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
   },
   providerCard: {
-    backgroundColor: COLOR.neutral50,
-    borderRadius: RADIUS.md,
+    backgroundColor: COLOR.surface,
+    borderRadius: RADIUS.sm,
     padding: SPACING.md,
     marginBottom: SPACING.lg,
     borderWidth: 1,
-    borderColor: COLOR.neutral200,
+    borderColor: COLOR.border,
   },
   providerLabel: {
-    color: COLOR.neutral900,
+    color: COLOR.text,
     marginBottom: SPACING.xs,
   },
   questionText: {
-    color: COLOR.neutral700,
+    color: COLOR.textMuted,
   },
   starsRow: {
     justifyContent: 'center',
@@ -286,20 +288,20 @@ const styles = StyleSheet.create({
   },
   starIcon: {
     fontSize: 38,
-    color: COLOR.neutral300,
+    color: COLOR.border,
   },
   starFilled: {
     color: '#F59E0B', // Golden amber star
   },
   ratingHint: {
-    color: COLOR.neutral500,
+    color: COLOR.textMuted,
     marginBottom: SPACING.md,
   },
   tagsSection: {
     marginVertical: SPACING.md,
   },
   tagsHeader: {
-    color: COLOR.neutral800,
+    color: COLOR.text,
     marginBottom: SPACING.sm,
   },
   tagsContainer: {
@@ -309,36 +311,36 @@ const styles = StyleSheet.create({
   tagChip: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.full,
+    borderRadius: RADIUS.sheet,
     borderWidth: 1,
-    borderColor: COLOR.neutral300,
-    backgroundColor: COLOR.neutral0,
+    borderColor: COLOR.border,
+    backgroundColor: COLOR.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   tagChipSelected: {
-    backgroundColor: COLOR.primary50,
-    borderColor: COLOR.primary600,
+    backgroundColor: COLOR.surface,
+    borderColor: COLOR.primary,
   },
   tagText: {
-    color: COLOR.neutral700,
+    color: COLOR.textMuted,
   },
   tagTextSelected: {
-    color: COLOR.primary700,
+    color: COLOR.primary,
     fontWeight: '600',
   },
   textSection: {
     marginVertical: SPACING.md,
   },
   textInput: {
-    backgroundColor: COLOR.neutral0,
+    backgroundColor: COLOR.background,
     borderWidth: 1,
-    borderColor: COLOR.neutral300,
-    borderRadius: RADIUS.md,
+    borderColor: COLOR.border,
+    borderRadius: RADIUS.sm,
     padding: SPACING.md,
     minHeight: 100,
     textAlignVertical: 'top',
-    color: COLOR.neutral900,
+    color: COLOR.text,
   },
   submitBtn: {
     marginTop: SPACING.lg,

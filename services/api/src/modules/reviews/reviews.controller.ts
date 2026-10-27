@@ -14,13 +14,14 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { type AuthenticatedRequest, AuthGuard } from '../identity/guards/auth.guard';
 import {
+  type AuthenticatedRequest,
+  AuthGuard,
   RequireRoleGuard,
   RequireAdminSubRoleGuard,
   RequireRole,
   RequireAdminSubRole,
-} from '../identity/guards/require-role.guard';
+} from '../identity/index.js';
 import { UserRoleType, AdminSubRole, ReviewFlagStatus } from '../../generated/prisma/client.js';
 import { ReviewsService } from './reviews.service';
 import type {
@@ -49,7 +50,7 @@ export class ReviewsController {
     @Req() req: AuthenticatedRequest,
     @Body() dto: SubmitReviewDto,
   ): Promise<ReviewResponseDto> {
-    return this.reviewsService.submitReview(req.user.userId, dto);
+    return this.reviewsService.submitReview(req.user.id, dto);
   }
 
   /**
@@ -86,7 +87,7 @@ export class ReviewsController {
     @Param('reviewId') reviewId: string,
     @Body() dto: ProviderReviewResponseDto,
   ): Promise<ReviewResponseDto> {
-    return this.reviewsService.respondToReview(req.user.userId, reviewId, dto);
+    return this.reviewsService.respondToReview(req.user.id, reviewId, dto);
   }
 
   /**
@@ -100,7 +101,7 @@ export class ReviewsController {
     @Param('reviewId') reviewId: string,
     @Body() dto: FlagReviewDto,
   ): Promise<ReviewFlagResponseDto> {
-    return this.reviewsService.flagReview(req.user.userId, reviewId, dto);
+    return this.reviewsService.flagReview(req.user.id, reviewId, dto);
   }
 }
 
@@ -134,7 +135,7 @@ export class AdminReviewsController {
     @Param('flagId') flagId: string,
     @Body() dto: ModerationDecisionDto,
   ) {
-    const subRoles = (req.user['adminSubRoles'] as AdminSubRole[]) ?? [AdminSubRole.RISK_TRUST];
-    return this.reviewsService.decideModerationFlag(req.user.userId, subRoles, flagId, dto);
+    const subRoles = (req.user.subRoles as AdminSubRole[]) ?? [AdminSubRole.RISK_TRUST];
+    return this.reviewsService.decideModerationFlag(req.user.id, subRoles, flagId, dto);
   }
 }

@@ -20,7 +20,7 @@ import {
   RatingStanding,
   ReviewModerationStatus,
 } from '../../generated/prisma/client.js';
-import { computePublicRating } from '../reviews/rating.util.js';
+import { computePublicRating } from '../reviews/index.js';
 import type {
   ProviderEnforcementEvaluation,
   RatingEnforcementAction,
@@ -49,14 +49,14 @@ export class RatingEnforcementService {
    */
   private async getConfigNumber(key: string): Promise<number | null> {
     try {
-      const res: any = await this.configService.get<number>(key, (v: unknown) =>
+      const res = await this.configService.get<number>(key, (v: unknown) =>
         typeof v === 'number' && Number.isFinite(v) ? v : undefined,
       );
       if (typeof res === 'number') {
         return res;
       }
-      if (res && res.status === 'configured' && typeof res.value === 'number') {
-        return res.value;
+      if (res && typeof res === 'object' && 'status' in res && res.status === 'configured') {
+        return typeof res.value === 'number' ? res.value : null;
       }
     } catch {
       return null;

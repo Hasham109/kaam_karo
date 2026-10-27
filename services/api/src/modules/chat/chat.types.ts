@@ -3,7 +3,7 @@
  * Requirements: CHAT-001, CHAT-002, CHAT-003, CHAT-004, SHARE-001..003.
  * BP §20, §25, §74, §82.
  */
-import { ActorRole, MessageModerationStatus } from '../../generated/prisma/client.js';
+import type { ActorRole, MessageModerationStatus } from '../../generated/prisma/client.js';
 
 export const CHAT_ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',

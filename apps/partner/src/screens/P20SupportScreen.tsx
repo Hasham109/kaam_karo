@@ -17,7 +17,7 @@ import {
   View,
 } from 'react-native';
 import { translate } from '@kaamkaro/i18n';
-import { COLOR, RADIUS, SPACING, textTokens } from '@kaamkaro/ui';
+import { COLOR, RADIUS, SPACING, STATUS_THEME, textTokens } from '@kaamkaro/ui';
 import { usePartner } from '../state/PartnerContext';
 import { getAppMirroring } from '../utils/rtl';
 import type { PartnerSupportCase, ScreenStateMode } from '../types';
@@ -99,7 +99,7 @@ const MOCK_PARTNER_CASES: PartnerSupportCase[] = [
 
 export const P20SupportScreen: React.FC<P20SupportScreenProps> = ({
   initialCases = MOCK_PARTNER_CASES,
-  initialState = 'CONTENT',
+  initialState = 'success',
   onCaseCreated,
 }) => {
   const { locale } = usePartner();
@@ -119,7 +119,6 @@ export const P20SupportScreen: React.FC<P20SupportScreenProps> = ({
   // Reply Modal State
   const [activeReplyCase, setActiveReplyCase] = useState<PartnerSupportCase | null>(null);
   const [replyMessage, setReplyMessage] = useState<string>('');
-  const [replySuccessNotice, setReplySuccessNotice] = useState<string | null>(null);
 
   const toggleFaq = (id: string) => {
     setExpandedFaqId((prev) => (prev === id ? null : id));
@@ -136,7 +135,7 @@ export const P20SupportScreen: React.FC<P20SupportScreenProps> = ({
     }
 
     setValidationError(null);
-    setScreenState('LOADING');
+    setScreenState('pending');
 
     setTimeout(() => {
       const caseNumber = `CS-${Math.floor(8000 + Math.random() * 1000)}`;
@@ -157,7 +156,7 @@ export const P20SupportScreen: React.FC<P20SupportScreenProps> = ({
       setDescription('');
       setJobRef('');
       setSuccessNotice(translate(locale, 'partner.p20.success'));
-      setScreenState('CONTENT');
+      setScreenState('success');
       onCaseCreated?.(newCase);
     }, 400);
   };
@@ -165,7 +164,6 @@ export const P20SupportScreen: React.FC<P20SupportScreenProps> = ({
   const handleOpenReply = (c: PartnerSupportCase) => {
     setActiveReplyCase(c);
     setReplyMessage('');
-    setReplySuccessNotice(null);
   };
 
   const handleSendReply = () => {
@@ -189,10 +187,10 @@ export const P20SupportScreen: React.FC<P20SupportScreenProps> = ({
     setSuccessNotice(translate(locale, 'partner.p20.replySuccess'));
   };
 
-  if (screenState === 'LOADING') {
+  if (screenState === 'loading') {
     return (
       <View style={styles.loadingContainer} testID="p20-support-screen">
-        <Text style={[styles.loadingText, mirror.textAlign]}>
+        <Text style={[styles.loadingText, { textAlign: mirror.textAlign }, textTokens(locale, 'body')]}>
           {translate(locale, 'partner.p20.pending')}
         </Text>
       </View>
@@ -203,8 +201,8 @@ export const P20SupportScreen: React.FC<P20SupportScreenProps> = ({
     <ScrollView style={styles.root} testID="p20-support-screen">
       <View style={styles.container}>
         {/* Header */}
-        <View style={[styles.headerRow, mirror.flexRow]}>
-          <Text style={[styles.title, mirror.textAlign]}>
+        <View style={[styles.headerRow, { flexDirection: mirror.row }]}>
+          <Text style={[styles.title, { textAlign: mirror.textAlign }, textTokens(locale, 'title')]}>
             {translate(locale, 'partner.p20.title')}
           </Text>
         </View>
@@ -212,13 +210,13 @@ export const P20SupportScreen: React.FC<P20SupportScreenProps> = ({
         {/* Success Notice */}
         {successNotice ? (
           <View style={styles.noticeBox} testID="p20-success-notice">
-            <Text style={[styles.noticeText, mirror.textAlign]}>{successNotice}</Text>
+            <Text style={[styles.noticeText, { textAlign: mirror.textAlign }]}>{successNotice}</Text>
           </View>
         ) : null}
 
         {/* Section 1: Help Articles / FAQ */}
         <View style={styles.section} testID="p20-faq-section">
-          <Text style={[styles.sectionTitle, mirror.textAlign]}>
+          <Text style={[styles.sectionTitle, { textAlign: mirror.textAlign }]}>
             {translate(locale, 'partner.p20.faqHeader')}
           </Text>
           {PARTNER_FAQS.map((faq) => {
@@ -234,11 +232,11 @@ export const P20SupportScreen: React.FC<P20SupportScreenProps> = ({
                 accessible={true}
                 accessibilityRole="button"
               >
-                <View style={[styles.faqHeader, mirror.flexRow]}>
-                  <Text style={[styles.faqQuestion, mirror.textAlign]}>{q}</Text>
-                  <Text style={styles.faqChevron}>{isExpanded ? '▲' : '▼'}</Text>
+                <View style={[styles.faqHeader, { flexDirection: mirror.row }]}>
+                  <Text style={[styles.faqQuestion, { textAlign: mirror.textAlign }, textTokens(locale, 'body')]}>{q}</Text>
+                  <Text style={[styles.faqChevron, textTokens(locale, 'body')]}>{isExpanded ? '▲' : '▼'}</Text>
                 </View>
-                {isExpanded ? <Text style={[styles.faqAnswer, mirror.textAlign]}>{a}</Text> : null}
+                {isExpanded ? <Text style={[styles.faqAnswer, { textAlign: mirror.textAlign }, textTokens(locale, 'body')]}>{a}</Text> : null}
               </TouchableOpacity>
             );
           })}
@@ -246,20 +244,20 @@ export const P20SupportScreen: React.FC<P20SupportScreenProps> = ({
 
         {/* Section 2: My Cases */}
         <View style={styles.section} testID="p20-cases-section">
-          <Text style={[styles.sectionTitle, mirror.textAlign]}>
+          <Text style={[styles.sectionTitle, { textAlign: mirror.textAlign }, textTokens(locale, 'title')]}>
             {translate(locale, 'partner.p20.myCasesHeader')}
           </Text>
           {cases.length === 0 ? (
             <View style={styles.emptyCard} testID="p20-empty-cases">
-              <Text style={[styles.emptyText, mirror.textAlign]}>
+              <Text style={[styles.emptyText, { textAlign: mirror.textAlign }, textTokens(locale, 'body')]}>
                 {translate(locale, 'partner.p20.emptyCases')}
               </Text>
             </View>
           ) : (
             cases.map((c) => (
               <View key={c.id} style={styles.caseCard} testID={`p20-case-item-${c.id}`}>
-                <View style={[styles.caseHeader, mirror.flexRow]}>
-                  <Text style={styles.caseNumber}>
+                <View style={[styles.caseHeader, { flexDirection: mirror.row }]}>
+                  <Text style={[styles.caseNumber, textTokens(locale, 'label')]}>
                     {translate(locale, 'partner.p20.caseNumber', {
                       number: c.caseNumber,
                     })}
@@ -272,7 +270,7 @@ export const P20SupportScreen: React.FC<P20SupportScreenProps> = ({
                         : styles.statusOpen,
                     ]}
                   >
-                    <Text style={styles.statusBadgeText}>
+                    <Text style={[styles.statusBadgeText, textTokens(locale, 'label')]}>
                       {c.status === 'CLOSED' || c.status === 'RESOLVED'
                         ? translate(locale, 'partner.p20.statusClosed')
                         : translate(locale, 'partner.p20.statusOpen')}
@@ -280,26 +278,26 @@ export const P20SupportScreen: React.FC<P20SupportScreenProps> = ({
                   </View>
                 </View>
 
-                <View style={[styles.caseMetaRow, mirror.flexRow]}>
-                  <Text style={styles.levelBadge}>
+                <View style={[styles.caseMetaRow, { flexDirection: mirror.row }]}>
+                  <Text style={[styles.levelBadge, textTokens(locale, 'label')]}>
                     {translate(locale, 'partner.p20.levelPrefix', {
                       level: c.level,
                     })}
                   </Text>
-                  <Text style={styles.categoryBadge}>{c.category}</Text>
-                  {c.bookingId ? <Text style={styles.bookingBadge}>#{c.bookingId}</Text> : null}
+                  <Text style={[styles.categoryBadge, textTokens(locale, 'label')]}>{c.category}</Text>
+                  {c.bookingId ? <Text style={[styles.bookingBadge, textTokens(locale, 'label')]}>#{c.bookingId}</Text> : null}
                 </View>
 
-                <Text style={[styles.caseSubject, mirror.textAlign]}>{c.subject}</Text>
-                <Text style={[styles.caseDescription, mirror.textAlign]}>{c.description}</Text>
+                <Text style={[styles.caseSubject, { textAlign: mirror.textAlign }, textTokens(locale, 'body')]}>{c.subject}</Text>
+                <Text style={[styles.caseDescription, { textAlign: mirror.textAlign }, textTokens(locale, 'label')]}>{c.description}</Text>
 
                 {/* Updates Thread */}
                 {c.updates.length > 0 ? (
                   <View style={styles.updatesContainer}>
                     {c.updates.map((up) => (
                       <View key={up.id} style={styles.updateBubble}>
-                        <Text style={styles.updateAuthor}>{up.authorRole}:</Text>
-                        <Text style={styles.updateText}>{up.message}</Text>
+                        <Text style={[styles.updateAuthor, textTokens(locale, 'label')]}>{up.authorRole}:</Text>
+                        <Text style={[styles.updateText, textTokens(locale, 'label')]}>{up.message}</Text>
                       </View>
                     ))}
                   </View>
@@ -314,7 +312,7 @@ export const P20SupportScreen: React.FC<P20SupportScreenProps> = ({
                     accessible={true}
                     accessibilityRole="button"
                   >
-                    <Text style={styles.replyButtonText}>
+                    <Text style={[styles.replyButtonText, textTokens(locale, 'label')]}>
                       {translate(locale, 'partner.p20.replyModalTitle')}
                     </Text>
                   </TouchableOpacity>
@@ -326,21 +324,21 @@ export const P20SupportScreen: React.FC<P20SupportScreenProps> = ({
 
         {/* Section 3: Create Case */}
         <View style={styles.section} testID="p20-create-case-section">
-          <Text style={[styles.sectionTitle, mirror.textAlign]}>
+          <Text style={[styles.sectionTitle, { textAlign: mirror.textAlign }, textTokens(locale, 'title')]}>
             {translate(locale, 'partner.p20.title')}
           </Text>
 
           {validationError ? (
             <View style={styles.errorBanner} testID="p20-validation-error">
-              <Text style={[styles.errorText, mirror.textAlign]}>{validationError}</Text>
+              <Text style={[styles.errorText, { textAlign: mirror.textAlign }, textTokens(locale, 'label')]}>{validationError}</Text>
             </View>
           ) : null}
 
           {/* Category Picker */}
-          <Text style={[styles.inputLabel, mirror.textAlign]}>
+          <Text style={[styles.inputLabel, { textAlign: mirror.textAlign }, textTokens(locale, 'label')]}>
             {translate(locale, 'partner.p20.categoryLabel')}
           </Text>
-          <View style={[styles.categoryGrid, mirror.flexRow]}>
+          <View style={[styles.categoryGrid, { flexDirection: mirror.row }]}>
             {CATEGORIES.map((catKey) => {
               const isSelected = category === catKey;
               return (
@@ -358,6 +356,7 @@ export const P20SupportScreen: React.FC<P20SupportScreenProps> = ({
                   <Text
                     style={[
                       styles.categoryPillText,
+                      textTokens(locale, 'label'),
                       isSelected
                         ? styles.categoryPillTextSelected
                         : styles.categoryPillTextUnselected,
@@ -371,29 +370,29 @@ export const P20SupportScreen: React.FC<P20SupportScreenProps> = ({
           </View>
 
           {/* Job Reference */}
-          <Text style={[styles.inputLabel, mirror.textAlign]}>
+          <Text style={[styles.inputLabel, { textAlign: mirror.textAlign }, textTokens(locale, 'label')]}>
             {translate(locale, 'partner.p20.jobLabel')}
           </Text>
           <TextInput
             testID="p20-job-input"
-            style={[styles.textInput, mirror.textAlign]}
+            style={[styles.textInput, { textAlign: mirror.textAlign }, textTokens(locale, 'body')]}
             value={jobRef}
             onChangeText={setJobRef}
             placeholder={translate(locale, 'partner.p20.jobLabel')}
-            placeholderTextColor={COLOR.mutedText}
+            placeholderTextColor={COLOR.textMuted}
           />
 
           {/* Description */}
-          <Text style={[styles.inputLabel, mirror.textAlign]}>
+          <Text style={[styles.inputLabel, { textAlign: mirror.textAlign }, textTokens(locale, 'label')]}>
             {translate(locale, 'partner.p20.descriptionLabel')}
           </Text>
           <TextInput
             testID="p20-description-input"
-            style={[styles.textArea, mirror.textAlign]}
+            style={[styles.textArea, { textAlign: mirror.textAlign }, textTokens(locale, 'body')]}
             value={description}
             onChangeText={setDescription}
             placeholder={translate(locale, 'partner.p20.descriptionPlaceholder')}
-            placeholderTextColor={COLOR.mutedText}
+            placeholderTextColor={COLOR.textMuted}
             multiline
             numberOfLines={4}
           />
@@ -405,7 +404,7 @@ export const P20SupportScreen: React.FC<P20SupportScreenProps> = ({
             accessible={true}
             accessibilityRole="button"
           >
-            <Text style={styles.submitBtnText}>{translate(locale, 'partner.p20.sendBtn')}</Text>
+            <Text style={[styles.submitBtnText, textTokens(locale, 'body')]}>{translate(locale, 'partner.p20.sendBtn')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -418,20 +417,20 @@ export const P20SupportScreen: React.FC<P20SupportScreenProps> = ({
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent} testID="p20-reply-modal">
-              <Text style={[styles.modalTitle, mirror.textAlign]}>
+              <Text style={[styles.modalTitle, { textAlign: mirror.textAlign }, textTokens(locale, 'title')]}>
                 {translate(locale, 'partner.p20.replyModalTitle')}
               </Text>
               <TextInput
                 testID="p20-reply-input"
-                style={[styles.modalInput, mirror.textAlign]}
+                style={[styles.modalInput, { textAlign: mirror.textAlign }, textTokens(locale, 'body')]}
                 value={replyMessage}
                 onChangeText={setReplyMessage}
                 placeholder={translate(locale, 'partner.p20.replyPlaceholder')}
-                placeholderTextColor={COLOR.mutedText}
+                placeholderTextColor={COLOR.textMuted}
                 multiline
                 numberOfLines={4}
               />
-              <View style={[styles.modalActionsRow, mirror.flexRow]}>
+              <View style={[styles.modalActionsRow, { flexDirection: mirror.row }]}>
                 <TouchableOpacity
                   testID="p20-reply-cancel-btn"
                   style={styles.modalCancelBtn}
@@ -439,7 +438,7 @@ export const P20SupportScreen: React.FC<P20SupportScreenProps> = ({
                   accessible={true}
                   accessibilityRole="button"
                 >
-                  <Text style={styles.modalCancelText}>{translate(locale, 'common.cancel')}</Text>
+                  <Text style={[styles.modalCancelText, textTokens(locale, 'body')]}>{translate(locale, 'common.action.cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   testID="p20-reply-send-btn"
@@ -448,7 +447,7 @@ export const P20SupportScreen: React.FC<P20SupportScreenProps> = ({
                   accessible={true}
                   accessibilityRole="button"
                 >
-                  <Text style={styles.modalSendText}>
+                  <Text style={[styles.modalSendText, textTokens(locale, 'body')]}>
                     {translate(locale, 'partner.p20.replySendBtn')}
                   </Text>
                 </TouchableOpacity>
@@ -477,38 +476,34 @@ const styles = StyleSheet.create({
     padding: SPACING.xl,
   },
   loadingText: {
-    ...textTokens.body,
-    color: COLOR.mutedText,
+    color: COLOR.textMuted,
   },
   headerRow: {
     marginBottom: SPACING.md,
   },
   title: {
-    ...textTokens.title,
     color: COLOR.primary,
   },
   noticeBox: {
-    backgroundColor: COLOR.primaryLight,
+    backgroundColor: STATUS_THEME.info.background,
     padding: SPACING.md,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.sm,
     marginBottom: SPACING.md,
   },
   noticeText: {
-    ...textTokens.body,
-    color: COLOR.primary,
+    color: STATUS_THEME.info.text,
     fontWeight: '600',
   },
   section: {
     marginBottom: SPACING.lg,
   },
   sectionTitle: {
-    ...textTokens.h2,
     color: COLOR.text,
     marginBottom: SPACING.sm,
   },
   faqCard: {
-    backgroundColor: COLOR.card,
-    borderRadius: RADIUS.md,
+    backgroundColor: COLOR.surface,
+    borderRadius: RADIUS.sm,
     padding: SPACING.md,
     marginBottom: SPACING.xs,
     borderWidth: 1,
@@ -520,37 +515,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   faqQuestion: {
-    ...textTokens.body,
     fontWeight: '600',
     color: COLOR.text,
     flex: 1,
   },
   faqChevron: {
-    ...textTokens.body,
-    color: COLOR.mutedText,
+    color: COLOR.textMuted,
     marginLeft: SPACING.sm,
   },
   faqAnswer: {
-    ...textTokens.body,
-    color: COLOR.mutedText,
+    color: COLOR.textMuted,
     marginTop: SPACING.sm,
     lineHeight: 20,
   },
   emptyCard: {
-    backgroundColor: COLOR.card,
-    borderRadius: RADIUS.md,
+    backgroundColor: COLOR.surface,
+    borderRadius: RADIUS.sm,
     padding: SPACING.lg,
     borderWidth: 1,
     borderColor: COLOR.border,
     alignItems: 'center',
   },
   emptyText: {
-    ...textTokens.body,
-    color: COLOR.mutedText,
+    color: COLOR.textMuted,
   },
   caseCard: {
-    backgroundColor: COLOR.card,
-    borderRadius: RADIUS.md,
+    backgroundColor: COLOR.surface,
+    borderRadius: RADIUS.sm,
     padding: SPACING.md,
     marginBottom: SPACING.sm,
     borderWidth: 1,
@@ -562,7 +553,6 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   caseNumber: {
-    ...textTokens.caption,
     fontWeight: '700',
     color: COLOR.text,
   },
@@ -572,13 +562,12 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.sm,
   },
   statusOpen: {
-    backgroundColor: COLOR.primaryLight,
+    backgroundColor: STATUS_THEME.info.background,
   },
   statusClosed: {
-    backgroundColor: COLOR.mutedBg,
+    backgroundColor: COLOR.background,
   },
   statusBadgeText: {
-    ...textTokens.caption,
     fontWeight: '600',
     color: COLOR.text,
   },
@@ -587,56 +576,49 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   levelBadge: {
-    ...textTokens.caption,
-    backgroundColor: COLOR.mutedBg,
+    backgroundColor: COLOR.background,
     paddingHorizontal: SPACING.xs,
     borderRadius: RADIUS.sm,
-    color: COLOR.mutedText,
+    color: COLOR.textMuted,
   },
   categoryBadge: {
-    ...textTokens.caption,
-    backgroundColor: COLOR.mutedBg,
+    backgroundColor: COLOR.background,
     paddingHorizontal: SPACING.xs,
     borderRadius: RADIUS.sm,
-    color: COLOR.mutedText,
+    color: COLOR.textMuted,
   },
   bookingBadge: {
-    ...textTokens.caption,
-    backgroundColor: COLOR.mutedBg,
+    backgroundColor: COLOR.background,
     paddingHorizontal: SPACING.xs,
     borderRadius: RADIUS.sm,
-    color: COLOR.mutedText,
+    color: COLOR.textMuted,
   },
   caseSubject: {
-    ...textTokens.body,
     fontWeight: '600',
     color: COLOR.text,
     marginBottom: 2,
   },
   caseDescription: {
-    ...textTokens.caption,
-    color: COLOR.mutedText,
+    color: COLOR.textMuted,
     marginBottom: SPACING.xs,
   },
   updatesContainer: {
-    backgroundColor: COLOR.mutedBg,
+    backgroundColor: COLOR.background,
     borderRadius: RADIUS.sm,
     padding: SPACING.sm,
     marginVertical: SPACING.xs,
     gap: SPACING.xs,
   },
   updateBubble: {
-    backgroundColor: COLOR.card,
+    backgroundColor: COLOR.surface,
     borderRadius: RADIUS.sm,
     padding: SPACING.xs,
   },
   updateAuthor: {
-    ...textTokens.caption,
     fontWeight: '700',
     color: COLOR.primary,
   },
   updateText: {
-    ...textTokens.caption,
     color: COLOR.text,
   },
   replyButton: {
@@ -646,23 +628,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   replyButtonText: {
-    ...textTokens.caption,
     color: COLOR.primary,
     fontWeight: '700',
   },
   errorBanner: {
-    backgroundColor: COLOR.dangerLight,
+    backgroundColor: STATUS_THEME.danger.background,
     padding: SPACING.sm,
     borderRadius: RADIUS.sm,
     marginBottom: SPACING.sm,
   },
   errorText: {
-    ...textTokens.caption,
-    color: COLOR.danger,
+    color: STATUS_THEME.danger.text,
     fontWeight: '600',
   },
   inputLabel: {
-    ...textTokens.caption,
     fontWeight: '600',
     color: COLOR.text,
     marginTop: SPACING.sm,
@@ -676,7 +655,7 @@ const styles = StyleSheet.create({
   categoryPill: {
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.sm,
     borderWidth: 1,
     minHeight: 48,
     justifyContent: 'center',
@@ -687,43 +666,40 @@ const styles = StyleSheet.create({
     borderColor: COLOR.primary,
   },
   categoryPillUnselected: {
-    backgroundColor: COLOR.card,
+    backgroundColor: COLOR.surface,
     borderColor: COLOR.border,
   },
   categoryPillText: {
-    ...textTokens.caption,
     fontWeight: '600',
   },
   categoryPillTextSelected: {
-    color: COLOR.white,
+    color: COLOR.onPrimary,
   },
   categoryPillTextUnselected: {
     color: COLOR.text,
   },
   textInput: {
-    backgroundColor: COLOR.card,
+    backgroundColor: COLOR.surface,
     borderWidth: 1,
     borderColor: COLOR.border,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.sm,
     padding: SPACING.sm,
-    ...textTokens.body,
     color: COLOR.text,
     minHeight: 48,
   },
   textArea: {
-    backgroundColor: COLOR.card,
+    backgroundColor: COLOR.surface,
     borderWidth: 1,
     borderColor: COLOR.border,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.sm,
     padding: SPACING.sm,
-    ...textTokens.body,
     color: COLOR.text,
     minHeight: 80,
     textAlignVertical: 'top',
   },
   submitBtn: {
     backgroundColor: COLOR.primary,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.sm,
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.lg,
     alignItems: 'center',
@@ -732,26 +708,24 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
   },
   submitBtnText: {
-    ...textTokens.body,
     fontWeight: '700',
-    color: COLOR.white,
+    color: COLOR.onPrimary,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: COLOR.backdrop,
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.lg,
   },
   modalContent: {
-    backgroundColor: COLOR.card,
-    borderRadius: RADIUS.lg,
+    backgroundColor: COLOR.surface,
+    borderRadius: RADIUS.sheet,
     padding: SPACING.lg,
     width: '100%',
     maxWidth: 400,
   },
   modalTitle: {
-    ...textTokens.h2,
     color: COLOR.text,
     marginBottom: SPACING.md,
   },
@@ -759,9 +733,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLOR.background,
     borderWidth: 1,
     borderColor: COLOR.border,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.sm,
     padding: SPACING.sm,
-    ...textTokens.body,
     color: COLOR.text,
     minHeight: 80,
     textAlignVertical: 'top',
@@ -778,12 +751,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   modalCancelText: {
-    ...textTokens.body,
-    color: COLOR.mutedText,
+    color: COLOR.textMuted,
   },
   modalSendBtn: {
     backgroundColor: COLOR.primary,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.sm,
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.lg,
     minHeight: 48,
@@ -791,8 +763,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalSendText: {
-    ...textTokens.body,
     fontWeight: '700',
-    color: COLOR.white,
+    color: COLOR.onPrimary,
   },
 });

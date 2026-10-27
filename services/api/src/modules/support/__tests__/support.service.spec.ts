@@ -8,7 +8,6 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
-  NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { SupportService } from '../support.service.js';

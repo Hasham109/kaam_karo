@@ -14,7 +14,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { type AuthenticatedRequest, AuthGuard } from '../identity/guards/auth.guard';
+import { type AuthenticatedRequest, AuthGuard } from '../identity/index.js';
 import { ChatService } from './chat.service';
 import type {
   CallRelaySessionDto,

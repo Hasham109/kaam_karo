@@ -3,7 +3,7 @@
  * ARCH §18; BP §20, §74; CHAT-002; EXT-001; D-009.
  * Ensures customer and provider personal phone numbers are never exposed.
  */
-import { ActorRole } from '../../../generated/prisma/client.js';
+import type { ActorRole } from '../../../generated/prisma/client.js';
 
 export const CALL_RELAY_SERVICE = Symbol('CALL_RELAY_SERVICE');
 

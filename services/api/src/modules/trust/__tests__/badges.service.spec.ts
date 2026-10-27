@@ -7,10 +7,8 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import {
   UnprocessableEntityException,
   BadRequestException,
-  NotFoundException,
 } from '@nestjs/common';
 import { BadgesService } from '../badges.service';
-import { CANONICAL_BADGE_DEFINITIONS } from '../badges.definitions';
 import type { BadgeRulesConfig } from '../trust.types';
 
 describe('[T7.4] BadgesService Test Suite', () => {
@@ -27,7 +25,16 @@ describe('[T7.4] BadgesService Test Suite', () => {
         findMany: vi.fn(),
       },
       providerStanding: {
+        findUnique: vi.fn(),
         count: vi.fn().mockResolvedValue(5),
+      },
+      providerLiveStatus: {
+        findUnique: vi.fn(),
+        count: vi.fn().mockResolvedValue(3),
+      },
+      availabilityRule: {
+        count: vi.fn().mockResolvedValue(1),
+        findMany: vi.fn().mockResolvedValue([]),
       },
       providerAvailability: {
         count: vi.fn().mockResolvedValue(3),
@@ -45,6 +52,9 @@ describe('[T7.4] BadgesService Test Suite', () => {
       review: {
         findMany: vi.fn().mockResolvedValue([]),
       },
+      favorite: {
+        count: vi.fn().mockResolvedValue(0),
+      },
       customerFavorite: {
         count: vi.fn().mockResolvedValue(0),
       },
@@ -54,10 +64,12 @@ describe('[T7.4] BadgesService Test Suite', () => {
     };
 
     mockAuditWriter = {
+      write: vi.fn().mockResolvedValue({ id: 'audit-log-1' }),
       log: vi.fn().mockResolvedValue({ id: 'audit-log-1' }),
     };
 
     mockOutboxWriter = {
+      append: vi.fn().mockResolvedValue('outbox-1'),
       write: vi.fn().mockResolvedValue(undefined),
     };
 
